@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import SidebarComponent from '@/components/global/SidebarComponent'
 import WelcomePage from '@/pages/onboarding/onboarding-pages/WelcomePage'
@@ -11,6 +11,7 @@ import ERSPGuidePage from './onboarding-pages/ERSPGuidePage'
 import FormsApplicationsPage from './onboarding-pages/FormsApplicationsPage'
 import TaxFormsPage from './onboarding-pages/TaxFormsPage'
 import OfferLetterPage from './onboarding-pages/OfferLetterPage'
+import CompletedPage from './onboarding-pages/CompletedPage'
 import { Heart, FolderUp, ClipboardList, GraduationCap, UserRound, ClipboardCheck, MonitorPlay, ScrollText, FileSignature, PartyPopper, FileText } from 'lucide-react'
 
 const initialSteps = [
@@ -36,6 +37,8 @@ export default function OnboardingPortal() {
     const [steps, setSteps] = useState(initialSteps)
     const [activeStep, setActiveStep] = useState(1)
 
+
+
     const handleNext = () => {
         setSteps(prev => prev.map(step => {
             if (step.id === activeStep) return { ...step, status: 'completed' }
@@ -45,6 +48,14 @@ export default function OnboardingPortal() {
         setActiveStep(prev => prev + 1)
     }
 
+    useEffect(() => {
+        if (activeStep === 11) {
+            setSteps(prev => prev.map(step =>
+                step.id === 11 ? { ...step, status: 'completed' } : step
+            ))
+        }
+    }, [activeStep])
+
     return (
         <SidebarProvider>
             <SidebarComponent
@@ -53,7 +64,7 @@ export default function OnboardingPortal() {
                 setActiveStep={setActiveStep}
                 handleNext={handleNext}
             />
-            <SidebarInset>
+            <SidebarInset className="overflow-y-auto">
                 {activeStep === 1 && <WelcomePage caregiver={caregiver} onNext={handleNext} />}
                 {activeStep === 2 && <UploadDocumentsPage onNext={handleNext} />}
                 {activeStep === 3 && <PersonalInformationPage onNext={handleNext} />}
@@ -64,6 +75,7 @@ export default function OnboardingPortal() {
                 {activeStep === 8 && <FormsApplicationsPage caregiver={caregiver} onNext={handleNext} />}
                 {activeStep === 9 && <TaxFormsPage onNext={handleNext} />}
                 {activeStep === 10 && <OfferLetterPage caregiver={caregiver} onNext={handleNext} />}
+                {activeStep === 11 && <CompletedPage caregiver={caregiver} onNext={handleNext} />}
             </SidebarInset>
         </SidebarProvider>
     )
