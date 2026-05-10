@@ -1,9 +1,41 @@
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { ClipboardList } from 'lucide-react'
+import { ClipboardList, ExternalLink } from 'lucide-react'
 
 export default function ERSPApplicationPage({ onNext }) {
+    const [popupOpened, setPopupOpened] = useState(false)
+    const [popupClosed, setPopupClosed] = useState(false)
+    const popupRef = useRef(null)
+    const pollRef = useRef(null)
+
+    const openPopup = () => {
+        const popup = window.open(
+            'https://livihomecare.ersp.biz/index.cfm?event=Apply.index',
+            'eRSP Enrollment',
+            'width=900,height=700,scrollbars=yes,resizable=yes'
+        )
+        popupRef.current = popup
+        setPopupOpened(true)
+        setPopupClosed(false)
+
+        // poll every second to check if popup closed
+        pollRef.current = setInterval(() => {
+            if (popup.closed) {
+                setPopupClosed(true)
+                clearInterval(pollRef.current)
+            }
+        }, 1000)
+    }
+
+    // cleanup interval on unmount
+    useEffect(() => {
+        return () => {
+            if (pollRef.current) clearInterval(pollRef.current)
+        }
+    }, [])
+
     return (
-        <div className="max-w-4xl mx-auto py-16 px-8">
+        <div className="max-w-2xl mx-auto py-16 px-8">
             <div className="flex items-center gap-2 mb-2">
                 <ClipboardList className="w-5 h-5 text-[#577C09]" />
                 <span className="text-[#577C09] font-medium">Step 4 of 11</span>
@@ -11,33 +43,46 @@ export default function ERSPApplicationPage({ onNext }) {
 
             <h1 className="text-3xl font-bold mb-2">eRSP Enrollment</h1>
             <p className="text-muted-foreground mb-2">
-                eRSP is the caregiver management system used by Livi Home Care. 
-                You'll use it to clock in and out of shifts, view your schedule, 
+                eRSP is the caregiver management system used by Livi Home Care.
+                You'll use it to clock in and out of shifts, view your schedule,
                 log care notes, and communicate with your supervisor.
             </p>
             <p className="text-muted-foreground mb-8">
-                Please complete the enrollment form below to create your caregiver account. 
+                Please complete the enrollment form to create your caregiver account.
                 Once submitted, Livi Home Care will activate your account before your first shift.
             </p>
 
-            <div className="w-full border border-border rounded-lg overflow-hidden mb-8">
-                <iframe
-                    src="https://livihomecare.ersp.biz/index.cfm?event=Apply.index"
-                    className="w-full"
-                    style={{ height: '700px' }}
-                    title="eRSP Caregiver Enrollment"
-                />
+            <div className="border border-border rounded-lg p-6 mb-6 flex items-center justify-between gap-4">
+                <div>
+                    <p className="font-medium mb-1">eRSP Caregiver Enrollment Form</p>
+                    <p className="text-sm text-muted-foreground">
+                        {!popupOpened && 'Opens in a popup — come back here when done'}
+                        {popupOpened && !popupClosed && 'Form is open in another window...'}
+                        {popupClosed && 'Form completed — you can continue'}
+                    </p>
+                </div>
+                <Button
+                    variant="outline"
+                    className="gap-2 border-[#577C09] text-[#577C09] hover:bg-[#E8F0D0] shrink-0"
+                    onClick={openPopup}
+                    disabled={popupOpened && !popupClosed}
+                >
+                    {popupClosed ? 'Reopen Form' : 'Open Form'}
+                    <ExternalLink className="w-4 h-4" />
+                </Button>
             </div>
 
             <div className="bg-[#E8F0D0] rounded-lg p-4 mb-8">
                 <p className="text-sm text-[#3D5906]">
-                    <span className="font-medium">Already submitted?</span> If you've completed the form above, click continue to move on to the next step. Livi Home Care will follow up with your login credentials before your first shift.
+                    <span className="font-medium">Heads up — </span>
+                    the enrollment form will open in a popup window. Complete the form there and then return to this page to continue your orientation.
                 </p>
             </div>
 
             <Button
                 onClick={onNext}
-                className="bg-[#577C09] hover:bg-[#3D5906] text-white px-8"
+                disabled={!popupClosed}
+                className="bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 I've Completed the Form — Continue
             </Button>

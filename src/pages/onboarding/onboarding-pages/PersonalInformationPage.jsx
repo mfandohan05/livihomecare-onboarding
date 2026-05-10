@@ -131,7 +131,7 @@ export default function PersonalInformationPage({ onNext }) {
                                 />
                             </div>
                             <div className="space-y-2 col-span-1">
-                                <Label htmlFor="zip">Zip</Label>
+                                <Label htmlFor="zip">ZIP code</Label>
                                 <Input
                                     id="zip"
                                     name="zip"
@@ -171,7 +171,7 @@ export default function PersonalInformationPage({ onNext }) {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
+                            <Label htmlFor="email">Email address</Label>
                             <Input
                                 id="email"
                                 name="email"
@@ -185,7 +185,6 @@ export default function PersonalInformationPage({ onNext }) {
                     </div>
                 </div>
 
-                {/* Primary Emergency Contact */}
                 <div>
                     <h2 className="text-lg font-medium mb-4 pb-2 border-b">Primary Emergency Contact</h2>
                     <div className="space-y-4">
@@ -248,7 +247,7 @@ export default function PersonalInformationPage({ onNext }) {
                                 />
                             </div>
                             <div className="space-y-2 col-span-1">
-                                <Label htmlFor="primaryEmergencyZip">Zip</Label>
+                                <Label htmlFor="primaryEmergencyZip">ZIP code</Label>
                                 <Input
                                     id="primaryEmergencyZip"
                                     name="primaryEmergencyZip"
@@ -313,7 +312,6 @@ export default function PersonalInformationPage({ onNext }) {
                     </div>
                 </div>
 
-                {/* Secondary Emergency Contact */}
                 <div>
                     <h2 className="text-lg font-medium mb-4 pb-2 border-b">Secondary Emergency Contact</h2>
                     <p className="text-sm text-muted-foreground mb-4">Optional but recommended.</p>
@@ -375,7 +373,7 @@ export default function PersonalInformationPage({ onNext }) {
                                 />
                             </div>
                             <div className="space-y-2 col-span-1">
-                                <Label htmlFor="secondaryEmergencyZip">Zip</Label>
+                                <Label htmlFor="secondaryEmergencyZip">ZIP code</Label>
                                 <Input
                                     id="secondaryEmergencyZip"
                                     name="secondaryEmergencyZip"
