@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -38,6 +38,12 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
         secondaryEmergencyEmail: '',
         secondaryEmergencyRelationship: '',
     })
+
+    useEffect(() => {
+  if (initialData && Object.keys(initialData).length > 0) {
+    setFormData(initialData)
+  }
+}, [initialData])
 
     const handleChange = (e) => {
         const updated = { ...formData, [e.target.name]: e.target.value }

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ScrollText, ChevronDown, ChevronUp, CheckCircle } from 'lucide-react'
+import { ScrollText, ChevronDown, ChevronUp } from 'lucide-react'
 
 const today = new Date().toLocaleDateString('en-US', {
     year: 'numeric',
@@ -10,24 +10,79 @@ const today = new Date().toLocaleDateString('en-US', {
     day: 'numeric',
 })
 
+const jobDescriptions = {
+    caregiver: {
+        title: 'Job Description for the In-Home Aide',
+        intro: 'Livi Home Care In-Home Aide is responsible for providing basic nursing care to our clients in their home. You will work under the supervision of our Registered Nurse.',
+        duties: [
+            'Assisting with personal care such as bathing, mouth care, skin care and hair care',
+            'Assisting with ambulation',
+            'Medication reminder',
+            'Perform incidental household services essential to the client\'s care at home',
+            'Observe, record and report any changes in the client\'s condition to the Livi Home Care Registered Nurse/supervisor',
+            'Assisting with mobility and transfers, including helping clients get in and out of bed or chairs',
+            'Assisting with meal preparation and feeding clients if necessary',
+            'Providing companionship and emotional support to clients and their families',
+            'Following infection control measures, including proper hand hygiene and PPE usage',
+            'Maintaining client records accurately and timely',
+            'Maintaining client confidentiality',
+            'Participating in ongoing education and training',
+            'Collaborating with other healthcare professionals to ensure coordinated and quality care',
+            'Adhering to safety guidelines to prevent accidents and injuries',
+            'Help with transportation',
+            'Other services as assigned',
+        ]
+    },
+    nurse: {
+        title: 'Job Description for the Registered Nurse',
+        intro: 'A Livi Home Care Registered Nurse is responsible for providing skilled nursing care to our clients in their home.',
+        duties: [
+            'Conducting client assessments and developing care plans',
+            'Administering medications and treatments as prescribed',
+            'Supervising and directing in-home aides and caregivers',
+            'Monitoring client health status and reporting changes',
+            'Providing wound care and other skilled nursing procedures',
+            'Educating clients and families on health management',
+            'Maintaining accurate clinical documentation',
+            'Coordinating care with physicians and other healthcare providers',
+            'Ensuring compliance with state and federal regulations',
+            'Participating in quality improvement activities',
+        ]
+    },
+    other: {
+        title: 'Job Description for Office Staff',
+        intro: 'Livi Home Care Office Staff is responsible for supporting the administrative operations of the agency.',
+        duties: [
+            'Answering and directing phone calls and emails',
+            'Scheduling and coordinating caregiver assignments',
+            'Maintaining client and employee records',
+            'Processing payroll and billing documentation',
+            'Assisting with onboarding new caregivers',
+            'Coordinating with healthcare providers and clients',
+            'Supporting management with administrative tasks',
+            'Ensuring compliance with agency policies and procedures',
+            'Other duties as assigned',
+        ]
+    }
+}
 
 const SignatureField = ({ formId, label = 'Type your full name to sign', signatures, onSign, caregiver }) => (
-  <div className="mt-6 pt-6 border-t border-border">
-    <p className="text-xs text-muted-foreground mb-3">
-      By typing your name below you are providing a legally binding electronic signature.
-    </p>
-    <div className="space-y-2">
-      <Label htmlFor={`sig_${formId}`}>{label}</Label>
-      <Input
-        id={`sig_${formId}`}
-        placeholder={caregiver.name}
-        value={signatures[formId] || ''}
-        onChange={(e) => onSign(formId, e.target.value)}
-        className="font-serif italic"
-      />
+    <div className="mt-6 pt-6 border-t border-border">
+        <p className="text-xs text-muted-foreground mb-3">
+            By typing your name below, you are providing a legally binding electronic signature.
+        </p>
+        <div className="space-y-2">
+            <Label htmlFor={`sig_${formId}`}>{label}</Label>
+            <Input
+                id={`sig_${formId}`}
+                placeholder={caregiver.name}
+                value={signatures[formId] || ''}
+                onChange={(e) => onSign(formId, e.target.value)}
+                className="font-serif italic"
+            />
+        </div>
+        <p className="text-xs text-muted-foreground mt-2">Date: {today}</p>
     </div>
-    <p className="text-xs text-muted-foreground mt-2">Date: {today}</p>
-  </div>
 
 )
 
@@ -111,48 +166,41 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
         },
         {
             id: 'form_1',
-            title: 'Job Description — In-Home Aide',
-            render: () => (
-                <>
-                    <FormContent>
-                        <p className="font-medium">Job Description for the In-Home Aide</p>
-                        <p>Livi Home Care In-Home Aide is responsible for providing basic nursing care to our clients in their home. You will work under the supervision of our Registered Nurse.</p>
-                        <p className="font-medium mt-2">Your duties may include the following:</p>
-                        <ul className="space-y-1 pl-4">
-                            {[
-                                'Assisting with personal care such as bathing, mouth care, skin care and hair care',
-                                'Assisting with ambulation',
-                                'Medication reminder',
-                                'Perform incidental household services essential to the client\'s care at home (light household chores such as cleaning and laundry)',
-                                'Observe, record and report any changes in the client\'s condition, family situation, or needs to the Livi Home Care Registered Nurse/supervisor',
-                                'Assisting with mobility and transfers, including helping clients get in and out of bed or chairs',
-                                'Assisting with meal preparation and feeding clients if necessary',
-                                'Providing companionship and emotional support to clients and their families',
-                                'Following infection control measures, including proper hand hygiene and personal protective equipment usage',
-                                'Maintaining client records accurately and timely',
-                                'Maintaining client confidentiality',
-                                'Participating in ongoing education and training',
-                                'Collaborating with other healthcare professionals to ensure coordinated and quality care for clients',
-                                'Adhering to safety guidelines to prevent accidents and injuries',
-                                'Help with transportation',
-                                'Other services as assigned',
-                            ].map((duty, i) => (
-                                <li key={i} className="flex items-start gap-2">
-                                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#577C09] shrink-0" />
-                                    {duty}
-                                </li>
-                            ))}
-                        </ul>
-                    </FormContent>
-                    <SignatureField formId="form_1" signatures={signatures} onSign={(formId, value) => updateSignature(formId, value)} caregiver={caregiver} label="Type your full name to acknowledge this job description" />
-                    <FormButton
-                        formId="form_1"
-                        disabled={!signatures['form_1']?.trim() || completed['form_1']}
-                        completed={completed}
-                        markComplete={markComplete}
-                    />
-                </>
-            )
+            title: `Job Description - ${caregiver.positionNameType[0]}`,
+            render: () => {
+                const jobDesc = jobDescriptions[caregiver.role] || jobDescriptions.caregiver
+
+                return (
+                    <>
+                        <FormContent>
+                            <p className="font-medium">{jobDesc.title}</p>
+                            <p>{jobDesc.intro}</p>
+                            <p className="font-medium mt-2">Your duties may include the following:</p>
+                            <ul className="space-y-1 pl-4">
+                                {jobDesc.duties.map((duty, i) => (
+                                    <li key={i} className="flex items-start gap-2">
+                                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#577C09] shrink-0" />
+                                        {duty}
+                                    </li>
+                                ))}
+                            </ul>
+                        </FormContent>
+                        <SignatureField
+                            formId="form_1"
+                            signatures={signatures}
+                            onSign={(formId, value) => updateSignature(formId, value)}
+                            caregiver={caregiver}
+                            label="Type your full name to acknowledge this job description"
+                        />
+                        <FormButton
+                            formId="form_1"
+                            disabled={!signatures['form_1']?.trim() || completed['form_1']}
+                            completed={completed}
+                            markComplete={markComplete}
+                        />
+                    </>
+                )
+            }
         },
         {
             id: 'form_2',
@@ -260,7 +308,7 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
                         </ul>
                         <p className="mt-3">By signing below, I acknowledge that I have received and read a copy of the Drug Test Policy for Livi Home Care Employees. I understand my responsibilities under this policy and agree to comply with all requirements outlined herein.</p>
                     </FormContent>
-                    <SignatureField formId="form_4" signatures={signatures} onSign={(formId, value) => updateSignature(formId, value)}caregiver={caregiver} label="Type your full name to acknowledge the Drug Test Policy" />
+                    <SignatureField formId="form_4" signatures={signatures} onSign={(formId, value) => updateSignature(formId, value)} caregiver={caregiver} label="Type your full name to acknowledge the Drug Test Policy" />
                     <FormButton
                         formId="form_4"
                         disabled={!signatures['form_4']?.trim() || completed['form_4']}
@@ -291,15 +339,15 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
                         ].map((option) => (
                             <button
                                 key={option.value}
-                                onClick={() => setHepBStatus(option.value)}
+                                onClick={() => updateHepBStatus(option.value)}
                                 className={`w-full text-left px-4 py-3 rounded-lg border text-sm transition-colors flex items-start gap-3 ${hepBStatus === option.value
-                                        ? 'border-[#577C09] bg-[#E8F0D0] text-[#3D5906]'
-                                        : 'border-border hover:border-[#577C09] hover:bg-[#E8F0D0]/30'
+                                    ? 'border-[#577C09] bg-[#E8F0D0] text-[#3D5906]'
+                                    : 'border-border hover:border-[#577C09] hover:bg-[#E8F0D0]/30'
                                     }`}
                             >
                                 <div className={`w-4 h-4 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center ${hepBStatus === option.value
-                                        ? 'border-[#577C09]'
-                                        : 'border-muted-foreground'
+                                    ? 'border-[#577C09]'
+                                    : 'border-muted-foreground'
                                     }`}>
                                     {hepBStatus === option.value && (
                                         <div className="w-2 h-2 rounded-full bg-[#577C09]" />
@@ -370,8 +418,8 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
                                         key={type}
                                         onClick={() => setDirectDeposit(prev => ({ ...prev, accountType: type }))}
                                         className={`px-6 py-2 rounded-md border text-sm font-medium transition-colors ${directDeposit.accountType === type
-                                                ? 'bg-[#577C09] text-white border-[#577C09]'
-                                                : 'bg-white text-foreground border-border hover:bg-muted'
+                                            ? 'bg-[#577C09] text-white border-[#577C09]'
+                                            : 'bg-white text-foreground border-border hover:bg-muted'
                                             }`}
                                     >
                                         {type}
@@ -491,15 +539,14 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
                             className={`border rounded-xl overflow-hidden transition-colors ${isDone ? 'border-[#577C09]' : 'border-border'
                                 }`}
                         >
-                            {/* Form Header */}
                             <button
                                 onClick={() => toggle(form.id)}
                                 className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/50 transition-colors"
                             >
                                 <div className="flex items-center gap-3">
                                     <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 text-xs font-medium ${isDone
-                                            ? 'border-[#577C09] bg-[#577C09] text-white'
-                                            : 'border-muted-foreground text-muted-foreground'
+                                        ? 'border-[#577C09] bg-[#577C09] text-white'
+                                        : 'border-muted-foreground text-muted-foreground'
                                         }`}>
                                         {isDone ? '✓' : index + 1}
                                     </div>

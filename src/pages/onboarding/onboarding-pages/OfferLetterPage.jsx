@@ -47,7 +47,7 @@ export default function OfferLetterPage({ stepLabel, caregiver, onNext, initialD
 
         <p>
           We are pleased to extend an offer of employment with <strong>Livi Home Care</strong> for
-          the position of <strong>PCA-Caregiver (Hourly, Part-Time)</strong>. This offer is
+          the position of <strong>{caregiver.positionNameType[0]} {caregiver.positionNameType[1]}</strong>. This offer is
           contingent upon the successful completion and verification of the following:
         </p>
 
@@ -70,7 +70,7 @@ export default function OfferLetterPage({ stepLabel, caregiver, onNext, initialD
         <div className="space-y-4">
           <div>
             <p className="font-medium">Position Title:</p>
-            <p className="text-muted-foreground">PCA-Caregiver</p>
+            <p className="text-muted-foreground">{caregiver.positionNameType[0]}</p>
           </div>
 
           <div>
@@ -78,10 +78,10 @@ export default function OfferLetterPage({ stepLabel, caregiver, onNext, initialD
             <p className="text-muted-foreground">
               Compensation rates may vary depending on the specific client case, the level of care
               required, and your experience, qualifications, and certifications. Hands-on care
-              assignments will start at <strong>$16.00 per hour</strong> and may increase based on
+              assignments will start at <strong>${caregiver.compensation} per hour</strong> and may increase based on
               the client's needs, level of care required, scheduling demands, and at the sole
               discretion of the company. The base rate for non-hands-on companion or sitter
-              services is <strong>$14.00 per hour</strong>.
+              services is <strong>${caregiver.baseRateForOtherServices} per hour</strong>.
             </p>
           </div>
 
@@ -182,11 +182,10 @@ export default function OfferLetterPage({ stepLabel, caregiver, onNext, initialD
           <p className="text-muted-foreground">Livi Home Care</p>
         </div>
 
-        {/* Divider */}
         <div className="border-t pt-6">
           <p className="font-medium mb-4">Acknowledgment and Acceptance</p>
           <p className="text-muted-foreground mb-6">
-            I accept the position of PCA-Caregiver with Livi Home Care under the terms outlined
+            I accept the position of {caregiver.positionNameType[0]} with Livi Home Care under the terms outlined
             in this offer letter.
           </p>
 

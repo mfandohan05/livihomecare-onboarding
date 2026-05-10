@@ -10,7 +10,7 @@ const getStatusIcon = (status) => {
     return null
 }
 
-function SidebarComponent({ steps, activeStep, setActiveStep, handleNext, caregiver }) {
+function SidebarComponent({ steps, activeStep, setActiveStep, handleNext, caregiver, resetFormData }) {
     const completedCount = steps.filter(s => s.status === "completed").length;
     const progressPercent = Math.round((completedCount / steps.length) * 100);
     const avatarURL = `https://ui-avatars.com/api/?name=${encodeURIComponent(caregiver.name)}&background=577C09&color=fff`;
@@ -53,6 +53,7 @@ function SidebarComponent({ steps, activeStep, setActiveStep, handleNext, caregi
             </SidebarContent>
             <SidebarFooter>
                 <button onClick={handleNext}>(Testing Purposes Only) <br />Skip to the next page</button>
+                <button onClick={resetFormData}>(Testing Purposes Only) <br />Clear all form data</button>
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg">

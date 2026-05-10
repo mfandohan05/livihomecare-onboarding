@@ -23,8 +23,7 @@ import { useSaveProgress, loadProgress } from '@/hooks/useOnboardingProgress'
 export default function OnboardingPortal() {
     const { token } = useParams();
     const caregiver = getCaregiverByToken(token);
-    const role = caregiver.role;
-
+    
     if (!caregiver) {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -40,7 +39,7 @@ export default function OnboardingPortal() {
             </div>
         )
     }
-
+    const role = caregiver.role;
     const [steps, setSteps] = useState(stepsByRole[caregiver.role]);
     const [activeStep, setActiveStep] = useState(1)
 
@@ -58,7 +57,7 @@ export default function OnboardingPortal() {
         }
     }, [activeStep])
 
-        const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState({
         personalInfo: {},
         competency: { checked: {}, lunch: '', dinner: '' },
         orientationQuiz: {
@@ -69,8 +68,32 @@ export default function OnboardingPortal() {
         },
         signatures: {},
         hepBStatus: '',
-        offerLetter: {}
+        offerLetter: {},
+        erspApplication: { popupOpened: false, popupClosed: false }
     })
+
+    const resetFormData = () => {
+        localStorage.removeItem(`onboarding_${token}`)
+
+        setFormData({
+            personalInfo: {},
+            competency: { checked: {}, lunch: '', dinner: '' },
+            orientationQuiz: {
+                currentSection: 0,
+                currentSlide: 0,
+                completedSections: [],
+                quizAnswers: {},
+            },
+            signatures: {},
+            hepBStatus: '',
+            offerLetter: {},
+            erspApplication: { popupOpened: false, popupClosed: false, confirmed: false },
+        }
+        )
+        setActiveStep(1)
+        setSteps(stepsByRole[caregiver.role])
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
     useEffect(() => {
         const saved = loadProgress(token);
         if (!saved) {
@@ -91,7 +114,7 @@ export default function OnboardingPortal() {
     useSaveProgress(token, activeStep, steps, formData)
 
     const updateFormData = (key, data) => {
-        setFormData(prev => ({ ...prev, [key]: data}))
+        setFormData(prev => ({ ...prev, [key]: data }))
     }
 
     const handleNext = () => {
@@ -118,9 +141,9 @@ export default function OnboardingPortal() {
             case 'Upload Documents':
                 return <UploadDocumentsPage stepLabel={stepLabel} onNext={handleNext} />
             case 'Personal Information':
-                return <PersonalInformationPage stepLabel={stepLabel} onNext={handleNext} initialPage={formData.personalInfo} onChange={(data) => updateFormData('personalInfo', data)}/>
+                return <PersonalInformationPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.personalInfo} onChange={(data) => updateFormData('personalInfo', data)} />
             case 'eRSP Enrollment':
-                return <ERSPApplicationPage stepLabel={stepLabel} onNext={handleNext} />
+                return <ERSPApplicationPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.erspApplication} onChange={(data) => updateFormData('erspApplication', data)} />
             case 'New Hire Orientation':
                 return <NewHireOrientationPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.orientationQuiz} onChange={(data) => updateFormData('orientationQuiz', data)} />
             case 'Skills Competency':
@@ -131,7 +154,7 @@ export default function OnboardingPortal() {
                 return <FormsApplicationsPage stepLabel={stepLabel} caregiver={caregiver} onNext={handleNext} initialData={{ signatures: formData.signatures, hepBStatus: formData.hepBStatus }} onChange={(data) => updateFormData('signatures', data.signatures)} onHepBChange={(status) => updateFormData('hepBStatus', status)} />
             case 'Tax Forms':
             case 'Tax Forms (W-9)':
-                return <TaxFormsPage stepLabel={stepLabel} onNext={handleNext} />
+                return <TaxFormsPage stepLabel={stepLabel} onNext={handleNext} role={role} />
             case 'Offer Letter':
                 return <OfferLetterPage stepLabel={stepLabel} caregiver={caregiver} onNext={handleNext} initialData={formData.offerLetter} onChange={(data) => updateFormData('offerLetter', data)} />
             case 'Completed!':
@@ -156,6 +179,7 @@ export default function OnboardingPortal() {
                 activeStep={activeStep}
                 setActiveStep={setActiveStep}
                 handleNext={handleNext}
+                resetFormData={resetFormData}
                 caregiver={caregiver}
             />
             <SidebarInset className="overflow-y-auto">

@@ -8,12 +8,6 @@ const today = new Date().toLocaleDateString('en-US', {
   month: '2-digit', day: '2-digit', year: 'numeric'
 }).replace(/\//g, '/')
 
-const steps = [
-  { id: 'i9', title: 'Form I-9', subtitle: 'Employment Eligibility Verification — Section 1' },
-  { id: 'w4', title: 'Form W-4', subtitle: 'Federal Employee Withholding Certificate' },
-  { id: 'nc4ez', title: 'NC-4EZ', subtitle: 'North Carolina Employee Withholding Certificate' },
-]
-
 const Field = ({ label, id, children, required }) => (
   <div className="space-y-1.5">
     <Label htmlFor={id}>
@@ -24,7 +18,7 @@ const Field = ({ label, id, children, required }) => (
   </div>
 )
 
-const RadioOption = ({ name, value, label, checked, onChange }) => (
+const RadioOption = ({ value, label, checked, onChange }) => (
   <button
     type="button"
     onClick={() => onChange(value)}
@@ -41,6 +35,25 @@ const RadioOption = ({ name, value, label, checked, onChange }) => (
     </div>
     {label}
   </button>
+)
+
+const Checkbox = ({ checked, onChange, label }) => (
+  <div className="flex items-center gap-3">
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
+        checked ? 'bg-[#577C09] border-[#577C09]' : 'border-muted-foreground'
+      }`}
+    >
+      {checked && (
+        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+        </svg>
+      )}
+    </button>
+    {label && <label className="text-sm">{label}</label>}
+  </div>
 )
 
 function I9Form({ data, onChange, onSave, saved }) {
@@ -63,7 +76,7 @@ function I9Form({ data, onChange, onSave, saved }) {
         <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
         <div className="text-sm text-amber-800">
           <p className="font-medium mb-1">You are completing Section 1 only.</p>
-          <p>Livi Home Care will complete Section 2 with you directly after your first day of employment. Section 2 requires in-person or remote verification of your identity documents.</p>
+          <p>Livi Home Care will complete Section 2 with you directly after your first day of employment.</p>
         </div>
       </div>
 
@@ -130,16 +143,9 @@ function I9Form({ data, onChange, onSave, saved }) {
         <h3 className="text-sm font-medium mb-4 pb-2 border-b">Citizenship / Immigration Status <span className="text-red-500">*</span></h3>
         <div className="space-y-2">
           {citizenshipOptions.map((opt) => (
-            <RadioOption
-              key={opt.value}
-              value={opt.value}
-              label={opt.label}
-              checked={data.citizenshipStatus === opt.value}
-              onChange={(v) => onChange({ ...data, citizenshipStatus: v })}
-            />
+            <RadioOption key={opt.value} value={opt.value} label={opt.label} checked={data.citizenshipStatus === opt.value} onChange={(v) => onChange({ ...data, citizenshipStatus: v })} />
           ))}
         </div>
-
         {data.citizenshipStatus === '3' && (
           <div className="mt-4">
             <Field label="USCIS A-Number" id="i9_uscis">
@@ -147,7 +153,6 @@ function I9Form({ data, onChange, onSave, saved }) {
             </Field>
           </div>
         )}
-
         {data.citizenshipStatus === '4' && (
           <div className="mt-4 grid grid-cols-2 gap-4">
             <Field label="Expiration date (MM/DD/YYYY)" id="i9_expDate">
@@ -171,11 +176,7 @@ function I9Form({ data, onChange, onSave, saved }) {
             Section 1 saved successfully
           </div>
         ) : (
-          <Button
-            onClick={onSave}
-            disabled={!canSave}
-            className="bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+          <Button onClick={onSave} disabled={!canSave} className="bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed">
             Save Section 1
           </Button>
         )}
@@ -200,11 +201,10 @@ function W4Form({ data, onChange, onSave, saved }) {
     <div className="space-y-6">
       <div className="bg-[#E8F0D0] rounded-lg p-4">
         <p className="text-sm text-[#3D5906]">
-          <span className="font-medium">Steps 2–4 are optional</span> — only complete them if they apply to your situation. Most caregivers only need to complete Step 1 and Step 5.
+          <span className="font-medium">Steps 2–4 are optional</span> — most employees only need to complete Step 1 and sign.
         </p>
       </div>
 
-      {/* Step 1 */}
       <div>
         <h3 className="text-sm font-medium mb-4 pb-2 border-b">Step 1 — Personal Information <span className="text-red-500">*</span></h3>
         <div className="space-y-4">
@@ -225,47 +225,23 @@ function W4Form({ data, onChange, onSave, saved }) {
           <Field label="Social Security Number" id="w4_ssn" required>
             <Input id="w4_ssn" value={data.ssn || ''} onChange={set('ssn')} placeholder="XXX-XX-XXXX" />
           </Field>
-
           <div>
             <Label>Filing status <span className="text-red-500">*</span></Label>
             <div className="space-y-2 mt-2">
               {filingOptions.map((opt) => (
-                <RadioOption
-                  key={opt.value}
-                  value={opt.value}
-                  label={opt.label}
-                  checked={data.filingStatus === opt.value}
-                  onChange={(v) => onChange({ ...data, filingStatus: v })}
-                />
+                <RadioOption key={opt.value} value={opt.value} label={opt.label} checked={data.filingStatus === opt.value} onChange={(v) => onChange({ ...data, filingStatus: v })} />
               ))}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Step 2 */}
       <div>
         <h3 className="text-sm font-medium mb-1 pb-2 border-b">Step 2 — Multiple Jobs or Spouse Works <span className="text-xs font-normal text-muted-foreground">(optional)</span></h3>
         <p className="text-xs text-muted-foreground mb-4">Complete only if you hold more than one job or are married filing jointly and your spouse also works.</p>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => onChange({ ...data, multipleJobs: !data.multipleJobs })}
-            className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
-              data.multipleJobs ? 'bg-[#577C09] border-[#577C09]' : 'border-muted-foreground'
-            }`}
-          >
-            {data.multipleJobs && (
-              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-              </svg>
-            )}
-          </button>
-          <label className="text-sm">Check here if there are only two jobs total (you and your spouse). Do the same on the W-4 for the other job.</label>
-        </div>
+        <Checkbox checked={data.multipleJobs || false} onChange={(v) => onChange({ ...data, multipleJobs: v })} label="Check here if there are only two jobs total. Do the same on the W-4 for the other job." />
       </div>
 
-      {/* Step 3 */}
       <div>
         <h3 className="text-sm font-medium mb-1 pb-2 border-b">Step 3 — Claim Dependents <span className="text-xs font-normal text-muted-foreground">(optional)</span></h3>
         <p className="text-xs text-muted-foreground mb-4">Only if your total income will be $200,000 or less ($400,000 or less if married filing jointly).</p>
@@ -282,7 +258,6 @@ function W4Form({ data, onChange, onSave, saved }) {
         </div>
       </div>
 
-      {/* Step 4 */}
       <div>
         <h3 className="text-sm font-medium mb-1 pb-2 border-b">Step 4 — Other Adjustments <span className="text-xs font-normal text-muted-foreground">(optional)</span></h3>
         <div className="grid grid-cols-2 gap-4">
@@ -296,29 +271,13 @@ function W4Form({ data, onChange, onSave, saved }) {
             <Input id="w4_extraWithholding" value={data.extraWithholding || ''} onChange={set('extraWithholding')} placeholder="$0" />
           </Field>
         </div>
-
-        <div className="flex items-center gap-3 mt-4">
-          <button
-            type="button"
-            onClick={() => onChange({ ...data, exempt: !data.exempt })}
-            className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
-              data.exempt ? 'bg-[#577C09] border-[#577C09]' : 'border-muted-foreground'
-            }`}
-          >
-            {data.exempt && (
-              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-              </svg>
-            )}
-          </button>
-          <label className="text-sm">Claim exemption from withholding for 2026 (only if you had no federal income tax liability in 2025 and expect none in 2026)</label>
+        <div className="mt-4">
+          <Checkbox checked={data.exempt || false} onChange={(v) => onChange({ ...data, exempt: v })} label="Claim exemption from withholding for 2026 (only if you had no federal income tax liability in 2025 and expect none in 2026)" />
         </div>
       </div>
 
       <div className="border-t pt-6">
-        <p className="text-xs text-muted-foreground mb-4">
-          Under penalties of perjury, I declare that this certificate, to the best of my knowledge and belief, is true, correct, and complete.
-        </p>
+        <p className="text-xs text-muted-foreground mb-4">Under penalties of perjury, I declare that this certificate, to the best of my knowledge and belief, is true, correct, and complete.</p>
         <p className="text-xs text-muted-foreground mb-4">Date: {today}</p>
         {saved ? (
           <div className="flex items-center gap-2 text-[#577C09] text-sm font-medium">
@@ -326,12 +285,120 @@ function W4Form({ data, onChange, onSave, saved }) {
             W-4 saved successfully
           </div>
         ) : (
-          <Button
-            onClick={onSave}
-            disabled={!canSave}
-            className="bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+          <Button onClick={onSave} disabled={!canSave} className="bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed">
             Save W-4
+          </Button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function W9Form({ data, onChange, onSave, saved }) {
+  const set = (key) => (e) => onChange({ ...data, [key]: e.target.value })
+
+  const taxClassifications = [
+    { value: 'individual', label: 'Individual / Sole proprietor' },
+    { value: 'c_corp', label: 'C Corporation' },
+    { value: 's_corp', label: 'S Corporation' },
+    { value: 'partnership', label: 'Partnership' },
+    { value: 'trust', label: 'Trust / Estate' },
+    { value: 'llc', label: 'LLC' },
+    { value: 'other', label: 'Other' },
+  ]
+
+  const canSave = data.name && data.address && data.cityStateZip &&
+    (data.ssn || data.ein) && data.taxClassification && !(data.ssn && data.ein)
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-[#E8F0D0] rounded-lg p-4">
+        <p className="text-sm text-[#3D5906]">
+          <span className="font-medium">W-9 is for independent contractors.</span> As a contractor with Livi Home Care, you are responsible for paying your own taxes. This form provides your taxpayer identification number for 1099 reporting.
+        </p>
+      </div>
+
+      <div>
+        <h3 className="text-sm font-medium mb-4 pb-2 border-b">Name & Business Information</h3>
+        <div className="space-y-4">
+          <Field label="Full legal name (as shown on your tax return)" id="w9_name" required>
+            <Input id="w9_name" value={data.name || ''} onChange={set('name')} placeholder="Dr. James Carter" />
+          </Field>
+          <Field label="Business name / DBA (if different from above)" id="w9_businessName">
+            <Input id="w9_businessName" value={data.businessName || ''} onChange={set('businessName')} placeholder="Leave blank if not applicable" />
+          </Field>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="text-sm font-medium mb-4 pb-2 border-b">Federal Tax Classification <span className="text-red-500">*</span></h3>
+        <div className="space-y-2">
+          {taxClassifications.map((opt) => (
+            <RadioOption key={opt.value} value={opt.value} label={opt.label} checked={data.taxClassification === opt.value} onChange={(v) => onChange({ ...data, taxClassification: v })} />
+          ))}
+        </div>
+        {data.taxClassification === 'llc' && (
+          <div className="mt-4">
+            <Field label="LLC tax classification (C = C corp, S = S corp, P = Partnership)" id="w9_llcClass">
+              <Input id="w9_llcClass" value={data.llcClassification || ''} onChange={set('llcClassification')} placeholder="C, S, or P" maxLength={1} />
+            </Field>
+          </div>
+        )}
+        {data.taxClassification === 'other' && (
+          <div className="mt-4">
+            <Field label="Other description" id="w9_otherDesc">
+              <Input id="w9_otherDesc" value={data.otherDescription || ''} onChange={set('otherDescription')} placeholder="Describe entity type" />
+            </Field>
+          </div>
+        )}
+      </div>
+
+      <div>
+        <h3 className="text-sm font-medium mb-4 pb-2 border-b">Address</h3>
+        <div className="space-y-4">
+          <Field label="Street address, apt or suite number" id="w9_address" required>
+            <Input id="w9_address" value={data.address || ''} onChange={set('address')} placeholder="123 Main St" />
+          </Field>
+          <Field label="City, state, and ZIP code" id="w9_cityStateZip" required>
+            <Input id="w9_cityStateZip" value={data.cityStateZip || ''} onChange={set('cityStateZip')} placeholder="Charlotte, NC 28201" />
+          </Field>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="text-sm font-medium mb-4 pb-2 border-b">Taxpayer Identification Number <span className="text-red-500">*</span></h3>
+        <p className="text-xs text-muted-foreground mb-4">For individuals enter your SSN. For entities enter your EIN. Enter only one.</p>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Social Security Number (SSN)" id="w9_ssn">
+            <Input id="w9_ssn" value={data.ssn || ''} onChange={set('ssn')} placeholder="XXX-XX-XXXX" disabled={!!data.ein} />
+          </Field>
+          <Field label="Employer Identification Number (EIN)" id="w9_ein">
+            <Input id="w9_ein" value={data.ein || ''} onChange={set('ein')} placeholder="XX-XXXXXXX" disabled={!!data.ssn} />
+          </Field>
+        </div>
+        {data.ssn && data.ein && (
+          <p className="text-xs text-red-500 mt-2">Please enter either SSN or EIN, not both.</p>
+        )}
+      </div>
+
+      <div className="border-t pt-6">
+        <p className="text-sm font-medium mb-3">Part II — Certification</p>
+        <p className="text-xs text-muted-foreground mb-3">Under penalties of perjury, I certify that:</p>
+        <ul className="text-xs text-muted-foreground space-y-2 mb-6 pl-4">
+          <li>1. The number shown on this form is my correct taxpayer identification number.</li>
+          <li>2. I am not subject to backup withholding.</li>
+          <li>3. I am a U.S. citizen or other U.S. person.</li>
+          <li>4. The FATCA code(s) entered on this form (if any) indicating that I am exempt from FATCA reporting is correct.</li>
+        </ul>
+        <p className="text-xs text-muted-foreground mb-4">Date: {today}</p>
+        {saved ? (
+          <div className="flex items-center gap-2 text-[#577C09] text-sm font-medium">
+            <CheckCircle className="w-4 h-4" />
+            W-9 saved successfully
+          </div>
+        ) : (
+          <Button onClick={onSave} disabled={!canSave} className="bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed">
+            Save W-9
           </Button>
         )}
       </div>
@@ -357,34 +424,23 @@ function NC4EZForm({ upload, setUpload, saved, onSave }) {
         <div>
           <p className="text-sm font-medium mb-1">Step 1 — Download the blank form</p>
           <p className="text-xs text-muted-foreground mb-3">Download the official NC-4EZ form from the NC Department of Revenue.</p>
-          <a
-            href="https://www.ncdor.gov/nc-4ez-employees-withholding-allowance-certificate/open"
-            target="_blank"
-            rel="noreferrer"
-          >
+          <a href="https://www.ncdor.gov/nc-4ez-employees-withholding-allowance-certificate/open" target="_blank" rel="noreferrer">
             <Button variant="outline" className="gap-2 border-[#577C09] text-[#577C09] hover:bg-[#E8F0D0]">
               <Download className="w-4 h-4" />
               Download NC-4EZ
             </Button>
           </a>
         </div>
-
         <div className="border-t pt-4">
           <p className="text-sm font-medium mb-1">Step 2 — Fill it out and upload</p>
           <p className="text-xs text-muted-foreground mb-3">Print, fill out, then take a clear photo or scan and upload it below.</p>
-
           {upload ? (
             <div className="flex items-center justify-between border border-[#577C09] bg-[#E8F0D0] rounded-lg px-4 py-3">
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-[#577C09]" />
                 <span className="text-sm text-[#577C09] font-medium truncate max-w-[200px]">{upload.name}</span>
               </div>
-              <button
-                onClick={() => setUpload(null)}
-                className="text-xs text-muted-foreground hover:text-destructive ml-4"
-              >
-                Remove
-              </button>
+              <button onClick={() => setUpload(null)} className="text-xs text-muted-foreground hover:text-destructive ml-4">Remove</button>
             </div>
           ) : (
             <label className="cursor-pointer">
@@ -405,31 +461,42 @@ function NC4EZForm({ upload, setUpload, saved, onSave }) {
             NC-4EZ uploaded successfully
           </div>
         ) : (
-          <Button
-            onClick={onSave}
-            disabled={!upload}
-            className="bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+          <Button onClick={onSave} disabled={!upload} className="bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed">
             Save & Continue
           </Button>
         )}
-        {!upload && (
-          <p className="text-xs text-muted-foreground mt-2">Please upload your completed NC-4EZ to continue.</p>
-        )}
+        {!upload && <p className="text-xs text-muted-foreground mt-2">Please upload your completed NC-4EZ to continue.</p>}
       </div>
     </div>
   )
 }
 
-export default function TaxFormsPage({ stepLabel, onNext }) {
-  const [currentStep, setCurrentStep] = useState(0)
-  const [saved, setSaved] = useState({ i9: false, w4: false, nc4ez: false })
+export default function TaxFormsPage({ stepLabel, role, onNext }) {
+  const isContractor = role === 'nurse'
 
+  const steps = isContractor
+    ? [
+        { id: 'i9', title: 'Form I-9', subtitle: 'Employment Eligibility Verification — Section 1' },
+        { id: 'w9', title: 'Form W-9', subtitle: 'Request for Taxpayer Identification Number' },
+      ]
+    : [
+        { id: 'i9', title: 'Form I-9', subtitle: 'Employment Eligibility Verification — Section 1' },
+        { id: 'w4', title: 'Form W-4', subtitle: 'Federal Employee Withholding Certificate' },
+        { id: 'nc4ez', title: 'NC-4EZ', subtitle: 'North Carolina Employee Withholding Certificate' },
+      ]
+
+  const initialSaved = isContractor
+    ? { i9: false, w9: false }
+    : { i9: false, w4: false, nc4ez: false }
+
+  const [currentStep, setCurrentStep] = useState(0)
+  const [saved, setSaved] = useState(initialSaved)
   const [i9Data, setI9Data] = useState({})
   const [w4Data, setW4Data] = useState({})
+  const [w9Data, setW9Data] = useState({})
   const [nc4ezUpload, setNc4ezUpload] = useState(null)
 
-  const allDone = saved.i9 && saved.w4 && saved.nc4ez
+  const allDone = Object.values(saved).every(Boolean)
 
   const handleSave = (formId) => {
     setSaved(prev => ({ ...prev, [formId]: true }))
@@ -442,17 +509,15 @@ export default function TaxFormsPage({ stepLabel, onNext }) {
 
   return (
     <div className="max-w-2xl mx-auto py-16 px-8">
-
       <div className="flex items-center gap-2 mb-2">
         <FileText className="w-5 h-5 text-[#577C09]" />
         <span className="text-[#577C09] font-medium">{stepLabel}</span>
       </div>
       <h1 className="text-3xl font-bold mb-2">Tax Forms</h1>
       <p className="text-muted-foreground mb-6">
-        Please complete all three tax forms below. These are required for payroll setup.
+        Please complete all {steps.length} tax forms below. These are required for payroll setup.
       </p>
 
-      {/* Step tabs */}
       <div className="flex gap-2 mb-8 flex-wrap">
         {steps.map((s, i) => (
           <button
@@ -471,7 +536,6 @@ export default function TaxFormsPage({ stepLabel, onNext }) {
         ))}
       </div>
 
-      {/* Current form */}
       <div className="border border-border rounded-xl p-8 mb-6">
         <div className="mb-6">
           <h2 className="text-xl font-semibold">{step.title}</h2>
@@ -479,78 +543,39 @@ export default function TaxFormsPage({ stepLabel, onNext }) {
         </div>
 
         {currentStep === 0 && (
-          <I9Form
-            data={i9Data}
-            onChange={setI9Data}
-            onSave={() => handleSave('i9')}
-            saved={saved.i9}
-          />
+          <I9Form data={i9Data} onChange={setI9Data} onSave={() => handleSave('i9')} saved={saved.i9} />
         )}
-        {currentStep === 1 && (
-          <W4Form
-            data={w4Data}
-            onChange={setW4Data}
-            onSave={() => handleSave('w4')}
-            saved={saved.w4}
-          />
+        {!isContractor && currentStep === 1 && (
+          <W4Form data={w4Data} onChange={setW4Data} onSave={() => handleSave('w4')} saved={saved.w4} />
         )}
-        {currentStep === 2 && (
-          <NC4EZForm
-            upload={nc4ezUpload}
-            setUpload={setNc4ezUpload}
-            saved={saved.nc4ez}
-            onSave={() => handleSave('nc4ez')}
-          />
+        {!isContractor && currentStep === 2 && (
+          <NC4EZForm upload={nc4ezUpload} setUpload={setNc4ezUpload} saved={saved.nc4ez} onSave={() => handleSave('nc4ez')} />
+        )}
+        {isContractor && currentStep === 1 && (
+          <W9Form data={w9Data} onChange={setW9Data} onSave={() => handleSave('w9')} saved={saved.w9} />
         )}
       </div>
 
-      {/* Navigation */}
       <div className="flex items-center justify-between mb-8">
-        <Button
-          variant="outline"
-          onClick={() => setCurrentStep(prev => prev - 1)}
-          disabled={currentStep === 0}
-          className="gap-2 disabled:opacity-50"
-        >
+        <Button variant="outline" onClick={() => setCurrentStep(prev => prev - 1)} disabled={currentStep === 0} className="gap-2 disabled:opacity-50">
           <ChevronLeft className="w-4 h-4" />
           Previous
         </Button>
-
         <div className="flex gap-1.5">
           {steps.map((_, i) => (
-            <div
-              key={i}
-              className={`w-2 h-2 rounded-full transition-colors ${
-                i === currentStep ? 'bg-[#577C09]' : saved[steps[i].id] ? 'bg-[#577C09]/40' : 'bg-muted-foreground/30'
-              }`}
-            />
+            <div key={i} className={`w-2 h-2 rounded-full transition-colors ${i === currentStep ? 'bg-[#577C09]' : saved[steps[i].id] ? 'bg-[#577C09]/40' : 'bg-muted-foreground/30'}`} />
           ))}
         </div>
-
-        <Button
-          onClick={() => setCurrentStep(prev => prev + 1)}
-          disabled={currentStep === steps.length - 1 || !saved[steps[currentStep].id]}
-          className="gap-2 bg-[#577C09] hover:bg-[#3D5906] text-white disabled:opacity-50"
-        >
+        <Button onClick={() => setCurrentStep(prev => prev + 1)} disabled={currentStep === steps.length - 1 || !saved[steps[currentStep].id]} className="gap-2 bg-[#577C09] hover:bg-[#3D5906] text-white disabled:opacity-50">
           Next
           <ChevronRight className="w-4 h-4" />
         </Button>
       </div>
 
-      {/* Final continue */}
-      {!allDone && (
-        <p className="text-sm text-muted-foreground mb-4">
-          Please complete all three tax forms to continue.
-        </p>
-      )}
-      <Button
-        onClick={onNext}
-        disabled={!allDone}
-        className="bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
+      {!allDone && <p className="text-sm text-muted-foreground mb-4">Please complete all tax forms to continue.</p>}
+      <Button onClick={onNext} disabled={!allDone} className="bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed">
         Save & Continue
       </Button>
-
     </div>
   )
 }
