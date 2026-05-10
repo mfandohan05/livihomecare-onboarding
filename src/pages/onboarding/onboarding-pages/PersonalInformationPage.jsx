@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { UserRound } from 'lucide-react'
 
-export default function PersonalInformationPage({ onNext }) {
+export default function PersonalInformationPage({ stepLabel, onNext }) {
     const [formData, setFormData] = useState({
         // Employee Information
         lastName: '',
@@ -56,7 +56,7 @@ export default function PersonalInformationPage({ onNext }) {
         <div className="max-w-2xl mx-auto py-16 px-8">
             <div className="flex items-center gap-2 mb-2">
                 <UserRound className="w-5 h-5 text-[#577C09]" />
-                <span className="text-[#577C09] font-medium">Step 3 of 11</span>
+                <span className="text-[#577C09] font-medium">{stepLabel}</span>
             </div>
 
             <h1 className="text-3xl font-bold mb-2">Personal Information</h1>

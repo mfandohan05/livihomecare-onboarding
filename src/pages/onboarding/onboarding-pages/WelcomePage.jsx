@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Heart } from "lucide-react"
 
-function WelcomePage({ caregiver, onNext }) {
+function WelcomePage({ caregiver, onNext, welcomeSteps }) {
     return (
         <div className="max-w-2xl mx-auto py-16 px-8">
             <div className="flex items-center gap-2 mb-2">
@@ -22,15 +22,9 @@ function WelcomePage({ caregiver, onNext }) {
                     Here's what you'll cover:
                 </p>
                 <ul className="space-y-2 text-sm text-[#3D5906]">
-                    <li>✓ Uploading required documents (driver's license, car insurance, Social Security card, etc.)</li>
-                    <li>✓ Personal information & emergency contact</li>
-                    <li>✓ eRSP employment application</li>
-                    <li>✓ New hire orientation</li>
-                    <li>✓ Skills competency checklist</li>
-                    <li>✓ Guide to using eRSP</li>
-                    <li>✓ Forms & agreements</li>
-                    <li>✓ Tax forms</li>
-                    <li>✓ Offer letter</li>
+                    {welcomeSteps.map((step, index) => (
+                        <li key={index}>{step}</li>
+                    ))}
                 </ul>
             </div>
 

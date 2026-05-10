@@ -12,11 +12,11 @@ const completedSteps = [
   'Offer letter',
 ]
 
-export default function CompletedPage({ caregiver = { name: 'Maria Santos' } }) {
+export default function CompletedPage({ caregiver }) {
   return (
     <div className="max-w-2xl mx-auto py-16 px-8">
 
-      {/* Celebration header */}
+
       <div className="text-center mb-10">
         <div className="flex justify-center mb-4">
           <div className="w-16 h-16 rounded-full bg-[#E8F0D0] flex items-center justify-center">

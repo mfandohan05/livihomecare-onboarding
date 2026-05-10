@@ -162,7 +162,7 @@ const sections = [
     },
 ]
 
-export default function ERSPGuidePage({ onNext }) {
+export default function ERSPGuidePage({ stepLabel, onNext }) {
     const [expanded, setExpanded] = useState({ app: true, clockin: false, telephony: false, finalresort: false })
     const [confirmed, setConfirmed] = useState(false)
 
@@ -176,7 +176,7 @@ export default function ERSPGuidePage({ onNext }) {
             {/* Header */}
             <div className="flex items-center gap-2 mb-2">
                 <MonitorPlay className="w-5 h-5 text-[#577C09]" />
-                <span className="text-[#577C09] font-medium">Step 7 of 11</span>
+                <span className="text-[#577C09] font-medium">{stepLabel}</span>
             </div>
             <h1 className="text-3xl font-bold mb-2">Guide to eRSP</h1>
             <p className="text-muted-foreground mb-8">

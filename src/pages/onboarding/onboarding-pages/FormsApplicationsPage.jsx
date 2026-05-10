@@ -39,7 +39,7 @@ const FormButton = ({ formId, disabled, completed, markComplete }) => (
   </Button>
 )
 
-export default function FormsApplicationsPage({ caregiver = { name: 'Maria Santos' }, onNext }) {
+export default function FormsApplicationsPage({ stepLabel, caregiver, onNext }) {
   const [expanded, setExpanded] = useState({ form_0: true })
   const [completed, setCompleted] = useState({})
   const [signatures, setSignatures] = useState({})
@@ -57,7 +57,6 @@ export default function FormsApplicationsPage({ caregiver = { name: 'Maria Santo
 
   const markComplete = (formId) => {
     setCompleted(prev => ({ ...prev, [formId]: true }))
-    // auto expand next form
     const nextIndex = parseInt(formId.split('_')[1]) + 1
     setExpanded(prev => ({ ...prev, [`form_${nextIndex}`]: true }))
   }
@@ -458,10 +457,9 @@ export default function FormsApplicationsPage({ caregiver = { name: 'Maria Santo
   return (
     <div className="max-w-2xl mx-auto py-16 px-8">
 
-      {/* Header */}
       <div className="flex items-center gap-2 mb-2">
         <ScrollText className="w-5 h-5 text-[#577C09]" />
-        <span className="text-[#577C09] font-medium">Step 8 of 11</span>
+        <span className="text-[#577C09] font-medium">{stepLabel}</span>
       </div>
       <h1 className="text-3xl font-bold mb-2">Forms & Agreements</h1>
       <p className="text-muted-foreground mb-2">

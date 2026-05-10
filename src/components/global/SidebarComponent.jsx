@@ -10,9 +10,10 @@ const getStatusIcon = (status) => {
     return null
 }
 
-function SidebarComponent({ steps, activeStep, setActiveStep, handleNext }) {
+function SidebarComponent({ steps, activeStep, setActiveStep, handleNext, caregiver }) {
     const completedCount = steps.filter(s => s.status === "completed").length;
     const progressPercent = Math.round((completedCount / steps.length) * 100);
+    const avatarURL = `https://ui-avatars.com/api/?name=${encodeURIComponent(caregiver.name)}&background=577C09&color=fff`;
 
     return (
         <Sidebar>
@@ -56,11 +57,11 @@ function SidebarComponent({ steps, activeStep, setActiveStep, handleNext }) {
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg">
                             <Avatar>
-                                <AvatarImage src="https://ui-avatars.com/api/?name=Maria+Santos&background=577C09&color=fff" />
+                                <AvatarImage src={avatarURL} alt={caregiver.name} />
                             </Avatar>
                             <div className="flex flex-col">
-                                <span className="text-sm font-medium">Maria Santos</span>
-                                <span className="text-xs text-muted-foreground">msantos@livihomecare.com</span>
+                                <span className="text-sm font-medium">{caregiver.name}</span>
+                                <span className="text-xs text-muted-foreground">{caregiver.email}</span>
                             </div>
                         </SidebarMenuButton>
                     </SidebarMenuItem>

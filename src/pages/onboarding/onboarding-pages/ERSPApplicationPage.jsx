@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { ClipboardList, ExternalLink } from 'lucide-react'
 
-export default function ERSPApplicationPage({ onNext }) {
+export default function ERSPApplicationPage({ stepLabel, onNext }) {
     const [popupOpened, setPopupOpened] = useState(false)
     const [popupClosed, setPopupClosed] = useState(false)
     const popupRef = useRef(null)
@@ -18,7 +18,6 @@ export default function ERSPApplicationPage({ onNext }) {
         setPopupOpened(true)
         setPopupClosed(false)
 
-        // poll every second to check if popup closed
         pollRef.current = setInterval(() => {
             if (popup.closed) {
                 setPopupClosed(true)
@@ -26,8 +25,6 @@ export default function ERSPApplicationPage({ onNext }) {
             }
         }, 1000)
     }
-
-    // cleanup interval on unmount
     useEffect(() => {
         return () => {
             if (pollRef.current) clearInterval(pollRef.current)
@@ -38,7 +35,7 @@ export default function ERSPApplicationPage({ onNext }) {
         <div className="max-w-2xl mx-auto py-16 px-8">
             <div className="flex items-center gap-2 mb-2">
                 <ClipboardList className="w-5 h-5 text-[#577C09]" />
-                <span className="text-[#577C09] font-medium">Step 4 of 11</span>
+                <span className="text-[#577C09] font-medium">{stepLabel}</span>
             </div>
 
             <h1 className="text-3xl font-bold mb-2">eRSP Enrollment</h1>
