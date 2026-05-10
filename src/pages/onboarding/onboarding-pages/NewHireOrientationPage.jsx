@@ -29,7 +29,7 @@ const sections = [
                     'At Livi Home Care, our mission is to improve the quality of life of our clients by providing high-quality services.',
                     '• Assist clients to maintain their independence and quality of life in their own home.',
                     '• Provide the best possible service with a friendly, caring, and compassionate approach.',
-                    '• Provide appropriately trained and skilled staff that fit our clients needs.',
+                    "• Provide appropriately trained and skilled staff that fit our clients' needs.",
                     '• Provide continuity of care wherever possible.',
                     '• Respect the dignity and privacy of our clients.',
                 ]
@@ -174,7 +174,7 @@ const sections = [
                     'The four steps in fire safety: R.A.C.E.',
                     '• R — Rescue: Remove the client from immediate danger.',
                     '• A — Alarm: Call for help, pull the alarm, or call 911.',
-                    '• C — Contain: Close doors and windows, turn off clients oxygen (O2) if applicable.',
+                    "• C — Contain: Close doors and windows, turn off the client's oxygen (O2) if applicable.",
                     '• E — Extinguish or Evacuate: Use the appropriate fire extinguisher or evacuate.',
                 ]
             },
@@ -218,7 +218,7 @@ const sections = [
             {
                 question: "What should you do if a client refuses to use an assistive device for transfer?",
                 choices: [
-                    "Force the transfer anyway for the clients safety",
+                    "Force the transfer anyway for the client's safety",
                     "Skip the transfer entirely",
                     "Contact Livi Home Care's Registered Nurse or designee for direction",
                     "Document it and do nothing"
@@ -368,14 +368,14 @@ const sections = [
                 title: 'Advanced Directives',
                 content: [
                     'Advanced Directives are legal documents that allow clients to outline their preferences for medical care in the event they are unable to make decisions for themselves.',
-                    'Each clients Plan of Care will indicate if the client has an Advanced Directive or a DNR (Do Not Resuscitate).',
-                    'This information will be located in the right corner of the Plan of Care, along with the clients Disaster Priority Code.',
+                    "Each client's Plan of Care will indicate if the client has an Advanced Directive or a DNR (Do Not Resuscitate).",
+                    "This information will be located in the right corner of the Plan of Care, along with the client's Disaster Priority Code.",
                 ]
             },
             {
                 title: 'HIPAA & Client Confidentiality',
                 content: [
-                    'HIPAA (Health Insurance Portability and Accountability Act) is a federal law designed to protect the privacy and security of patients health information.',
+                    "HIPAA (Health Insurance Portability and Accountability Act) is a federal law designed to protect the privacy and security of patients' health information.",
                     'PHI (Protected Health Information) includes:',
                     "• Client's name, date of birth, social security number.",
                     '• Medical record number, health insurance ID.',
@@ -406,7 +406,7 @@ const sections = [
                 choices: [
                     "Assisting a client with bathing",
                     "Rough handling or yelling at a client",
-                    "Documenting a clients care",
+                    "Documenting a client's care",
                     "Reminding a client to take their medication"
                 ],
                 correct: 1
@@ -414,10 +414,10 @@ const sections = [
             {
                 question: "Which of the following is NOT an example of PHI?",
                 choices: [
-                    "Clients name and date of birth",
+                    "Client's name and date of birth",
                     "Caregivers work schedule",
-                    "Clients medical record number",
-                    "Clients health insurance ID number"
+                    "Client's medical record number",
+                    "Client's health insurance ID number"
                 ],
                 correct: 1
             },
@@ -445,7 +445,7 @@ const sections = [
                 question: "What is an Advanced Directive?",
                 choices: [
                     "A training document for new caregivers",
-                    "A legal document outlining a clients medical care preferences if they cannot decide for themselves",
+                    "A legal document outlining a client's medical care preferences if they cannot decide for themselves",
                     "A form caregivers fill out after each shift",
                     "A policy for handling workplace injuries"
                 ],
@@ -461,7 +461,7 @@ const sections = [
                 title: 'The Importance of Documentation',
                 content: [
                     '"If it is not documented, it did not happen."',
-                    'All services provided must be recorded in the clients chart.',
+                    "All services provided must be recorded in the client's chart.",
                     "Documentation is part of the client's medical record and is a legal document — it must be accurate.",
                     'Best Practices:',
                     '• Chart only accurate, day-to-day information.',
@@ -517,7 +517,7 @@ const sections = [
                 question: "What does 'if it is not documented, it did not happen' mean?",
                 choices: [
                     "You only need to document serious incidents",
-                    "All services provided must be recorded in the clients chart",
+                    "All services provided must be recorded in the client's chart",
                     "Documentation is optional if the shift went smoothly",
                     "Only nurses need to document"
                 ],
@@ -613,7 +613,7 @@ const sections = [
                 content: [
                     'Caregivers have two options to clock in and out: the eRSP Mobile Connect app and Telephony.',
                     '• Clock in at the beginning of your shift and clock out at the end.',
-                    '• If you cannot clock in via eRSP, call 1-888-624-0351 from the clients phone.',
+                    "• If you cannot clock in via eRSP, call 1-888-624-0351 from the client's phone.",
                     '• You cannot use your own phone to call the 1-888 number.',
                     'Unauthorized Timekeeping:',
                     '• Employees are prohibited from clocking in or out for another employee.',
@@ -677,7 +677,7 @@ const sections = [
             {
                 title: 'Fragrance Free Policy',
                 content: [
-                    'All caregivers must refrain from using perfumes, colognes, scented lotions, or any scented products while providing care in clients homes.',
+                    "All caregivers must refrain from using perfumes, colognes, scented lotions, or any scented products while providing care in client's homes.",
                     'Some clients may have sensitivities or allergies to fragrances.',
                     'All caregivers and staff are required to comply with this policy during all client visits.',
                 ]
@@ -766,9 +766,9 @@ const sections = [
             {
                 question: "What topics should caregivers avoid discussing with clients?",
                 choices: [
-                    "The clients care plan",
+                    "The client's care plan",
                     "Religion and politics",
-                    "The clients daily schedule",
+                    "The client's daily schedule",
                     "Medication reminders"
                 ],
                 correct: 1
@@ -921,7 +921,7 @@ export default function NewHireOrientationPage({ onNext }) {
                                 ? 'bg-[#E8F0D0] text-[#577C09] border-[#577C09]'
                                 : 'bg-muted text-muted-foreground border-border opacity-50 cursor-not-allowed'
                             }`}
-                    >
+                     >
                         {completedSections.includes(i) ? '✓ ' : ''}{s.title}
                     </button>
                 ))}
