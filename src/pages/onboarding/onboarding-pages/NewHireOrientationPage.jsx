@@ -889,7 +889,7 @@ export default function NewHireOrientationPage({ onNext }) {
             </div>
             <h1 className="text-3xl font-bold mb-2">New Hire Orientation</h1>
             <p className="text-muted-foreground mb-6">
-                Complete all 6 sections and their quizzes to finish your orientation.
+                Complete all 6 sections and their quizzes.
             </p>
 
             {/* Overall Progress */}

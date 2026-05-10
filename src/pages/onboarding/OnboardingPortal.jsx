@@ -6,6 +6,8 @@ import UploadDocumentsPage from '@/pages/onboarding/onboarding-pages/UploadDocum
 import PersonalInformationPage from './onboarding-pages/PersonalInformationPage'
 import ERSPApplicationPage from './onboarding-pages/ERSPApplicationPage'
 import NewHireOrientationPage from './onboarding-pages/NewHireOrientationPage'
+import SkillsCompetencyPage from './onboarding-pages/SkillsCompetencyPage'
+import ERSPGuidePage from './onboarding-pages/ERSPGuidePage'
 import { Heart, FolderUp, ClipboardList, GraduationCap, UserRound, ClipboardCheck, MonitorPlay, ScrollText, FileSignature, PartyPopper, FileText } from 'lucide-react'
 
 const initialSteps = [
@@ -46,6 +48,7 @@ export default function OnboardingPortal() {
                 steps={steps}
                 activeStep={activeStep}
                 setActiveStep={setActiveStep}
+                handleNext={handleNext}
             />
             <SidebarInset>
                 {activeStep === 1 && <WelcomePage caregiver={caregiver} onNext={handleNext} />}
@@ -53,6 +56,8 @@ export default function OnboardingPortal() {
                 {activeStep === 3 && <PersonalInformationPage onNext={handleNext} />}
                 {activeStep === 4 && <ERSPApplicationPage onNext={handleNext} />}
                 {activeStep === 5 && <NewHireOrientationPage onNext={handleNext} />}
+                {activeStep === 6 && <SkillsCompetencyPage onNext={handleNext} />}
+                {activeStep === 7 && <ERSPGuidePage onNext={handleNext} />}
             </SidebarInset>
         </SidebarProvider>
     )

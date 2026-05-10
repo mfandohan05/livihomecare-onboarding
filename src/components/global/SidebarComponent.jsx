@@ -10,7 +10,7 @@ const getStatusIcon = (status) => {
     return null
 }
 
-function SidebarComponent({ steps, activeStep, setActiveStep }) {
+function SidebarComponent({ steps, activeStep, setActiveStep, handleNext }) {
     const completedCount = steps.filter(s => s.status === "completed").length;
     const progressPercent = Math.round((completedCount / steps.length) * 100);
 
@@ -51,6 +51,7 @@ function SidebarComponent({ steps, activeStep, setActiveStep }) {
                 ))}
             </SidebarContent>
             <SidebarFooter>
+                <button onClick={handleNext}>(Testing Purposes Only) <br />Skip to the next page</button>
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg">
