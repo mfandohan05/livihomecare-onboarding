@@ -17,6 +17,8 @@ import TaxFormsPage from './onboarding-pages/TaxFormsPage'
 import OfferLetterPage from './onboarding-pages/OfferLetterPage'
 import CompletedPage from './onboarding-pages/CompletedPage'
 
+import { useSaveProgress, loadProgress } from '@/hooks/useOnboardingProgress'
+
 
 export default function OnboardingPortal() {
     const { token } = useParams();
@@ -56,6 +58,42 @@ export default function OnboardingPortal() {
         }
     }, [activeStep])
 
+        const [formData, setFormData] = useState({
+        personalInfo: {},
+        competency: { checked: {}, lunch: '', dinner: '' },
+        orientationQuiz: {
+            currentSection: 0,
+            currentSlide: 0,
+            completedSections: [],
+            quizAnswers: {},
+        },
+        signatures: {},
+        hepBStatus: '',
+        offerLetter: {}
+    })
+    useEffect(() => {
+        const saved = loadProgress(token);
+        if (!saved) {
+            return;
+        }
+        setActiveStep(saved.activeStep)
+        setFormData(prev => ({ ...prev, ...saved.formData }))
+        setSteps(prev => prev.map(step => ({
+            ...step,
+            status: saved.completedSteps.includes(step.id)
+                ? 'completed'
+                : step.id === saved.activeStep
+                    ? 'active'
+                    : 'locked'
+        })))
+    }, [token])
+
+    useSaveProgress(token, activeStep, steps, formData)
+
+    const updateFormData = (key, data) => {
+        setFormData(prev => ({ ...prev, [key]: data}))
+    }
+
     const handleNext = () => {
         setSteps(prev => prev.map(step => {
             if (step.id === activeStep) return { ...step, status: 'completed' }
@@ -72,30 +110,30 @@ export default function OnboardingPortal() {
         const step = steps.find(s => s.id === activeStep)
         if (!step) {
             return null
-        } 
+        }
 
         switch (step.stepName) {
             case 'Welcome':
-                return <WelcomePage caregiver={caregiver} onNext={handleNext} welcomeSteps={welcomeSteps[role]}/>
+                return <WelcomePage caregiver={caregiver} onNext={handleNext} welcomeSteps={welcomeSteps[role]} />
             case 'Upload Documents':
                 return <UploadDocumentsPage stepLabel={stepLabel} onNext={handleNext} />
             case 'Personal Information':
-                return <PersonalInformationPage stepLabel={stepLabel} onNext={handleNext} />
+                return <PersonalInformationPage stepLabel={stepLabel} onNext={handleNext} initialPage={formData.personalInfo} onChange={(data) => updateFormData('personalInfo', data)}/>
             case 'eRSP Enrollment':
                 return <ERSPApplicationPage stepLabel={stepLabel} onNext={handleNext} />
             case 'New Hire Orientation':
-                return <NewHireOrientationPage stepLabel={stepLabel} onNext={handleNext} />
+                return <NewHireOrientationPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.orientationQuiz} onChange={(data) => updateFormData('orientationQuiz', data)} />
             case 'Skills Competency':
-                return <SkillsCompetencyPage stepLabel={stepLabel} onNext={handleNext} />
+                return <SkillsCompetencyPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.competency} onChange={(data) => updateFormData('competency', data)} />
             case 'Guide to eRSP':
                 return <ERSPGuidePage stepLabel={stepLabel} onNext={handleNext} />
             case 'Forms & Agreements':
-                return <FormsApplicationsPage stepLabel={stepLabel} caregiver={caregiver} onNext={handleNext} />
+                return <FormsApplicationsPage stepLabel={stepLabel} caregiver={caregiver} onNext={handleNext} initialData={{ signatures: formData.signatures, hepBStatus: formData.hepBStatus }} onChange={(data) => updateFormData('signatures', data.signatures)} onHepBChange={(status) => updateFormData('hepBStatus', status)} />
             case 'Tax Forms':
             case 'Tax Forms (W-9)':
                 return <TaxFormsPage stepLabel={stepLabel} onNext={handleNext} />
             case 'Offer Letter':
-                return <OfferLetterPage stepLabel={stepLabel} caregiver={caregiver} onNext={handleNext} />
+                return <OfferLetterPage stepLabel={stepLabel} caregiver={caregiver} onNext={handleNext} initialData={formData.offerLetter} onChange={(data) => updateFormData('offerLetter', data)} />
             case 'Completed!':
                 return <CompletedPage stepLabel={stepLabel} caregiver={caregiver} />
             default:

@@ -149,14 +149,16 @@ const sections = [
   },
 ]
 
-export default function SkillsCompetencyPage({ stepLabel, onNext }) {
-  const [checked, setChecked] = useState({})
-  const [lunch, setLunch] = useState('')
-  const [dinner, setDinner] = useState('')
+export default function SkillsCompetencyPage({ stepLabel, onNext, initialData, onChange }) {
+  const [checked, setChecked] = useState(initialData?.checked || {})
+  const [lunch, setLunch] = useState(initialData?.lunch || '')
+  const [dinner, setDinner] = useState(initialData?.dinner || '')
 
   const toggleItem = (sectionId, item) => {
     const key = `${sectionId}__${item}`
-    setChecked(prev => ({ ...prev, [key]: !prev[key] }))
+    const updated = { ...checked, [key]: !checked[key] }
+    setChecked(updated)
+    onChange({ checked: updated, lunch, dinner })
   }
 
   const isChecked = (sectionId, item) => {
@@ -203,17 +205,15 @@ export default function SkillsCompetencyPage({ stepLabel, onNext }) {
                     key={item}
                     type="button"
                     onClick={() => toggleItem(section.id, item)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg border text-sm text-left transition-colors ${
-                      checked_
+                    className={`flex items-center gap-3 px-4 py-3 rounded-lg border text-sm text-left transition-colors ${checked_
                         ? 'border-[#577C09] bg-[#E8F0D0] text-[#3D5906]'
                         : 'border-border hover:border-[#577C09] hover:bg-[#E8F0D0]/30'
-                    }`}
+                      }`}
                   >
-                    <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
-                      checked_
+                    <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${checked_
                         ? 'bg-[#577C09] border-[#577C09]'
                         : 'border-muted-foreground'
-                    }`}>
+                      }`}>
                       {checked_ && (
                         <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -243,7 +243,10 @@ export default function SkillsCompetencyPage({ stepLabel, onNext }) {
               </label>
               <textarea
                 value={lunch}
-                onChange={(e) => setLunch(e.target.value)}
+                onChange={(e) => {
+                  setLunch(e.target.value)
+                  onChange({ checked, lunch: e.target.value, dinner })
+                }}
                 rows={4}
                 placeholder="Describe the meal, ingredients, and why it is nutritious..."
                 className="w-full border border-border rounded-lg px-4 py-3 text-sm resize-none focus:outline-none focus:border-[#577C09] transition-colors"
@@ -257,7 +260,10 @@ export default function SkillsCompetencyPage({ stepLabel, onNext }) {
               </label>
               <textarea
                 value={dinner}
-                onChange={(e) => setDinner(e.target.value)}
+                onChange={(e) => {
+                  setDinner(e.target.value)
+                  onChange({ checked, lunch, dinner: e.target.value })
+                }}
                 rows={4}
                 placeholder="Describe the meal, ingredients, and why it is nutritious..."
                 className="w-full border border-border rounded-lg px-4 py-3 text-sm resize-none focus:outline-none focus:border-[#577C09] transition-colors"

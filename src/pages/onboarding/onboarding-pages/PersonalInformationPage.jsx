@@ -4,9 +4,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { UserRound } from 'lucide-react'
 
-export default function PersonalInformationPage({ stepLabel, onNext }) {
-    const [formData, setFormData] = useState({
-        // Employee Information
+export default function PersonalInformationPage({ stepLabel, onNext, initialData, onChange }) {
+    const [formData, setFormData] = useState(initialData || {
         lastName: '',
         firstName: '',
         streetAddress: '',
@@ -17,7 +16,6 @@ export default function PersonalInformationPage({ stepLabel, onNext }) {
         secondaryPhone: '',
         email: '',
 
-        // Primary Emergency Contact
         primaryEmergencyLastName: '',
         primaryEmergencyFirstName: '',
         primaryEmergencyStreetAddress: '',
@@ -29,7 +27,6 @@ export default function PersonalInformationPage({ stepLabel, onNext }) {
         primaryEmergencyEmail: '',
         primaryEmergencyRelationship: '',
 
-        // Secondary Emergency Contact
         secondaryEmergencyLastName: '',
         secondaryEmergencyFirstName: '',
         secondaryEmergencyStreetAddress: '',
@@ -43,7 +40,9 @@ export default function PersonalInformationPage({ stepLabel, onNext }) {
     })
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value })
+        const updated = { ...formData, [e.target.name]: e.target.value }
+        setFormData(updated)
+        onChange(updated)
     }
 
     const handleSubmit = (e) => {
