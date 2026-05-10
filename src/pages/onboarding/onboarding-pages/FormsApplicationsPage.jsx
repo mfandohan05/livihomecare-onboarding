@@ -10,6 +10,35 @@ const today = new Date().toLocaleDateString('en-US', {
   day: 'numeric',
 })
 
+const SignatureField = ({ formId, label = 'Type your full name to sign', signatures, setSignatures, caregiver }) => (
+  <div className="mt-6 pt-6 border-t border-border">
+    <p className="text-xs text-muted-foreground mb-3">
+      By typing your name below, you are providing a legally binding electronic signature.
+    </p>
+    <div className="space-y-2">
+      <Label htmlFor={`sig_${formId}`}>{label}</Label>
+      <Input
+        id={`sig_${formId}`}
+        placeholder={caregiver.name}
+        value={signatures[formId] || ''}
+        onChange={(e) => setSignatures(prev => ({ ...prev, [formId]: e.target.value }))}
+        className="font-serif italic"
+      />
+    </div>
+    <p className="text-xs text-muted-foreground mt-2">Date: {today}</p>
+  </div>
+)
+
+const FormButton = ({ formId, disabled, completed, markComplete }) => (
+  <Button
+    onClick={() => markComplete(formId)}
+    disabled={disabled}
+    className="mt-4 bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+  >
+    {completed[formId] ? 'Signed ✓' : 'Sign & Continue'}
+  </Button>
+)
+
 export default function FormsApplicationsPage({ caregiver = { name: 'Maria Santos' }, onNext }) {
   const [expanded, setExpanded] = useState({ form_0: true })
   const [completed, setCompleted] = useState({})
@@ -35,34 +64,6 @@ export default function FormsApplicationsPage({ caregiver = { name: 'Maria Santo
 
   const allCompleted = [0, 1, 2, 3, 4, 5, 6, 7].every(i => completed[`form_${i}`])
 
-  const SignatureField = ({ formId, label = 'Type your full name to sign' }) => (
-    <div className="mt-6 pt-6 border-t border-border">
-      <p className="text-xs text-muted-foreground mb-3">
-        By typing your name below you are providing a legally binding electronic signature.
-      </p>
-      <div className="space-y-2">
-        <Label htmlFor={`sig_${formId}`}>{label}</Label>
-        <Input
-          id={`sig_${formId}`}
-          placeholder={caregiver.name}
-          value={signatures[formId] || ''}
-          onChange={(e) => setSignatures(prev => ({ ...prev, [formId]: e.target.value }))}
-          className="font-serif italic"
-        />
-      </div>
-      <p className="text-xs text-muted-foreground mt-2">Date: {today}</p>
-    </div>
-  )
-
-  const FormButton = ({ formId, disabled }) => (
-    <Button
-      onClick={() => markComplete(formId)}
-      disabled={disabled}
-      className="mt-4 bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
-    >
-      {completed[formId] ? 'Signed ✓' : 'Sign & Continue'}
-    </Button>
-  )
 
   const FormContent = ({ children, color = '#F9F9F9' }) => (
     <div
@@ -86,10 +87,12 @@ export default function FormsApplicationsPage({ caregiver = { name: 'Maria Santo
             <p>The orientation payment will be made to you after you have successfully completed 10 shifts with Livi Home Care.</p>
             <p className="mt-2">By signing below, you acknowledge that you understand and agree to the requirements outlined above.</p>
           </FormContent>
-          <SignatureField formId="form_0" />
+          <SignatureField formId="form_0" signatures={signatures} setSignatures={setSignatures} caregiver={caregiver} />
           <FormButton
             formId="form_0"
             disabled={!signatures['form_0']?.trim() || completed['form_0']}
+            completed={completed}
+            markComplete={markComplete}
           />
         </>
       )
@@ -129,10 +132,12 @@ export default function FormsApplicationsPage({ caregiver = { name: 'Maria Santo
               ))}
             </ul>
           </FormContent>
-          <SignatureField formId="form_1" label="Type your full name to acknowledge this job description" />
+          <SignatureField formId="form_1" signatures={signatures} setSignatures={setSignatures} caregiver={caregiver} label="Type your full name to acknowledge this job description" />
           <FormButton
             formId="form_1"
             disabled={!signatures['form_1']?.trim() || completed['form_1']}
+            completed={completed}
+            markComplete={markComplete}
           />
         </>
       )
@@ -174,10 +179,12 @@ export default function FormsApplicationsPage({ caregiver = { name: 'Maria Santo
             <p className="font-medium mt-2">Enforcement</p>
             <p>If the employee violates the terms of this agreement, Livi Home Care may seek appropriate legal remedies, including injunctive relief and damages. This Agreement constitutes the entire agreement between the parties with respect to the non-compete obligations.</p>
           </FormContent>
-          <SignatureField formId="form_2" label="Type your full name to sign the Non-Compete Agreement" />
+          <SignatureField formId="form_2" signatures={signatures} setSignatures={setSignatures} caregiver={caregiver} label="Type your full name to sign the Non-Compete Agreement" />
           <FormButton
             formId="form_2"
             disabled={!signatures['form_2']?.trim() || completed['form_2']}
+            completed={completed}
+            markComplete={markComplete}
           />
         </>
       )
@@ -206,10 +213,12 @@ export default function FormsApplicationsPage({ caregiver = { name: 'Maria Santo
             </ul>
             <p className="mt-2">I have read this authorization and release, and I fully understand its contents. I certify that the information I have provided is accurate and complete to the best of my knowledge.</p>
           </FormContent>
-          <SignatureField formId="form_3" label="Type your full name to consent" />
+          <SignatureField formId="form_3" signatures={signatures} setSignatures={setSignatures} caregiver={caregiver} label="Type your full name to consent" />
           <FormButton
             formId="form_3"
             disabled={!signatures['form_3']?.trim() || completed['form_3']}
+            completed={completed}
+            markComplete={markComplete}
           />
         </>
       )
@@ -239,10 +248,12 @@ export default function FormsApplicationsPage({ caregiver = { name: 'Maria Santo
             </ul>
             <p className="mt-3">By signing below, I acknowledge that I have received and read a copy of the Drug Test Policy for Livi Home Care Employees. I understand my responsibilities under this policy and agree to comply with all requirements outlined herein.</p>
           </FormContent>
-          <SignatureField formId="form_4" label="Type your full name to acknowledge the Drug Test Policy" />
+          <SignatureField formId="form_4" signatures={signatures} setSignatures={setSignatures} caregiver={caregiver} label="Type your full name to acknowledge the Drug Test Policy" />
           <FormButton
             formId="form_4"
             disabled={!signatures['form_4']?.trim() || completed['form_4']}
+            completed={completed}
+            markComplete={markComplete}
           />
         </>
       )
@@ -289,10 +300,12 @@ export default function FormsApplicationsPage({ caregiver = { name: 'Maria Santo
             ))}
           </div>
 
-          <SignatureField formId="form_5" label="Type your full name to confirm your vaccine status" />
+          <SignatureField formId="form_5" signatures={signatures} setSignatures={setSignatures} caregiver={caregiver} label="Type your full name to confirm your vaccine status" />
           <FormButton
             formId="form_5"
             disabled={!hepBStatus || !signatures['form_5']?.trim() || completed['form_5']}
+            completed={completed}
+            markComplete={markComplete}
           />
         </>
       )
@@ -359,7 +372,7 @@ export default function FormsApplicationsPage({ caregiver = { name: 'Maria Santo
             </div>
           </div>
 
-          <SignatureField formId="form_6" label="Type your full name to authorize direct deposit" />
+          <SignatureField formId="form_6" signatures={signatures} setSignatures={setSignatures} caregiver={caregiver} label="Type your full name to authorize direct deposit" />
           <FormButton
             formId="form_6"
             disabled={
@@ -370,6 +383,8 @@ export default function FormsApplicationsPage({ caregiver = { name: 'Maria Santo
               !signatures['form_6']?.trim() ||
               completed['form_6']
             }
+            completed={completed}
+            markComplete={markComplete}
           />
         </>
       )
@@ -428,10 +443,12 @@ export default function FormsApplicationsPage({ caregiver = { name: 'Maria Santo
             </ul>
             <p className="mt-3">My signature below verifies that I have received all the required documents and have participated in the above orientation session.</p>
           </FormContent>
-          <SignatureField formId="form_7" label="Type your full name to confirm completion of pre-employment orientation" />
+          <SignatureField formId="form_7" signatures={signatures} setSignatures={setSignatures} caregiver={caregiver} label="Type your full name to confirm completion of pre-employment orientation" />
           <FormButton
             formId="form_7"
             disabled={!signatures['form_7']?.trim() || completed['form_7']}
+            completed={completed}
+            markComplete={markComplete}
           />
         </>
       )
