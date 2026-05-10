@@ -1,0 +1,72 @@
+import { Sidebar, SidebarContent, SidebarHeader, SidebarFooter, SidebarMenuItem, SidebarMenuButton, SidebarMenu } from "../ui/sidebar"
+import { CircleCheck, Lock } from 'lucide-react'
+import { Avatar, AvatarImage } from "../ui/avatar";
+import { Progress } from "../ui/progress";
+import companyLogo from '@/assets/logo.png';
+
+const getStatusIcon = (status) => {
+    if (status === "completed") return <CircleCheck className="w-4 h-4 text-[#577C09]" />
+    if (status === "locked") return <Lock className="w-4 h-4 text-muted-foreground" />
+    return null
+}
+
+function SidebarComponent({ steps, activeStep, setActiveStep }) {
+    const completedCount = steps.filter(s => s.status === "completed").length;
+    const progressPercent = Math.round((completedCount / steps.length) * 100);
+
+    return (
+        <Sidebar>
+            <SidebarHeader>
+                <div className="flex flex-row items-center">
+                    <img src={companyLogo} alt="Livi Home Care logo" className="w-[80px]" />
+                    <span className="font-semibold">Onboarding System</span>
+                </div>
+                <div className="px-4 py-2">
+                    <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                        <span>{completedCount} of {steps.length} complete</span>
+                        <span>{progressPercent}%</span>
+                    </div>
+                    <Progress value={progressPercent} className="h-2" />
+                </div>
+            </SidebarHeader>
+            <SidebarContent>
+                {steps.map((step) => (
+                    <SidebarMenuItem key={step.id}>
+                        <SidebarMenuButton
+                            disabled={step.status === 'locked'}
+                            onClick={() => step.status !== 'locked' && setActiveStep(step.id)}
+                            className={
+                                step.id === activeStep
+                                    ? 'bg-[#E8F0D0] text-[#577C09] font-medium'
+                                    : step.status === 'locked'
+                                    ? 'opacity-50 cursor-not-allowed'
+                                    : ''
+                            }
+                        >
+                            <step.logo className="w-4 h-4" />
+                            <span className="flex-1">{step.stepName}</span>
+                            {getStatusIcon(step.status)}
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                ))}
+            </SidebarContent>
+            <SidebarFooter>
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton size="lg">
+                            <Avatar>
+                                <AvatarImage src="https://ui-avatars.com/api/?name=Maria+Santos&background=577C09&color=fff" />
+                            </Avatar>
+                            <div className="flex flex-col">
+                                <span className="text-sm font-medium">Maria Santos</span>
+                                <span className="text-xs text-muted-foreground">msantos@livihomecare.com</span>
+                            </div>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+            </SidebarFooter>
+        </Sidebar>
+    )
+}
+
+export default SidebarComponent;
