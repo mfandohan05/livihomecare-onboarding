@@ -809,13 +809,13 @@ const sections = [
 
 ]
 
-export default function NewHireOrientationPage({ stepLabel, onNext }) {
-    const [currentSection, setCurrentSection] = useState(0)
-    const [currentSlide, setCurrentSlide] = useState(0)
-    const [showQuiz, setShowQuiz] = useState(false)
-    const [quizAnswers, setQuizAnswers] = useState({})
-    const [quizSubmitted, setQuizSubmitted] = useState(false)
-    const [completedSections, setCompletedSections] = useState([])
+export default function NewHireOrientationPage({ stepLabel, onNext, initialData, onChange }) {
+    const [currentSection, setCurrentSection] = useState(initialData?.currentSection || 0)
+    const [currentSlide, setCurrentSlide] = useState(initialData?.currentSlide || 0)
+    const [showQuiz, setShowQuiz] = useState(initialData?.showQuiz || false)
+    const [quizAnswers, setQuizAnswers] = useState(initialData?.quizAnswers || {})
+    const [quizSubmitted, setQuizSubmitted] = useState(initialData?.quizSubmitted || false)
+    const [completedSections, setCompletedSections] = useState(initialData?.completedSections || [])
 
     const section = sections[currentSection]
     const slide = section.slides[currentSlide]
@@ -823,12 +823,25 @@ export default function NewHireOrientationPage({ stepLabel, onNext }) {
     const isLastSection = currentSection === sections.length - 1
 
     const overallProgress = Math.round((completedSections.length / sections.length) * 100)
-
+    const saveProgress = (updates) => {
+        onChange({
+            currentSection,
+            currentSlide,
+            showQuiz,
+            quizAnswers,
+            quizSubmitted,
+            completedSections,
+            ...updates,
+        })
+    }
     const handleNextSlide = () => {
         if (isLastSlide) {
             setShowQuiz(true)
-        } else {
+            saveProgress({ showQuiz: true })
+        }
+        else {
             setCurrentSlide(prev => prev + 1)
+            saveProgress({ currentSlide: currentSlide + 1 })
         }
     }
 
@@ -843,8 +856,12 @@ export default function NewHireOrientationPage({ stepLabel, onNext }) {
     }
 
     const handleAnswerSelect = (questionIndex, answerIndex) => {
-        if (quizSubmitted) return
-        setQuizAnswers(prev => ({ ...prev, [questionIndex]: answerIndex }))
+        if (quizSubmitted) {
+            return;
+        }
+        const updated = { ...quizAnswers, [questionIndex]: answerIndex }
+        setQuizAnswers(updated)
+        saveProgress({ quizAnswers: updated })
     }
 
     const allAnswered = Object.keys(quizAnswers).length === section.quiz.length
@@ -865,17 +882,29 @@ export default function NewHireOrientationPage({ stepLabel, onNext }) {
     }
 
     const handleNextSection = () => {
-        if (!completedSections.includes(currentSection)) {
-            setCompletedSections(prev => [...prev, currentSection])
-        }
+        const updatedSections = completedSections.includes(currentSection)
+            ? completedSections
+            : [...completedSections, currentSection]
+
+        setCompletedSections(updatedSections)
+
         if (isLastSection) {
             onNext()
         } else {
-            setCurrentSection(prev => prev + 1)
+            const nextSection = currentSection + 1
+            setCurrentSection(nextSection)
             setCurrentSlide(0)
             setShowQuiz(false)
             setQuizAnswers({})
             setQuizSubmitted(false)
+            saveProgress({
+                completedSections: updatedSections,
+                currentSection: nextSection,
+                currentSlide: 0,
+                showQuiz: false,
+                quizAnswers: {},
+                quizSubmitted: false,
+            })
         }
     }
 
@@ -921,7 +950,7 @@ export default function NewHireOrientationPage({ stepLabel, onNext }) {
                                 ? 'bg-[#E8F0D0] text-[#577C09] border-[#577C09]'
                                 : 'bg-muted text-muted-foreground border-border opacity-50 cursor-not-allowed'
                             }`}
-                     >
+                    >
                         {completedSections.includes(i) ? '✓ ' : ''}{s.title}
                     </button>
                 ))}

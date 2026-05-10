@@ -10,18 +10,19 @@ const today = new Date().toLocaleDateString('en-US', {
   day: 'numeric',
 })
 
-export default function OfferLetterPage({ stepLabel, caregiver, onNext }) {
-  const [signature, setSignature] = useState('')
-  const [address, setAddress] = useState('')
-  const [city, setCity] = useState('')
-  const [state, setState] = useState('')
-  const [zip, setZip] = useState('')
-  const [signed, setSigned] = useState(false)
+export default function OfferLetterPage({ stepLabel, caregiver, onNext, initialData, onChange }) {
+  const [signature, setSignature] = useState(initialData?.signature || '')
+  const [address, setAddress] = useState(initialData?.address || '')
+  const [city, setCity] = useState(initialData?.city || '')
+  const [state, setState] = useState(initialData?.state || '')
+  const [zip, setZip] = useState(initialData?.zip || '')
+  const [signed, setSigned] = useState(initialData?.signed || false)
 
   const canSign = signature.trim() && address.trim() && city.trim() && state.trim() && zip.trim()
 
   const handleSign = () => {
     setSigned(true)
+    onChange({ signature, address, city, state, zip, signed: true })
   }
 
   return (
@@ -209,7 +210,10 @@ export default function OfferLetterPage({ stepLabel, caregiver, onNext }) {
                   id="offerSignature"
                   placeholder={caregiver.name}
                   value={signature}
-                  onChange={(e) => setSignature(e.target.value)}
+                  onChange={(e) => {
+                    setSignature(e.target.value)
+                    onChange({ signature: e.target.value, address, city, state, zip, signed })
+                }}
                   className="font-serif italic"
                 />
                 <p className="text-xs text-muted-foreground">
@@ -225,7 +229,11 @@ export default function OfferLetterPage({ stepLabel, caregiver, onNext }) {
                   id="offerAddress"
                   placeholder="123 Main St"
                   value={address}
-                  onChange={(e) => setAddress(e.target.value)}
+                  onChange={(e) => {
+                    setAddress(e.target.value)
+                    onChange({ signature, address: e.target.value, city, state, zip, signed })
+                  }
+                }
                 />
               </div>
 
@@ -238,7 +246,10 @@ export default function OfferLetterPage({ stepLabel, caregiver, onNext }) {
                     id="offerCity"
                     placeholder="Charlotte"
                     value={city}
-                    onChange={(e) => setCity(e.target.value)}
+                    onChange={(e) => {
+                        setCity(e.target.value)
+                        onChange({ signature, address, city: e.target.value, state, zip, signed })
+                    }}
                   />
                 </div>
                 <div className="space-y-2 col-span-1">
@@ -250,7 +261,10 @@ export default function OfferLetterPage({ stepLabel, caregiver, onNext }) {
                     placeholder="NC"
                     maxLength={2}
                     value={state}
-                    onChange={(e) => setState(e.target.value)}
+                    onChange={(e) => {
+                        setState(e.target.value)
+                        onChange({ signature, address, city, state: e.target.value, zip, signed })
+                    }}
                   />
                 </div>
                 <div className="space-y-2 col-span-1">
@@ -262,7 +276,10 @@ export default function OfferLetterPage({ stepLabel, caregiver, onNext }) {
                     placeholder="28201"
                     maxLength={5}
                     value={zip}
-                    onChange={(e) => setZip(e.target.value)}
+                    onChange={(e) => {
+                        setZip(e.target.value)
+                        onChange({ signature, address, city, state, zip: e.target.value, signed })
+                    }}
                   />
                 </div>
               </div>
