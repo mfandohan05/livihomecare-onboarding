@@ -1,8 +1,12 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { FolderUp, CreditCard, Car, Stethoscope, IdCard, Camera, Award, CheckCircle, Upload } from 'lucide-react'
+import { FolderUp, CreditCard, Car, Stethoscope, IdCard, Camera, CheckCircle, Upload, Award } from 'lucide-react'
 
-const requiredDocs = [
+
+export default function UploadDocumentsPage({ stepLabel, onNext, role }) {
+
+
+const baseDocs = [
   {
     id: 'driversLicense',
     label: "Driver's License",
@@ -38,16 +42,25 @@ const requiredDocs = [
     required: true,
     description: "A clear, recent photo of yourself for your employee badge"
   },
-  {
-    id: 'certifications',
+]
+
+const optionalDocs = {
+  id: 'certifications',
     label: "Certifications",
     icon: Award,
     required: false,
     description: "CNA, HHA, CPR, or any other relevant certifications (if applicable)"
-  },
-]
+}
 
-export default function UploadDocumentsPage({ stepLabel, onNext }) {
+const nursingLicenseDocument = {
+  id: 'nursingLicense',
+  label: 'Nursing License',
+  icon: Award,
+  required: true,
+  description: "Your current RN license issued by the NC Board of Nursing"
+}
+const requiredDocs = role === 'nurse' ? [...baseDocs, nursingLicenseDocument, optionalDocs] : [...baseDocs, optionalDocs]
+
   const [uploads, setUploads] = useState({})
 
   const handleFileChange = (docId, e) => {

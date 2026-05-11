@@ -37,16 +37,14 @@ const jobDescriptions = {
         title: 'Job Description for the Registered Nurse',
         intro: 'A Livi Home Care Registered Nurse is responsible for providing skilled nursing care to our clients in their home.',
         duties: [
-            'Conducting client assessments and developing care plans',
-            'Administering medications and treatments as prescribed',
-            'Supervising and directing in-home aides and caregivers',
-            'Monitoring client health status and reporting changes',
-            'Providing wound care and other skilled nursing procedures',
-            'Educating clients and families on health management',
-            'Maintaining accurate clinical documentation',
-            'Coordinating care with physicians and other healthcare providers',
-            'Ensuring compliance with state and federal regulations',
-            'Participating in quality improvement activities',
+            'Conducting assessments for new clients',
+            'Performing quarterly and annual assessment of current clients.',
+            'Managing care plans in accordance with physicians’ instructions',
+            'Attend all	Leadership and Team Management meetings',
+            'Supervise and evaluate caregivers as needed',
+            'Create a positive and collaborative work environment',
+            'Ensure compliance and quality assurance',
+            'Additional duties may be assigned by the agency as needed.'
         ]
     },
     other: {
@@ -149,7 +147,7 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
                 <>
                     <FormContent>
                         <p className="font-medium">New Hire Notification Form</p>
-                        <p>All new hires must attend an orientation session before starting any shifts. This session will cover Livi Home Care's policies, procedures and expectations.</p>
+                        <p>All new hires must complete the online onboarding process before starting any shifts. This onboarding covers Livi Home Care's policies, procedures, and expectations and must be fully completed prior to your first scheduled shift.</p>
                         <p className="font-medium mt-2">Orientation Payment</p>
                         <p>The orientation payment will be made to you after you have successfully completed 10 shifts with Livi Home Care.</p>
                         <p className="mt-2">By signing below, you acknowledge that you understand and agree to the requirements outlined above.</p>
@@ -166,7 +164,7 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
         },
         {
             id: 'form_1',
-            title: `Job Description - ${caregiver.positionNameType[0]}`,
+            title: `Job Description - ${caregiver.jobDescription}`,
             render: () => {
                 const jobDesc = jobDescriptions[caregiver.role] || jobDescriptions.caregiver
 
@@ -211,7 +209,7 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
                         <p className="font-medium">Employee Non-Compete Agreement</p>
                         <p>This Non-Compete Agreement is entered into on {today}, by and between Livi Home Care, located at 179 Gasoline Alley Dr. Suite 203, Mooresville NC 28117 and <strong>{caregiver.name}</strong>.</p>
                         <p className="font-medium mt-2">Non-Compete Obligation</p>
-                        <p>In consideration of employment with Livi Home Care, Employee agrees that for a period of <strong>12 months</strong> following the termination of employment, for any reason, they shall not:</p>
+                        <p>In consideration of employment with Livi Home Care, Employee agrees that for a period of <strong>36 months</strong> following the termination of employment, for any reason, they shall not:</p>
                         <ul className="space-y-1 pl-4">
                             <li className="flex items-start gap-2">
                                 <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#577C09] shrink-0" />

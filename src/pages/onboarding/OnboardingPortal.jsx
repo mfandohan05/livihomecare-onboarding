@@ -33,7 +33,7 @@ export default function OnboardingPortal() {
                         This onboarding link is invalid or has expired. Please contact Livi Home Care for a new link.
                     </p>
                     <p className="text-sm text-muted-foreground mt-4">
-                        📞 828-540-0112 &nbsp;|&nbsp; ✉️ office@livihomecare.com
+                        📞 980-416-6127 &nbsp;|&nbsp; ✉️ office@livihomecare.com
                     </p>
                 </div>
             </div>
@@ -145,7 +145,7 @@ export default function OnboardingPortal() {
             case 'Welcome':
                 return <WelcomePage caregiver={caregiver} onNext={handleNext} welcomeSteps={welcomeSteps[role]} />
             case 'Upload Documents':
-                return <UploadDocumentsPage stepLabel={stepLabel} onNext={handleNext} />
+                return <UploadDocumentsPage stepLabel={stepLabel} onNext={handleNext} role={caregiver.role}/>
             case 'Personal Information':
                 return <PersonalInformationPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.personalInfo} onChange={(data) => updateFormData('personalInfo', data)} />
             case 'Enrollment Profile / Enrollment':
@@ -157,7 +157,7 @@ export default function OnboardingPortal() {
             case 'How to Use eRSP':
                 return <ERSPGuidePage stepLabel={stepLabel} onNext={handleNext} initialData={formData.erspGuide} onChange={(data) => updateFormData('erspGuide', data)}/>
             case 'Forms & Agreements':
-                return <FormsApplicationsPage stepLabel={stepLabel} caregiver={caregiver} onNext={handleNext} initialData={{ signatures: formData.signatures, hepBStatus: formData.hepBStatus }} onChange={(data) => {
+                return <FormsApplicationsPage stepLabel={stepLabel} caregiver={caregiver} onNext={handleNext} initialData={{ signatures: formData.signatures, hepBStatus: formData.hepBStatus, completed: formData.formsCompleted }} onChange={(data) => {
                     updateFormData('signatures', data.signatures)
                     updateFormData('formsCompleted', data.completed)
                 }} onHepBChange={(status) => updateFormData('hepBStatus', status)} />

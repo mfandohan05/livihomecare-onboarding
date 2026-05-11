@@ -13,8 +13,7 @@ function WelcomePage({ caregiver, onNext, welcomeSteps }) {
 
             <p className="text-muted-foreground text-lg mb-6">
                 We're so glad to have you on the team. This orientation will walk you
-                through everything you need to know before your first day. It should
-                take about <span className="text-foreground font-medium">2-3 hours</span> to complete.
+                through everything you need to know before your first day. 
             </p>
 
             <div className="bg-[#E8F0D0] rounded-lg p-6 mb-8">

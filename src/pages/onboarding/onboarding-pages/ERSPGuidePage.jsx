@@ -271,7 +271,7 @@ export default function ERSPGuidePage({ stepLabel, onNext, initialData, onChange
                     )
                 })}
             </div>
-
+                <span className='mb-8 inline-block'>You can view a general training video about using eRSP here: <a href="https://www.youtube.com/watch?si=vn8rXl9q9tBR97f1&v=9BaQsRNkL00&feature=youtu.be" target="_blank" className="underline text-blue-700">eRSP Mobile Application</a></span>
             {/* Confirmation */}
             <div className="border border-border rounded-xl p-6 mb-8">
                 <button
