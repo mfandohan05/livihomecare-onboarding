@@ -59,7 +59,7 @@ const sections = [
         ],
         quiz: [
             {
-                question: "What is Livi Home Care's mission?",
+                question: "Select ",
                 choices: [
                     "To provide the lowest cost care possible",
                     "To improve the quality of life of clients by providing high-quality services",
@@ -68,21 +68,6 @@ const sections = [
                 ],
                 correct: 1
             },
-            {
-                question: "Which of the following is one of Livi Home Care's core values?",
-                choices: [
-                    "Profit-driven care",
-                    "Competitive pricing",
-                    "Compassion and respect for dignity",
-                    "Rapid service delivery"
-                ],
-                correct: 2
-            },
-            {
-                question: "Who is the Service Coordinator at Livi Home Care?",
-                choices: ["Morina", "Linda", "Sylvie", "Victoria"],
-                correct: 2
-            }
         ]
     },
     {
@@ -415,7 +400,7 @@ const sections = [
                 question: "Which of the following is NOT an example of PHI?",
                 choices: [
                     "Client's name and date of birth",
-                    "Caregivers work schedule",
+                    "Caregiver's work schedule",
                     "Client's medical record number",
                     "Client's health insurance ID number"
                 ],
@@ -734,6 +719,15 @@ const sections = [
                 correct: 2
             },
             {
+                question: "True or False: Caregivers are allowed to schedule direct working hours with the clients.",
+                choices: [
+                    "True",
+                    "False"
+                ],
+                correct: 1
+            },
+
+            {
                 question: "Which of the following gifts can a caregiver accept from a client?",
                 choices: [
                     "Cash",
@@ -816,6 +810,8 @@ export default function NewHireOrientationPage({ stepLabel, onNext, initialData,
     const [quizAnswers, setQuizAnswers] = useState(initialData?.quizAnswers || {})
     const [quizSubmitted, setQuizSubmitted] = useState(initialData?.quizSubmitted || false)
     const [completedSections, setCompletedSections] = useState(initialData?.completedSections || [])
+    const [sectionStates, setSectionStates] = useState(initialData?.sectionStates || {})
+    const [visitedSections, setVisitedSections] = useState(initialData?.visitedSections || [0])
 
     const section = sections[currentSection]
     const slide = section.slides[currentSlide]
@@ -831,13 +827,56 @@ export default function NewHireOrientationPage({ stepLabel, onNext, initialData,
             quizAnswers,
             quizSubmitted,
             completedSections,
+            sectionStates,
+            visitedSections,
             ...updates,
+        })
+    }
+    const switchSection = (targetIndex) => {
+        const updatedSectionStates = {
+            ...sectionStates,
+            [currentSection]: {
+                currentSlide,
+                showQuiz,
+                quizAnswers,
+                quizSubmitted,
+            }
+        }
+        setSectionStates(updatedSectionStates)
+
+        const updatedVisited = visitedSections.includes(targetIndex)
+            ? visitedSections
+            : [...visitedSections, targetIndex]
+        setVisitedSections(updatedVisited)
+
+        const target = updatedSectionStates[targetIndex]
+
+        setCurrentSection(targetIndex)
+        setCurrentSlide(target?.currentSlide || 0)
+        setShowQuiz(target?.showQuiz || false)
+        setQuizAnswers(target?.quizAnswers || {})
+        setQuizSubmitted(target?.quizSubmitted || false)
+
+        saveProgress({
+            sectionStates: updatedSectionStates,
+            visitedSections: updatedVisited,
+            currentSection: targetIndex,
+            currentSlide: target?.currentSlide || 0,
+            showQuiz: target?.showQuiz || false,
+            quizAnswers: target?.quizAnswers || {},
+            quizSubmitted: target?.quizSubmitted || false,
         })
     }
     const handleNextSlide = () => {
         if (isLastSlide) {
-            setShowQuiz(true)
-            saveProgress({ showQuiz: true })
+            if (currentSection === 0) {
+                handleNextSection();
+            }
+            else {
+                setShowQuiz(true)
+                saveProgress({ showQuiz: true })
+            }
+            
         }
         else {
             setCurrentSlide(prev => prev + 1)
@@ -848,9 +887,12 @@ export default function NewHireOrientationPage({ stepLabel, onNext, initialData,
     const handlePrevSlide = () => {
         if (showQuiz) {
             setShowQuiz(false)
-            setQuizAnswers({})
-            setQuizSubmitted(false)
-        } else if (currentSlide > 0) {
+            if (!completedSections.includes(currentSection)) {
+                setQuizAnswers({})
+                setQuizSubmitted(false)
+            }
+        }
+        else if (currentSlide > 0) {
             setCurrentSlide(prev => prev - 1)
         }
     }
@@ -889,9 +931,14 @@ export default function NewHireOrientationPage({ stepLabel, onNext, initialData,
         setCompletedSections(updatedSections)
 
         if (isLastSection) {
+            saveProgress({ completedSections: updatedSections })
             onNext()
         } else {
             const nextSection = currentSection + 1
+            const updatedVisited = visitedSections.includes(nextSection)
+                ? visitedSections
+                : [...visitedSections, nextSection]
+            setVisitedSections(updatedVisited)
             setCurrentSection(nextSection)
             setCurrentSlide(0)
             setShowQuiz(false)
@@ -899,6 +946,7 @@ export default function NewHireOrientationPage({ stepLabel, onNext, initialData,
             setQuizSubmitted(false)
             saveProgress({
                 completedSections: updatedSections,
+                visitedSections: updatedVisited,
                 currentSection: nextSection,
                 currentSlide: 0,
                 showQuiz: false,
@@ -936,19 +984,17 @@ export default function NewHireOrientationPage({ stepLabel, onNext, initialData,
                     <button
                         key={s.id}
                         onClick={() => {
-                            if (completedSections.includes(i) || i === currentSection) {
-                                setCurrentSection(i)
-                                setCurrentSlide(0)
-                                setShowQuiz(false)
-                                setQuizAnswers({})
-                                setQuizSubmitted(false)
+                            if (completedSections.includes(i) || i === currentSection || visitedSections.includes(i)) {
+                                switchSection(i);
                             }
                         }}
                         className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${i === currentSection
-                            ? 'bg-[#577C09] text-white border-[#577C09]'
-                            : completedSections.includes(i)
-                                ? 'bg-[#E8F0D0] text-[#577C09] border-[#577C09]'
-                                : 'bg-muted text-muted-foreground border-border opacity-50 cursor-not-allowed'
+                                ? 'bg-[#577C09] text-white border-[#577C09]'
+                                : completedSections.includes(i)
+                                    ? 'bg-[#E8F0D0] text-[#577C09] border-[#577C09]'
+                                    : visitedSections.includes(i)
+                                        ? 'bg-muted text-[#577C09] border-[#577C09] opacity-75'
+                                        : 'bg-muted text-muted-foreground border-border opacity-50 cursor-not-allowed'
                             }`}
                     >
                         {completedSections.includes(i) ? '✓ ' : ''}{s.title}
@@ -1124,7 +1170,7 @@ export default function NewHireOrientationPage({ stepLabel, onNext, initialData,
                         onClick={handleNextSlide}
                         className="gap-2 bg-[#577C09] hover:bg-[#3D5906] text-white"
                     >
-                        {isLastSlide ? 'Take Quiz' : 'Next'}
+                        {isLastSlide ? (currentSection === 0 ? 'Complete Section' : 'Take Quiz') : 'Next'}
                         <ChevronRight className="w-4 h-4" />
                     </Button>
                 </div>

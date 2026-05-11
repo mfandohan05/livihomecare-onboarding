@@ -13,6 +13,7 @@ import image9 from '@/assets/guide-9.png';
 import image10 from '@/assets/guide-10.png';
 import image11 from '@/assets/guide-11.png';
 import image13 from '@/assets/guide-13.png';
+import eRSPLogo from '@/assets/eRSP.webp';
 
 
 const sections = [
@@ -24,9 +25,10 @@ const sections = [
         steps: [
             {
                 heading: 'Download the App',
+                images: [eRSPLogo],
                 items: [
                     'Open your device\'s App Store (Apple) or Google Play Store (Android).',
-                    'Search for "eRSP Mobile Connect" and download the app.',
+                    'Search for "eRSP Mobile Connect" and download the app. The eRSP logo is pictured below, in order to ensure you download the correct app.',
                 ]
             },
             {
@@ -162,12 +164,18 @@ const sections = [
     },
 ]
 
-export default function ERSPGuidePage({ stepLabel, onNext }) {
+export default function ERSPGuidePage({ stepLabel, onNext, initialData, onChange }) {
     const [expanded, setExpanded] = useState({ app: true, clockin: false, telephony: false, finalresort: false })
-    const [confirmed, setConfirmed] = useState(false)
+    const [confirmed, setConfirmed] = useState(initialData?.confirmed || false)
 
     const toggle = (id) => {
         setExpanded(prev => ({ ...prev, [id]: !prev[id] }))
+    }
+
+    const handleConfirm = () => {
+        const updated = !confirmed;
+        setConfirmed(updated);
+        onChange({ confirmed: updated })
     }
 
     return (
@@ -244,7 +252,7 @@ export default function ERSPGuidePage({ stepLabel, onNext }) {
                                                 ))}
                                             </ul>
                                             {step.images && step.images.length > 0 && (
-                                                <div className="space-y-3 mt-4 flex flex-row">
+                                                <div className="space-y-3 mt-4 flex flex-row max-w-[300px]">
                                                     {step.images.map((img, idx) => (
                                                         <img
                                                             key={idx}
@@ -267,7 +275,7 @@ export default function ERSPGuidePage({ stepLabel, onNext }) {
             {/* Confirmation */}
             <div className="border border-border rounded-xl p-6 mb-8">
                 <button
-                    onClick={() => setConfirmed(prev => !prev)}
+                    onClick={handleConfirm}
                     className="flex items-start gap-3 w-full text-left"
                 >
                     <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${confirmed

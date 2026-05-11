@@ -23,7 +23,7 @@ import { useSaveProgress, loadProgress } from '@/hooks/useOnboardingProgress'
 export default function OnboardingPortal() {
     const { token } = useParams();
     const caregiver = getCaregiverByToken(token);
-    
+
     if (!caregiver) {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -65,11 +65,17 @@ export default function OnboardingPortal() {
             currentSlide: 0,
             completedSections: [],
             quizAnswers: {},
+            quizSubmitted: false,
+            showQuiz: false,
+            sectionStates: {},
+            visitedSections: [0]
         },
         signatures: {},
+        formsCompleted: {},
         hepBStatus: '',
         offerLetter: {},
-        erspApplication: { popupOpened: false, popupClosed: false }
+        erspApplication: { popupOpened: false, popupClosed: false },
+        erspGuide: { confirmed: false }
     })
 
     const resetFormData = () => {
@@ -142,16 +148,19 @@ export default function OnboardingPortal() {
                 return <UploadDocumentsPage stepLabel={stepLabel} onNext={handleNext} />
             case 'Personal Information':
                 return <PersonalInformationPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.personalInfo} onChange={(data) => updateFormData('personalInfo', data)} />
-            case 'eRSP Enrollment':
+            case 'Enrollment Profile / Enrollment':
                 return <ERSPApplicationPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.erspApplication} onChange={(data) => updateFormData('erspApplication', data)} />
             case 'New Hire Orientation':
                 return <NewHireOrientationPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.orientationQuiz} onChange={(data) => updateFormData('orientationQuiz', data)} />
-            case 'Skills Competency':
+            case 'Competency Checklist':
                 return <SkillsCompetencyPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.competency} onChange={(data) => updateFormData('competency', data)} />
-            case 'Guide to eRSP':
-                return <ERSPGuidePage stepLabel={stepLabel} onNext={handleNext} />
+            case 'How to Use eRSP':
+                return <ERSPGuidePage stepLabel={stepLabel} onNext={handleNext} initialData={formData.erspGuide} onChange={(data) => updateFormData('erspGuide', data)}/>
             case 'Forms & Agreements':
-                return <FormsApplicationsPage stepLabel={stepLabel} caregiver={caregiver} onNext={handleNext} initialData={{ signatures: formData.signatures, hepBStatus: formData.hepBStatus }} onChange={(data) => updateFormData('signatures', data.signatures)} onHepBChange={(status) => updateFormData('hepBStatus', status)} />
+                return <FormsApplicationsPage stepLabel={stepLabel} caregiver={caregiver} onNext={handleNext} initialData={{ signatures: formData.signatures, hepBStatus: formData.hepBStatus }} onChange={(data) => {
+                    updateFormData('signatures', data.signatures)
+                    updateFormData('formsCompleted', data.completed)
+                }} onHepBChange={(status) => updateFormData('hepBStatus', status)} />
             case 'Tax Forms':
             case 'Tax Forms (W-9)':
                 return <TaxFormsPage stepLabel={stepLabel} onNext={handleNext} role={role} />

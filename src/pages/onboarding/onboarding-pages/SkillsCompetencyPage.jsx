@@ -185,7 +185,7 @@ export default function SkillsCompetencyPage({ stepLabel, onNext, initialData, o
         <ClipboardCheck className="w-5 h-5 text-[#577C09]" />
         <span className="text-[#577C09] font-medium">{stepLabel}</span>
       </div>
-      <h1 className="text-3xl font-bold mb-2">Skills Competency Checklist</h1>
+      <h1 className="text-3xl font-bold mb-2">Competency Checklist</h1>
       <p className="text-muted-foreground mb-8">
         Check all items you have experience with. This helps Livi Home Care match
         you with the right clients. You are not required to check everything —

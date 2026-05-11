@@ -40,7 +40,7 @@ export default function ERSPApplicationPage({ stepLabel, onNext, initialData, on
                 <span className="text-[#577C09] font-medium">{stepLabel}</span>
             </div>
 
-            <h1 className="text-3xl font-bold mb-2">eRSP Enrollment</h1>
+            <h1 className="text-3xl font-bold mb-2">Employee Profile / Enrollment</h1>
             <p className="text-muted-foreground mb-2">
                 eRSP is the caregiver management system used by Livi Home Care.
                 You'll use it to clock in and out of shifts, view your schedule,
@@ -62,7 +62,7 @@ export default function ERSPApplicationPage({ stepLabel, onNext, initialData, on
                 </div>
                 <Button
                     variant="outline"
-                    className="gap-2 border-[#577C09] text-[#577C09] hover:bg-[#E8F0D0] shrink-0"
+                    className="gap-2 border-[#577C09] text-[#577C09] hover:bg-[#E8F0D0] shrink-0 "
                     onClick={openPopup}
                     disabled={popupOpened && !popupClosed}
                 >
@@ -81,7 +81,7 @@ export default function ERSPApplicationPage({ stepLabel, onNext, initialData, on
             <Button
                 onClick={onNext}
                 disabled={!popupClosed}
-                className="bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:bg-gray-500 disabled:text-black disabled:cursor-not-allowed"
             >
                 I've Completed the Form — Continue
             </Button>
