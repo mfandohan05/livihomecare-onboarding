@@ -53,10 +53,9 @@ function WelcomePage({ caregiver, onNext, welcomeSteps }) {
                 <p className="text-sm font-medium text-[#577C09] mb-3">
                     Here's what you'll cover:
                 </p>
-                <ul className="space-y-2 text-sm text-[#3D5906]">
+                <ul className="space-y-2 text-sm text-[#3D5906] list-none">
                     {welcomeSteps.map((step, index) => (
                         <li key={index} className="flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#577C09] shrink-0" />
                             {step}
                         </li>
                     ))}

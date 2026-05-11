@@ -22,7 +22,6 @@ export function useSaveProgress(token, activeStep, steps, formData) {
     }
 
     localStorage.setItem(`onboarding_${token}`, JSON.stringify(progress))
-    // console.log(localStorage.getItem(`onboarding_${token}`))
   }, [token, activeStep, steps, formData])
 
   useEffect(() => {

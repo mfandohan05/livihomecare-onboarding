@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import { getCaregiverByToken } from '@/data/mockEmployeeData'
 import { stepsByRole } from '@/data/steps'
 import { welcomeSteps } from '@/data/steps'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
@@ -18,47 +17,18 @@ import OfferLetterPage from './onboarding-pages/OfferLetterPage'
 import CompletedPage from './onboarding-pages/CompletedPage'
 import { useOnboardingTimer } from '@/hooks/useOnboardingTimer'
 
-import { useSaveProgress, loadProgress } from '@/hooks/useOnboardingProgress'
+import { useSaveProgress, loadProgress as loadLocalProgress } from '@/hooks/useOnboardingProgress'
 
+import { getCaregiverByToken, updateCaregiverStatus, saveProgress, loadProgress } from '@/lib/caregiver'
 
 export default function OnboardingPortal() {
-    const { token } = useParams();
-    const { isIdle, getHoursWorked, isActiveTab, setPopupOpen } = useOnboardingTimer(token);
-    const caregiver = getCaregiverByToken(token);
+    const { token } = useParams()
+    const { isIdle, getHoursWorked, isActiveTab, setPopupOpen } = useOnboardingTimer(token)
 
-    if (!caregiver) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center max-w-md px-8">
-                    <h1 className="text-2xl font-bold mb-2">Link not found</h1>
-                    <p className="text-muted-foreground">
-                        This onboarding link is invalid or has expired. Please contact Livi Home Care for a new link.
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-4">
-                        📞 980-416-6127 &nbsp;|&nbsp; ✉️ office@livihomecare.com
-                    </p>
-                </div>
-            </div>
-        )
-    }
-    const role = caregiver.role;
-    const [steps, setSteps] = useState(stepsByRole[caregiver.role]);
+    const [caregiver, setCaregiver] = useState(null)
+    const [loading, setLoading] = useState(true)
+    const [steps, setSteps] = useState([])
     const [activeStep, setActiveStep] = useState(1)
-
-    useEffect(() => {
-        caregiver.status = 'in_progress'
-        console.log(`${caregiver.name} is now in progress.`);
-    }, [])
-
-    useEffect(() => {
-        const lastStep = steps[steps.length - 1];
-        if (activeStep === lastStep.id) {
-            setSteps(prev => prev.map(step =>
-                step.id === lastStep.id ? { ...step, status: 'completed' } : step
-            ))
-        }
-    }, [activeStep])
-
     const [formData, setFormData] = useState({
         personalInfo: {},
         competency: { checked: {}, lunch: '', dinner: '' },
@@ -80,11 +50,103 @@ export default function OnboardingPortal() {
         erspGuide: { confirmed: false }
     })
 
+    useSaveProgress(token, activeStep, steps, formData)
+
+    // fetch caregiver
+    useEffect(() => {
+        const fetchCaregiver = async () => {
+            const data = await getCaregiverByToken(token)
+            setCaregiver(data)
+            if (data) setSteps(stepsByRole[data.role])
+            setLoading(false)
+        }
+        fetchCaregiver()
+    }, [token])
+
+    // update status to in_progress
+    useEffect(() => {
+        if (!caregiver) return
+        updateCaregiverStatus(caregiver.id, 'in_progress')
+        console.log(`${caregiver.name} is now in progress.`)
+    }, [caregiver?.id])
+
+    // restore progress
+    useEffect(() => {
+        const restoreProgress = async () => {
+            const dbProgress = await loadProgress(caregiver.id)
+            if (dbProgress) {
+                setActiveStep(dbProgress.active_step)
+                setFormData(prev => ({ ...prev, ...dbProgress.form_data }))
+                setSteps(prev => prev.map(step => ({
+                    ...step,
+                    status: dbProgress.completed_steps.includes(step.id)
+                        ? 'completed'
+                        : step.id === dbProgress.active_step
+                        ? 'active'
+                        : 'locked'
+                })))
+                return
+            }
+            const localProgress = loadLocalProgress(token)
+            if (localProgress) {
+                setActiveStep(localProgress.activeStep)
+                setFormData(prev => ({ ...prev, ...localProgress.formData }))
+                setSteps(prev => prev.map(step => ({
+                    ...step,
+                    status: localProgress.completedSteps.includes(step.id)
+                        ? 'completed'
+                        : step.id === localProgress.activeStep
+                        ? 'active'
+                        : 'locked'
+                })))
+            }
+        }
+        if (caregiver) restoreProgress()
+    }, [caregiver])
+
+    // mark last step completed
+    useEffect(() => {
+        if (!steps.length) return
+        const lastStep = steps[steps.length - 1]
+        if (activeStep === lastStep.id) {
+            setSteps(prev => prev.map(step =>
+                step.id === lastStep.id ? { ...step, status: 'completed' } : step
+            ))
+        }
+    }, [activeStep, steps])
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <p className="text-muted-foreground">Loading...</p>
+            </div>
+        )
+    }
+
+    if (!caregiver) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center max-w-md px-8">
+                    <h1 className="text-2xl font-bold mb-2">Link not found</h1>
+                    <p className="text-muted-foreground">
+                        This onboarding link is invalid or has expired. Please contact Livi Home Care for a new link.
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-4">
+                        📞 980-416-6127 &nbsp;|&nbsp; ✉️ office@livihomecare.com
+                    </p>
+                </div>
+            </div>
+        )
+    }
+
+    const role = caregiver.role;
+    const currentStepNumber = steps.findIndex(s => s.id === activeStep) + 1
+    const totalSteps = steps.length
+    const stepLabel = `Step ${currentStepNumber} of ${totalSteps}`
+
     const resetFormData = () => {
         localStorage.removeItem(`onboarding_${token}`)
-        localStorage.removeItem(`onboarding_${token}`)
         localStorage.removeItem(`livi_time_${token}`)
-
         setFormData({
             personalInfo: {},
             competency: { checked: {}, lunch: '', dinner: '' },
@@ -98,30 +160,11 @@ export default function OnboardingPortal() {
             hepBStatus: '',
             offerLetter: {},
             erspApplication: { popupOpened: false, popupClosed: false, confirmed: false },
-        }
-        )
+        })
         setActiveStep(1)
         setSteps(stepsByRole[caregiver.role])
         window.scrollTo({ top: 0, behavior: 'smooth' })
     }
-    useEffect(() => {
-        const saved = loadProgress(token);
-        if (!saved) {
-            return;
-        }
-        setActiveStep(saved.activeStep)
-        setFormData(prev => ({ ...prev, ...saved.formData }))
-        setSteps(prev => prev.map(step => ({
-            ...step,
-            status: saved.completedSteps.includes(step.id)
-                ? 'completed'
-                : step.id === saved.activeStep
-                    ? 'active'
-                    : 'locked'
-        })))
-    }, [token])
-
-    useSaveProgress(token, activeStep, steps, formData)
 
     const updateFormData = (key, data) => {
         setFormData(prev => ({ ...prev, [key]: data }))
@@ -136,20 +179,16 @@ export default function OnboardingPortal() {
         setActiveStep(prev => prev + 1)
         window.scrollTo({ top: 0, behavior: 'smooth' })
     }
-    const currentStepNumber = steps.findIndex(s => s.id === activeStep) + 1;
-    const totalSteps = steps.length;
-    const stepLabel = `Step ${currentStepNumber} of ${totalSteps}`
+
     const renderStep = () => {
         const step = steps.find(s => s.id === activeStep)
-        if (!step) {
-            return null
-        }
+        if (!step) return null
 
         switch (step.stepName) {
             case 'Welcome':
                 return <WelcomePage caregiver={caregiver} onNext={handleNext} welcomeSteps={welcomeSteps[role]} />
             case 'Upload Documents':
-                return <UploadDocumentsPage stepLabel={stepLabel} onNext={handleNext} role={caregiver.role}/>
+                return <UploadDocumentsPage stepLabel={stepLabel} onNext={handleNext} role={caregiver.role} />
             case 'Personal Information':
                 return <PersonalInformationPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.personalInfo} onChange={(data) => updateFormData('personalInfo', data)} />
             case 'Enrollment Profile / Enrollment':
@@ -159,7 +198,7 @@ export default function OnboardingPortal() {
             case 'Competency Checklist':
                 return <SkillsCompetencyPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.competency} onChange={(data) => updateFormData('competency', data)} />
             case 'How to Use eRSP':
-                return <ERSPGuidePage stepLabel={stepLabel} onNext={handleNext} initialData={formData.erspGuide} onChange={(data) => updateFormData('erspGuide', data)}/>
+                return <ERSPGuidePage stepLabel={stepLabel} onNext={handleNext} initialData={formData.erspGuide} onChange={(data) => updateFormData('erspGuide', data)} />
             case 'Forms & Agreements':
                 return <FormsApplicationsPage stepLabel={stepLabel} caregiver={caregiver} onNext={handleNext} initialData={{ signatures: formData.signatures, hepBStatus: formData.hepBStatus, completed: formData.formsCompleted }} onChange={(data) => {
                     updateFormData('signatures', data.signatures)
@@ -176,14 +215,6 @@ export default function OnboardingPortal() {
                 return null
         }
     }
-
-    useEffect(() => {
-        if (activeStep === 11) {
-            setSteps(prev => prev.map(step =>
-                step.id === 11 ? { ...step, status: 'completed' } : step
-            ))
-        }
-    }, [activeStep])
 
     return (
         <SidebarProvider>
