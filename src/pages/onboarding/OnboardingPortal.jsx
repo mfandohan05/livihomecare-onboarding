@@ -16,12 +16,14 @@ import FormsApplicationsPage from './onboarding-pages/FormsApplicationsPage'
 import TaxFormsPage from './onboarding-pages/TaxFormsPage'
 import OfferLetterPage from './onboarding-pages/OfferLetterPage'
 import CompletedPage from './onboarding-pages/CompletedPage'
+import { useOnboardingTimer } from '@/hooks/useOnboardingTimer'
 
 import { useSaveProgress, loadProgress } from '@/hooks/useOnboardingProgress'
 
 
 export default function OnboardingPortal() {
     const { token } = useParams();
+    const { isIdle, getHoursWorked, isActiveTab, setPopupOpen } = useOnboardingTimer(token);
     const caregiver = getCaregiverByToken(token);
 
     if (!caregiver) {
@@ -80,6 +82,8 @@ export default function OnboardingPortal() {
 
     const resetFormData = () => {
         localStorage.removeItem(`onboarding_${token}`)
+        localStorage.removeItem(`onboarding_${token}`)
+        localStorage.removeItem(`livi_time_${token}`)
 
         setFormData({
             personalInfo: {},
@@ -149,7 +153,7 @@ export default function OnboardingPortal() {
             case 'Personal Information':
                 return <PersonalInformationPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.personalInfo} onChange={(data) => updateFormData('personalInfo', data)} />
             case 'Enrollment Profile / Enrollment':
-                return <ERSPApplicationPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.erspApplication} onChange={(data) => updateFormData('erspApplication', data)} />
+                return <ERSPApplicationPage stepLabel={stepLabel} onNext={handleNext} setPopupOpen={setPopupOpen} initialData={formData.erspApplication} onChange={(data) => updateFormData('erspApplication', data)} />
             case 'New Hire Orientation':
                 return <NewHireOrientationPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.orientationQuiz} onChange={(data) => updateFormData('orientationQuiz', data)} />
             case 'Competency Checklist':
@@ -167,7 +171,7 @@ export default function OnboardingPortal() {
             case 'Offer Letter':
                 return <OfferLetterPage stepLabel={stepLabel} caregiver={caregiver} onNext={handleNext} initialData={formData.offerLetter} onChange={(data) => updateFormData('offerLetter', data)} />
             case 'Completed!':
-                return <CompletedPage stepLabel={stepLabel} caregiver={caregiver} />
+                return <CompletedPage stepLabel={stepLabel} caregiver={caregiver} getHoursWorked={getHoursWorked} />
             default:
                 return null
         }
@@ -190,6 +194,8 @@ export default function OnboardingPortal() {
                 handleNext={handleNext}
                 resetFormData={resetFormData}
                 caregiver={caregiver}
+                isIdle={isIdle}
+                getHoursWorked={getHoursWorked}
             />
             <SidebarInset className="overflow-y-auto">
                 {renderStep()}

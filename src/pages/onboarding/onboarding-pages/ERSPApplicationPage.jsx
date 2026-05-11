@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { ClipboardList, ExternalLink } from 'lucide-react'
 
-export default function ERSPApplicationPage({ stepLabel, onNext, initialData, onChange }) {
+export default function ERSPApplicationPage({ stepLabel, onNext, initialData, onChange, setPopupOpen }) {
     const [popupOpened, setPopupOpened] = useState(initialData?.popupOpened || false)
     const [popupClosed, setPopupClosed] = useState(initialData?.popupClosed || false)
     const popupRef = useRef(null)
@@ -18,10 +18,12 @@ export default function ERSPApplicationPage({ stepLabel, onNext, initialData, on
         setPopupOpened(true)
         setPopupClosed(false)
         onChange({ popupOpened: true, popupClosed: false })
+        setPopupOpen(true);
 
         pollRef.current = setInterval(() => {
             if (popup.closed) {
                 setPopupClosed(true)
+                setPopupOpen(false);
                 onChange({ popupOpened: true, popupClosed: true })
                 clearInterval(pollRef.current)
             }

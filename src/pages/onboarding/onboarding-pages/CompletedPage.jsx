@@ -99,11 +99,12 @@ const nextSteps = {
     ]
 }
 
-export default function CompletedPage({ caregiver }) {
+export default function CompletedPage({ caregiver, getHoursWorked }) {
 
     useEffect(() => {
         caregiver.status = 'completed'
         console.log(`${caregiver.name} is now completed.`);
+        console.log("Hours worked: " + getHoursWorked());
     }, [])
     return (
         <div className="max-w-2xl mx-auto py-16 px-8">
