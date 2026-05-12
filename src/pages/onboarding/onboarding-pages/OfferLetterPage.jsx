@@ -153,12 +153,12 @@ function NurseContractorAgreement({ caregiver }) {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <p className="font-medium">Start Date:</p>
-          <p className="text-muted-foreground">{caregiver.startDate || '________________'}</p>
+          <p className="text-muted-foreground">{caregiver.start_date || '________________'}</p>
         </div>
         <div>
           <p className="font-medium">Pay Rate:</p>
           <p className="text-muted-foreground">
-            ${caregiver.payRate ? `${caregiver.payRate}.00` : '_______.00'} per hour
+            ${caregiver.pay_rate ? `${caregiver.pay_rate}.00` : '_______.00'} per hour
           </p>
         </div>
         <div>
@@ -358,7 +358,7 @@ export default function OfferLetterPage({ stepLabel, caregiver, onNext, initialD
                   className="font-serif italic"
                 />
                 <p className="text-xs text-muted-foreground">
-                  By typing your name you are providing a legally binding electronic signature.
+                  By typing your name, you are providing a legally binding electronic signature.
                 </p>
               </div>
 

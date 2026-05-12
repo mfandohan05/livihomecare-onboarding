@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { FileText, ChevronLeft, ChevronRight, CheckCircle, Upload, Download, AlertCircle } from 'lucide-react'
+import { FileText, ChevronLeft, ChevronRight, CheckCircle, Upload, Download, AlertCircle, AlertTriangle } from 'lucide-react'
 import { saveTaxFormData } from '@/lib/caregiver'
 import { supabase } from '@/lib/supabase'
 
@@ -553,7 +553,8 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver }) {
         : { i9: false, w4: false, nc4ez: false }
 
     const [currentStep, setCurrentStep] = useState(0)
-    const [saved, setSaved] = useState(initialSaved)
+    const [saved, setSaved] = useState(initialSaved);
+    const [confirming, setConfirming] = useState(null);
     const [i9Data, setI9Data] = useState({})
     const [w4Data, setW4Data] = useState({})
     const [w9Data, setW9Data] = useState({})
@@ -629,6 +630,7 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver }) {
         }
 
         setSaved(prev => ({ ...prev, [formId]: true }))
+        setConfirming(null);
         if (currentStep < steps.length - 1) {
             setCurrentStep(prev => prev + 1)
         }
@@ -670,18 +672,72 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver }) {
                     <p className="text-sm text-muted-foreground">{step.subtitle}</p>
                 </div>
 
-                {currentStep === 0 && (
-                    <I9Form data={i9Data} onChange={setI9Data} onSave={() => handleSave('i9')} saved={saved.i9} />
-                )}
-                {!isContractor && currentStep === 1 && (
-                    <W4Form data={w4Data} onChange={setW4Data} onSave={() => handleSave('w4')} saved={saved.w4} />
-                )}
-                {!isContractor && currentStep === 2 && (
-                    <NC4EZForm upload={nc4ezUpload} setUpload={setNc4ezUpload} saved={saved.nc4ez} onSave={() => handleSave('nc4ez')} />
-                )}
-                {isContractor && currentStep === 1 && (
-                    <W9Form data={w9Data} onChange={setW9Data} onSave={() => handleSave('w9')} saved={saved.w9} />
-                )}
+                <div className="relative">
+                    {/* blur overlay when saved */}
+                    {saved[step.id] && confirming !== step.id && (
+                        <div
+                            className="absolute inset-0 z-10 backdrop-blur-sm bg-white/60 rounded-lg flex items-center justify-center cursor-pointer"
+                            onClick={() => setConfirming(step.id)}
+                        >
+                            <div className="text-center px-6">
+                                <CheckCircle className="w-8 h-8 text-[#577C09] mx-auto mb-2" />
+                                <p className="text-sm font-medium text-[#577C09]">Form submitted</p>
+                                <p className="text-xs text-muted-foreground mt-1">Click to modify</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* warning dialog */}
+                    {confirming === step.id && (
+                        <div className="absolute inset-0 z-20 bg-white/95 rounded-lg flex items-center justify-center">
+                            <div className="text-center max-w-sm px-6">
+                                <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
+                                    <AlertTriangle className="w-6 h-6 text-amber-600" />
+                                </div>
+                                <h3 className="font-semibold mb-2">Tax Form Already Submitted</h3>
+                                <p className="text-sm text-muted-foreground mb-6">
+                                    You've already completed and submitted this tax form. If you continue,
+                                    your data will be erased and you will have to re-enter your information
+                                    for security and compliance purposes.
+                                </p>
+                                <div className="flex gap-3 justify-center">
+                                    <button
+                                        onClick={() => setConfirming(null)}
+                                        className="px-4 py-2 text-sm border border-border rounded-lg hover:bg-muted transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setSaved(prev => ({ ...prev, [step.id]: false }))
+                                            setConfirming(null)
+                                            if (step.id === 'i9') setI9Data({})
+                                            if (step.id === 'w4') setW4Data({})
+                                            if (step.id === 'w9') setW9Data({})
+                                            if (step.id === 'nc4ez') setNc4ezUpload(null)
+                                        }}
+                                        className="px-4 py-2 text-sm bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+                                    >
+                                        Yes, Re-enter Form
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {currentStep === 0 && (
+                        <I9Form data={i9Data} onChange={setI9Data} onSave={() => handleSave('i9')} saved={saved.i9} />
+                    )}
+                    {!isContractor && currentStep === 1 && (
+                        <W4Form data={w4Data} onChange={setW4Data} onSave={() => handleSave('w4')} saved={saved.w4} />
+                    )}
+                    {!isContractor && currentStep === 2 && (
+                        <NC4EZForm upload={nc4ezUpload} setUpload={setNc4ezUpload} saved={saved.nc4ez} onSave={() => handleSave('nc4ez')} />
+                    )}
+                    {isContractor && currentStep === 1 && (
+                        <W9Form data={w9Data} onChange={setW9Data} onSave={() => handleSave('w9')} saved={saved.w9} />
+                    )}
+                </div>
             </div>
 
             <div className="flex items-center justify-between mb-8">
