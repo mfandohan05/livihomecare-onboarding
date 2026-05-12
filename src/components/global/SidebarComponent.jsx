@@ -10,7 +10,7 @@ const getStatusIcon = (status) => {
     return null
 }
 
-function SidebarComponent({ steps, activeStep, setActiveStep, handleNext, caregiver, resetFormData, isIdle, getHoursWorked }) {
+function SidebarComponent({ steps, activeStep, setActiveStep, handleNext, caregiver, resetFormData, isIdle, isCompleted }) {
     const completedCount = steps.filter(s => s.status === "completed").length;
     const progressPercent = Math.round((completedCount / steps.length) * 100);
     const avatarURL = `https://ui-avatars.com/api/?name=${encodeURIComponent(caregiver.name)}&background=577C09&color=fff`;
@@ -34,14 +34,19 @@ function SidebarComponent({ steps, activeStep, setActiveStep, handleNext, caregi
                 {steps.map((step) => (
                     <SidebarMenuItem key={step.id}>
                         <SidebarMenuButton
-                            disabled={step.status === 'locked'}
-                            onClick={() => step.status !== 'locked' && setActiveStep(step.id)}
+                            disabled={step.status === 'locked' || isCompleted}
+                            onClick={() => {
+                                if (isCompleted) return
+                                if (step.status !== 'locked') setActiveStep(step.id)
+                            }}
                             className={
                                 step.id === activeStep
                                     ? 'bg-[#E8F0D0] text-[#577C09] font-medium'
                                     : step.status === 'locked'
                                         ? 'opacity-50 cursor-not-allowed'
-                                        : ''
+                                        : isCompleted
+                                            ? 'cursor-default'
+                                            : ''
                             }
                         >
                             <step.logo className="w-4 h-4" />

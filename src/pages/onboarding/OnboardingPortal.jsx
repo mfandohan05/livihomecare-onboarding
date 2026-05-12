@@ -54,13 +54,22 @@ export default function OnboardingPortal() {
 
     // fetch caregiver
     useEffect(() => {
-        const fetchCaregiver = async () => {
-            const data = await getCaregiverByToken(token)
-            setCaregiver(data)
-            if (data) setSteps(stepsByRole[data.role])
-            setLoading(false)
+    const fetchCaregiver = async () => {
+        const data = await getCaregiverByToken(token)
+        setCaregiver(data)
+        if (data) {
+            const roleSteps = stepsByRole[data.role]
+            if (data.status === 'completed') {
+                const completedSteps = roleSteps.map(step => ({ ...step, status: 'completed' }))
+                setSteps(completedSteps)
+                setActiveStep(roleSteps[roleSteps.length - 1].id)
+            } else {
+                setSteps(roleSteps)
+            }
         }
-        fetchCaregiver()
+        setLoading(false)
+        }
+    fetchCaregiver()
     }, [token])
 
     // update status to in_progress
@@ -82,8 +91,8 @@ export default function OnboardingPortal() {
                     status: dbProgress.completed_steps.includes(step.id)
                         ? 'completed'
                         : step.id === dbProgress.active_step
-                        ? 'active'
-                        : 'locked'
+                            ? 'active'
+                            : 'locked'
                 })))
                 return
             }
@@ -96,8 +105,8 @@ export default function OnboardingPortal() {
                     status: localProgress.completedSteps.includes(step.id)
                         ? 'completed'
                         : step.id === localProgress.activeStep
-                        ? 'active'
-                        : 'locked'
+                            ? 'active'
+                            : 'locked'
                 })))
             }
         }
@@ -106,14 +115,15 @@ export default function OnboardingPortal() {
 
     // mark last step completed
     useEffect(() => {
-        if (!steps.length) return
-        const lastStep = steps[steps.length - 1]
-        if (activeStep === lastStep.id) {
-            setSteps(prev => prev.map(step =>
-                step.id === lastStep.id ? { ...step, status: 'completed' } : step
-            ))
-        }
-    }, [activeStep, steps])
+    if (!steps.length) return
+    const lastStep = steps[steps.length - 1]
+    if (activeStep === lastStep.id) {
+        setSteps(prev => prev.map(step =>
+            step.id === lastStep.id ? { ...step, status: 'completed' } : step
+        ))
+        updateCaregiverStatus(caregiver.id, 'completed')
+    }
+}, [activeStep])
 
     if (loading) {
         return (
@@ -170,14 +180,22 @@ export default function OnboardingPortal() {
         setFormData(prev => ({ ...prev, [key]: data }))
     }
 
-    const handleNext = () => {
-        setSteps(prev => prev.map(step => {
+    const handleNext = async () => {
+        const updatedSteps = steps.map(step => {
             if (step.id === activeStep) return { ...step, status: 'completed' }
             if (step.id === activeStep + 1) return { ...step, status: 'active' }
             return step
-        }))
+        })
+
+        const completedStepIds = updatedSteps
+            .filter(s => s.status === 'completed')
+            .map(s => s.id)
+
+        setSteps(updatedSteps)
         setActiveStep(prev => prev + 1)
         window.scrollTo({ top: 0, behavior: 'smooth' })
+
+        await saveProgress(caregiver.id, activeStep + 1, completedStepIds, formData)
     }
 
     const renderStep = () => {
@@ -188,13 +206,16 @@ export default function OnboardingPortal() {
             case 'Welcome':
                 return <WelcomePage caregiver={caregiver} onNext={handleNext} welcomeSteps={welcomeSteps[role]} />
             case 'Upload Documents':
-                return <UploadDocumentsPage stepLabel={stepLabel} onNext={handleNext} role={caregiver.role} />
+                return <UploadDocumentsPage stepLabel={stepLabel} onNext={handleNext} role={caregiver.role} caregiver={caregiver} />
             case 'Personal Information':
                 return <PersonalInformationPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.personalInfo} onChange={(data) => updateFormData('personalInfo', data)} />
             case 'Enrollment Profile / Enrollment':
                 return <ERSPApplicationPage stepLabel={stepLabel} onNext={handleNext} setPopupOpen={setPopupOpen} initialData={formData.erspApplication} onChange={(data) => updateFormData('erspApplication', data)} />
             case 'New Hire Orientation':
-                return <NewHireOrientationPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.orientationQuiz} onChange={(data) => updateFormData('orientationQuiz', data)} />
+                return <NewHireOrientationPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.orientationQuiz} onChange={async (data) => {
+                    updateFormData('orientationQuiz', data)
+                    await saveProgress(caregiver.id, activeStep, steps.filter(s => s.status === 'completed').map(s => s.id), {...formData, orientationQuiz: data})
+                }} />
             case 'Competency Checklist':
                 return <SkillsCompetencyPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.competency} onChange={(data) => updateFormData('competency', data)} />
             case 'How to Use eRSP':
@@ -210,12 +231,13 @@ export default function OnboardingPortal() {
             case 'Offer Letter':
                 return <OfferLetterPage stepLabel={stepLabel} caregiver={caregiver} onNext={handleNext} initialData={formData.offerLetter} onChange={(data) => updateFormData('offerLetter', data)} />
             case 'Completed!':
-                return <CompletedPage stepLabel={stepLabel} caregiver={caregiver} getHoursWorked={getHoursWorked} />
+                return <CompletedPage stepLabel={stepLabel} caregiver={caregiver} getHoursWorked={getHoursWorked} updateCaregiverStatus={updateCaregiverStatus} />
             default:
                 return null
         }
     }
-
+    const isCompleted = caregiver?.status === 'completed' || 
+    steps.every(s => s.status === 'completed')
     return (
         <SidebarProvider>
             <SidebarComponent
@@ -227,6 +249,7 @@ export default function OnboardingPortal() {
                 caregiver={caregiver}
                 isIdle={isIdle}
                 getHoursWorked={getHoursWorked}
+                isCompleted={isCompleted}
             />
             <SidebarInset className="overflow-y-auto">
                 {renderStep()}

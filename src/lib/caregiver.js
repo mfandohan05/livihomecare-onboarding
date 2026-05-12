@@ -50,3 +50,39 @@ export async function loadProgress(caregiverId) {
   if (error) return null
   return data
 }
+
+export async function uploadDocument(caregiverId, documentType, file) {
+  const fileExt = file.name.split('.').pop()
+  const filePath = `${caregiverId}/${documentType}.${fileExt}`
+
+  // upload to storage
+  const { error: uploadError } = await supabase.storage
+    .from('documents')
+    .upload(filePath, file, { upsert: true })
+
+  if (uploadError) {
+    console.error('Error uploading file:', uploadError)
+    return null
+  }
+
+  // save record to DB
+  const { error: dbError } = await supabase
+    .from('caregiver_documents')
+    .upsert({
+      caregiver_id: caregiverId,
+      document_type: documentType,
+      file_name: file.name,
+      file_path: filePath,
+      file_size: file.size,
+      mime_type: file.type,
+    }, {
+      onConflict: 'caregiver_id, document_type'
+    })
+
+  if (dbError) {
+    console.error('Error saving document record:', dbError)
+    return null
+  }
+
+  return filePath
+}

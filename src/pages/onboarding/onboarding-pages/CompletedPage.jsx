@@ -99,11 +99,12 @@ const nextSteps = {
     ]
 }
 
-export default function CompletedPage({ caregiver, getHoursWorked }) {
+export default function CompletedPage({ caregiver, getHoursWorked, updateCaregiverStatus }) {
 
     useEffect(() => {
         caregiver.status = 'completed'
         console.log(`${caregiver.name} is now completed.`);
+        updateCaregiverStatus(caregiver.id, 'completed')
         console.log("Hours worked: " + getHoursWorked());
     }, [])
     return (

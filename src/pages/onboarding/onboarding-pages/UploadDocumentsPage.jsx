@@ -1,73 +1,89 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { FolderUp, CreditCard, Car, Stethoscope, IdCard, Camera, CheckCircle, Upload, Award } from 'lucide-react'
+import { FolderUp, CreditCard, Car, Stethoscope, IdCard, Camera, CheckCircle, Upload, Award, Loader2 } from 'lucide-react'
+import { uploadDocument } from '@/lib/caregiver'
 
+export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver }) {
 
-export default function UploadDocumentsPage({ stepLabel, onNext, role }) {
+  const baseDocs = [
+    {
+      id: 'driversLicense',
+      label: "Driver's License",
+      icon: CreditCard,
+      required: true,
+      description: "Front of your valid driver's license"
+    },
+    {
+      id: 'carInsurance',
+      label: "Car Insurance",
+      icon: Car,
+      required: true,
+      description: "Current insurance card or declaration page"
+    },
+    {
+      id: 'tbTest',
+      label: "TB Test / TB Skin Test",
+      icon: Stethoscope,
+      required: true,
+      description: "Results from your TB test or skin test"
+    },
+    {
+      id: 'socialSecurityCard',
+      label: "Social Security Card",
+      icon: IdCard,
+      required: true,
+      description: "Photo or scan of your Social Security card"
+    },
+    {
+      id: 'badgePhoto',
+      label: "Badge Photo",
+      icon: Camera,
+      required: true,
+      description: "A clear, recent photo of yourself for your employee badge"
+    },
+  ]
 
-
-const baseDocs = [
-  {
-    id: 'driversLicense',
-    label: "Driver's License",
-    icon: CreditCard,
-    required: true,
-    description: "Front of your valid driver's license"
-  },
-  {
-    id: 'carInsurance',
-    label: "Car Insurance",
-    icon: Car,
-    required: true,
-    description: "Current insurance card or declaration page"
-  },
-  {
-    id: 'tbTest',
-    label: "TB Test / TB Skin Test",
-    icon: Stethoscope,
-    required: true,
-    description: "Results from your TB test or skin test"
-  },
-  {
-    id: 'socialSecurityCard',
-    label: "Social Security Card",
-    icon: IdCard,
-    required: true,
-    description: "Photo or scan of your Social Security card"
-  },
-  {
-    id: 'badgePhoto',
-    label: "Badge Photo",
-    icon: Camera,
-    required: true,
-    description: "A clear, recent photo of yourself for your employee badge"
-  },
-]
-
-const optionalDocs = {
-  id: 'certifications',
+  const optionalDocs = {
+    id: 'certifications',
     label: "Certifications",
     icon: Award,
     required: false,
     description: "CNA, HHA, CPR, or any other relevant certifications (if applicable)"
-}
+  }
 
-const nursingLicenseDocument = {
-  id: 'nursingLicense',
-  label: 'Nursing License',
-  icon: Award,
-  required: true,
-  description: "Your current RN license issued by the NC Board of Nursing"
-}
-const requiredDocs = role === 'nurse' ? [...baseDocs, nursingLicenseDocument, optionalDocs] : [...baseDocs, optionalDocs]
+  const nursingLicenseDocument = {
+    id: 'nursingLicense',
+    label: 'Nursing License',
+    icon: Award,
+    required: true,
+    description: "Your current RN license issued by the NC Board of Nursing"
+  }
+
+  const requiredDocs = role === 'nurse'
+    ? [...baseDocs, nursingLicenseDocument, optionalDocs]
+    : [...baseDocs, optionalDocs]
 
   const [uploads, setUploads] = useState({})
+  const [uploading, setUploading] = useState({}) // tracks which docs are currently uploading
+  const [errors, setErrors] = useState({}) // tracks upload errors per doc
 
-  const handleFileChange = (docId, e) => {
+  const handleFileChange = async (docId, e) => {
     const file = e.target.files[0]
-    if (file) {
-      setUploads(prev => ({ ...prev, [docId]: file }))
+    if (!file) return
+
+    // show uploading state
+    setUploading(prev => ({ ...prev, [docId]: true }))
+    setErrors(prev => ({ ...prev, [docId]: null }))
+
+    const filePath = await uploadDocument(caregiver.id, docId, file)
+
+    if (filePath) {
+      setUploads(prev => ({ ...prev, [docId]: { name: file.name, path: filePath } }))
+    } else {
+      setErrors(prev => ({ ...prev, [docId]: 'Upload failed — please try again' }))
     }
+
+    setUploading(prev => ({ ...prev, [docId]: false }))
   }
 
   const handleRemove = (docId) => {
@@ -80,12 +96,7 @@ const requiredDocs = role === 'nurse' ? [...baseDocs, nursingLicenseDocument, op
 
   const requiredIds = requiredDocs.filter(d => d.required).map(d => d.id)
   const allRequiredUploaded = requiredIds.every(id => uploads[id])
-
-  const handleSubmit = () => {
-    if (!allRequiredUploaded) return
-    console.log('uploads', uploads)
-    onNext()
-  }
+  const anyUploading = Object.values(uploading).some(Boolean)
 
   return (
     <div className="max-w-2xl mx-auto py-16 px-8">
@@ -104,14 +115,19 @@ const requiredDocs = role === 'nurse' ? [...baseDocs, nursingLicenseDocument, op
         {requiredDocs.map((doc) => {
           const Icon = doc.icon
           const uploaded = uploads[doc.id]
+          const isUploading = uploading[doc.id]
+          const error = errors[doc.id]
 
           return (
             <div
               key={doc.id}
-              className={`border rounded-lg p-4 transition-colors ${uploaded
+              className={`border rounded-lg p-4 transition-colors ${
+                uploaded
                   ? 'border-[#577C09] bg-[#E8F0D0]'
+                  : error
+                  ? 'border-red-300 bg-red-50'
                   : 'border-border bg-background'
-                }`}
+              }`}
             >
               <div className="flex items-start gap-4">
                 <div className={`p-2 rounded-md ${uploaded ? 'bg-[#577C09]' : 'bg-muted'}`}>
@@ -136,7 +152,12 @@ const requiredDocs = role === 'nurse' ? [...baseDocs, nursingLicenseDocument, op
                   </div>
                   <p className="text-xs text-muted-foreground mb-3">{doc.description}</p>
 
-                  {uploaded ? (
+                  {isUploading ? (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Uploading...
+                    </div>
+                  ) : uploaded ? (
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-[#577C09] font-medium truncate max-w-[200px]">
                         {uploaded.name}
@@ -149,18 +170,23 @@ const requiredDocs = role === 'nurse' ? [...baseDocs, nursingLicenseDocument, op
                       </button>
                     </div>
                   ) : (
-                    <label className="cursor-pointer">
-                      <input
-                        type="file"
-                        accept="image/*,.pdf"
-                        className="hidden"
-                        onChange={(e) => handleFileChange(doc.id, e)}
-                      />
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground border border-dashed border-border rounded-md px-3 py-2 hover:border-[#577C09] hover:text-[#577C09] transition-colors w-fit">
-                        <Upload className="w-3 h-3" />
-                        <span>Click to upload — JPG, PNG or PDF</span>
-                      </div>
-                    </label>
+                    <>
+                      <label className="cursor-pointer">
+                        <input
+                          type="file"
+                          accept="image/*,.pdf"
+                          className="hidden"
+                          onChange={(e) => handleFileChange(doc.id, e)}
+                        />
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground border border-dashed border-border rounded-md px-3 py-2 hover:border-[#577C09] hover:text-[#577C09] transition-colors w-fit">
+                          <Upload className="w-3 h-3" />
+                          <span>Click to upload — JPG, PNG or PDF</span>
+                        </div>
+                      </label>
+                      {error && (
+                        <p className="text-xs text-red-600 mt-1">{error}</p>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -176,11 +202,16 @@ const requiredDocs = role === 'nurse' ? [...baseDocs, nursingLicenseDocument, op
       )}
 
       <Button
-        onClick={handleSubmit}
-        disabled={!allRequiredUploaded}
+        onClick={onNext}
+        disabled={!allRequiredUploaded || anyUploading}
         className="bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        Save & Continue
+        {anyUploading ? (
+          <span className="flex items-center gap-2">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Uploading...
+          </span>
+        ) : 'Save & Continue'}
       </Button>
     </div>
   )

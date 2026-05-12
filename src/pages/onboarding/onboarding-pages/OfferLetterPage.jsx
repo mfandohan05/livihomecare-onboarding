@@ -17,7 +17,7 @@ function CaregiverOfferLetter({ caregiver }) {
       <p>Dear {caregiver.name},</p>
       <p>
         We are pleased to extend an offer of employment with <strong>Livi Home Care</strong> for
-        the position of <strong>{caregiver.positionNameType[0]} {caregiver.positionNameType[1]}</strong>. This offer is
+        the position of <strong>{caregiver.position_title} ({caregiver.employment_type})</strong>. This offer is
         contingent upon the successful completion and verification of the following:
       </p>
       <ul className="space-y-1 pl-4">
@@ -37,17 +37,17 @@ function CaregiverOfferLetter({ caregiver }) {
       <div className="space-y-4">
         <div>
           <p className="font-medium">Position Title:</p>
-          <p className="text-muted-foreground">{caregiver.positionNameType[0]}</p>
+          <p className="text-muted-foreground">{caregiver.position_title}</p>
         </div>
         <div>
           <p className="font-medium">Compensation:</p>
           <p className="text-muted-foreground">
             Compensation rates may vary depending on the specific client case, the level of care
             required, and your experience, qualifications, and certifications. Hands-on care
-            assignments will start at <strong>${caregiver.compensation} per hour</strong> and may increase based on
+            assignments will start at <strong>${caregiver.pay_rate} per hour</strong> and may increase based on
             the client's needs, level of care required, scheduling demands, and at the sole
             discretion of the company. The base rate for non-hands-on companion or sitter
-            services is <strong>${caregiver.baseRateForOtherServices} per hour</strong>.
+            services is <strong>${caregiver.companion_pay_rate} per hour</strong>.
           </p>
         </div>
         <div>
@@ -327,7 +327,7 @@ export default function OfferLetterPage({ stepLabel, caregiver, onNext, initialD
           <p className="text-muted-foreground mb-6">
             {isNurse
               ? `I, ${caregiver.name}, agree to the terms of this Independent Contractor Agreement with Livi Home Care.`
-              : `I accept the position of ${caregiver.positionNameType?.[0]} with Livi Home Care under the terms outlined in this offer letter.`
+              : `I accept the position of ${caregiver.position_title} with Livi Home Care under the terms outlined in this offer letter.`
             }
           </p>
 
