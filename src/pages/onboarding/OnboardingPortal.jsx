@@ -19,7 +19,8 @@ import { useOnboardingTimer } from '@/hooks/useOnboardingTimer'
 
 import { useSaveProgress, loadProgress as loadLocalProgress } from '@/hooks/useOnboardingProgress'
 
-import { getCaregiverByToken, updateCaregiverStatus, saveProgress, loadProgress } from '@/lib/caregiver'
+import { getCaregiverByToken, updateCaregiverStatus, saveProgress, loadProgress, saveTimeLog } from '@/lib/caregiver'
+
 
 export default function OnboardingPortal() {
     const { token } = useParams()
@@ -115,13 +116,16 @@ export default function OnboardingPortal() {
 
     // mark last step completed
     useEffect(() => {
-    if (!steps.length) return
+    if (!steps.length) {
+        return;
+    } 
     const lastStep = steps[steps.length - 1]
     if (activeStep === lastStep.id) {
         setSteps(prev => prev.map(step =>
             step.id === lastStep.id ? { ...step, status: 'completed' } : step
         ))
         updateCaregiverStatus(caregiver.id, 'completed')
+        saveTimeLog(caregiver.id, getHoursWorked());
     }
 }, [activeStep])
 
@@ -217,17 +221,31 @@ export default function OnboardingPortal() {
                     await saveProgress(caregiver.id, activeStep, steps.filter(s => s.status === 'completed').map(s => s.id), {...formData, orientationQuiz: data})
                 }} />
             case 'Competency Checklist':
-                return <SkillsCompetencyPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.competency} onChange={(data) => updateFormData('competency', data)} />
+                return <SkillsCompetencyPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.competency} onChange={async (data) => {
+                    updateFormData('compentency', data)
+                    await saveProgress(
+                        caregiver.id,
+                        activeStep,
+                        steps.filter(s => s.status === 'completed').map(s => s.id),
+                        {...formData, competency: data}
+                    )
+                }} />
             case 'How to Use eRSP':
                 return <ERSPGuidePage stepLabel={stepLabel} onNext={handleNext} initialData={formData.erspGuide} onChange={(data) => updateFormData('erspGuide', data)} />
             case 'Forms & Agreements':
-                return <FormsApplicationsPage stepLabel={stepLabel} caregiver={caregiver} onNext={handleNext} initialData={{ signatures: formData.signatures, hepBStatus: formData.hepBStatus, completed: formData.formsCompleted }} onChange={(data) => {
+                return <FormsApplicationsPage stepLabel={stepLabel} caregiver={caregiver} onNext={handleNext} initialData={{ signatures: formData.signatures, hepBStatus: formData.hepBStatus, completed: formData.formsCompleted }} onChange={async (data) => {
                     updateFormData('signatures', data.signatures)
                     updateFormData('formsCompleted', data.completed)
+                    await saveProgress(
+                        caregiver.id,
+                        activeStep,
+                        steps.filter(s => s.status === 'completed').map(s => s.id),
+                        {...formData, signatures: data.signatures, formsCompleted: data.completed}
+                    )
                 }} onHepBChange={(status) => updateFormData('hepBStatus', status)} />
             case 'Tax Forms':
             case 'Tax Forms (W-9)':
-                return <TaxFormsPage stepLabel={stepLabel} onNext={handleNext} role={role} />
+                return <TaxFormsPage stepLabel={stepLabel} onNext={handleNext} role={role} caregiver={caregiver} />
             case 'Offer Letter':
                 return <OfferLetterPage stepLabel={stepLabel} caregiver={caregiver} onNext={handleNext} initialData={formData.offerLetter} onChange={(data) => updateFormData('offerLetter', data)} />
             case 'Completed!':

@@ -171,7 +171,6 @@ export default function SkillsCompetencyPage({ stepLabel, onNext, initialData, o
       lunch,
       dinner,
     }
-    console.log(result)
     onNext()
   }
 

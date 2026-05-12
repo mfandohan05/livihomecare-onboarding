@@ -1,6 +1,4 @@
 import { PartyPopper, Heart, CheckCircle, Mail, Phone } from 'lucide-react'
-import { useEffect } from 'react'
-
 
 const completedSteps = {
     'caregiver': [
@@ -100,13 +98,7 @@ const nextSteps = {
 }
 
 export default function CompletedPage({ caregiver, getHoursWorked, updateCaregiverStatus }) {
-
-    useEffect(() => {
-        caregiver.status = 'completed'
-        console.log(`${caregiver.name} is now completed.`);
-        updateCaregiverStatus(caregiver.id, 'completed')
-        console.log("Hours worked: " + getHoursWorked());
-    }, [])
+    
     return (
         <div className="max-w-2xl mx-auto py-16 px-8">
 

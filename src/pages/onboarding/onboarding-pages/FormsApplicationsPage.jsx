@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ScrollText, ChevronDown, ChevronUp } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
 const today = new Date().toLocaleDateString('en-US', {
     year: 'numeric',
@@ -138,7 +139,24 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
             {children}
         </div>
     )
+    const handleDirectDepositComplete = async (formId) => {
+    const { error } = await supabase.functions.invoke('save-banking-info', {
+        body: {
+            caregiverId: caregiver.id,
+            bankName: directDeposit.bankName,
+            routingNumber: directDeposit.routingNumber,
+            accountNumber: directDeposit.accountNumber,
+            accountType: directDeposit.accountType,
+        }
+    })
 
+    if (error) {
+        console.error('Error saving banking info:', error)
+        return
+    }
+
+    markComplete(formId)
+}
     const forms = [
         {
             id: 'form_0',
@@ -164,7 +182,7 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
         },
         {
             id: 'form_1',
-            title: `Job Description - ${caregiver.jobDescription}`,
+            title: `Job Description - ${caregiver.job_description}`,
             render: () => {
                 const jobDesc = jobDescriptions[caregiver.role] || jobDescriptions.caregiver
 
@@ -439,7 +457,7 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
                             completed['form_6']
                         }
                         completed={completed}
-                        markComplete={markComplete}
+                        markComplete={handleDirectDepositComplete}
                     />
                 </>
             )

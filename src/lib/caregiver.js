@@ -1,6 +1,5 @@
 import { supabase } from './supabase'
 
-// Get caregiver by token — replaces getCaregiverByToken from mock data
 export async function getCaregiverByToken(token) {
   const { data, error } = await supabase
     .from('caregivers')
@@ -12,7 +11,6 @@ export async function getCaregiverByToken(token) {
   return data
 }
 
-// Update caregiver status
 export async function updateCaregiverStatus(caregiverId, status) {
   const { error } = await supabase
     .from('caregivers')
@@ -22,7 +20,6 @@ export async function updateCaregiverStatus(caregiverId, status) {
   if (error) console.error('Error updating status:', error)
 }
 
-// Save progress
 export async function saveProgress(caregiverId, activeStep, completedSteps, formData) {
   const { error } = await supabase
     .from('caregiver_progress')
@@ -39,7 +36,6 @@ export async function saveProgress(caregiverId, activeStep, completedSteps, form
   if (error) console.error('Error saving progress:', error)
 }
 
-// Load progress
 export async function loadProgress(caregiverId) {
   const { data, error } = await supabase
     .from('caregiver_progress')
@@ -51,11 +47,11 @@ export async function loadProgress(caregiverId) {
   return data
 }
 
-export async function uploadDocument(caregiverId, documentType, file) {
+export async function uploadDocument(caregiverId, caregiverName, documentType, file) {
   const fileExt = file.name.split('.').pop()
-  const filePath = `${caregiverId}/${documentType}.${fileExt}`
+  const sanitizedName = caregiverName.replace(/[^a-zA-Z0-9]/g, '_')
+  const filePath = `${caregiverId}/${sanitizedName}_${documentType}.${fileExt}`
 
-  // upload to storage
   const { error: uploadError } = await supabase.storage
     .from('documents')
     .upload(filePath, file, { upsert: true })
@@ -65,13 +61,12 @@ export async function uploadDocument(caregiverId, documentType, file) {
     return null
   }
 
-  // save record to DB
   const { error: dbError } = await supabase
     .from('caregiver_documents')
     .upsert({
       caregiver_id: caregiverId,
       document_type: documentType,
-      file_name: file.name,
+      file_name: `${sanitizedName}_${documentType}.${fileExt}`,
       file_path: filePath,
       file_size: file.size,
       mime_type: file.type,
@@ -85,4 +80,88 @@ export async function uploadDocument(caregiverId, documentType, file) {
   }
 
   return filePath
+}
+
+export async function getDocuments(caregiverId) {
+  const { data, error } = await supabase
+    .from('caregiver_documents')
+    .select('*')
+    .eq('caregiver_id', caregiverId)
+
+  if (error) return []
+  return data
+}
+
+export async function saveTaxFormData(caregiverId, formType, data) {
+  const updates = { caregiver_id: caregiverId }
+  
+  if (formType === 'i9') {
+    updates.i9_data = {
+      lastName: data.lastName,
+      firstName: data.firstName,
+      middleInitial: data.middleInitial,
+      otherLastNames: data.otherLastNames,
+      address: data.address,
+      apt: data.apt,
+      city: data.city,
+      state: data.state,
+      zip: data.zip,
+      email: data.email,
+      phone: data.phone,
+      citizenshipStatus: data.citizenshipStatus,
+      uscisNumber: data.uscisNumber,
+      expDate: data.expDate,
+      alienNumber: data.alienNumber,
+    }
+  }
+
+  if (formType === 'w4') {
+    updates.w4_data = {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      address: data.address,
+      cityStateZip: data.cityStateZip,
+      filingStatus: data.filingStatus,
+      multipleJobs: data.multipleJobs,
+      childCredit: data.childCredit,
+      otherDependents: data.otherDependents,
+      totalCredits: data.totalCredits,
+      otherIncome: data.otherIncome,
+      deductions: data.deductions,
+      extraWithholding: data.extraWithholding,
+      exempt: data.exempt,
+    }
+  }
+
+  if (formType === 'w9') {
+    updates.w9_data = {
+      name: data.name,
+      businessName: data.businessName,
+      taxClassification: data.taxClassification,
+      llcClassification: data.llcClassification,
+      otherDescription: data.otherDescription,
+      address: data.address,
+      cityStateZip: data.cityStateZip,
+    }
+  }
+
+  const { error } = await supabase
+    .from('caregiver_tax_forms')
+    .upsert(updates, { onConflict: 'caregiver_id' })
+
+  if (error) console.error('Error saving tax form data:', error)
+}
+
+export async function saveTimeLog(caregiverId, hoursWorked) {
+  const { error } = await supabase
+    .from('caregiver_time_logs')
+    .insert({
+      caregiver_id: caregiverId,
+      session_start: new Date(Date.now() - hoursWorked * 60 * 60 * 1000).toISOString(),
+      session_end: new Date().toISOString(),
+      active_seconds: Math.round(hoursWorked * 3600),
+      completed: true
+    })
+
+  if (error) console.error('Error saving time log:', error)
 }

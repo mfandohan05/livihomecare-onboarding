@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { FolderUp, CreditCard, Car, Stethoscope, IdCard, Camera, CheckCircle, Upload, Award, Loader2 } from 'lucide-react'
-import { uploadDocument } from '@/lib/caregiver'
+import { uploadDocument, getDocuments } from '@/lib/caregiver'
 
 export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver }) {
 
@@ -64,18 +64,42 @@ export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver
     : [...baseDocs, optionalDocs]
 
   const [uploads, setUploads] = useState({})
-  const [uploading, setUploading] = useState({}) // tracks which docs are currently uploading
-  const [errors, setErrors] = useState({}) // tracks upload errors per doc
+  const [uploading, setUploading] = useState({}) 
+  const [errors, setErrors] = useState({}) 
+  const [loadingDocs, setLoadingDocs] = useState(true);
+
+  useEffect(() => {
+    const fetchDocs = async () => {
+      const docs = await getDocuments(caregiver.id)
+      const restored = {}
+      docs.forEach(doc => {
+        restored[doc.document_type] = {
+          name: doc.file_name,
+          path: doc.file_path
+        }
+      })
+      setUploads(restored)
+      setLoadingDocs(false)
+    }
+    fetchDocs()
+  }, [caregiver.id])
+
+  if (loadingDocs) {
+    return (
+      <div className="max-w-2xl mx-auto py-16 px-8 flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-[#577C09]" />
+      </div>
+    )
+  }
 
   const handleFileChange = async (docId, e) => {
     const file = e.target.files[0]
     if (!file) return
 
-    // show uploading state
     setUploading(prev => ({ ...prev, [docId]: true }))
     setErrors(prev => ({ ...prev, [docId]: null }))
 
-    const filePath = await uploadDocument(caregiver.id, docId, file)
+    const filePath = await uploadDocument(caregiver.id, caregiver.name, docId, file)
 
     if (filePath) {
       setUploads(prev => ({ ...prev, [docId]: { name: file.name, path: filePath } }))
