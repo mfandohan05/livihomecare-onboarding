@@ -65,7 +65,7 @@ function I9Form({ data, onChange, onSave, saved }) {
         { value: '4', label: 'An alien authorized to work (enter expiration date and number below)' },
     ]
 
-    
+
 
     const alienFieldComplete = data.citizenshipStatus !== '4' || (
         data.alienNumberType && (
@@ -583,19 +583,49 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver }) {
         }
 
         if (formId === 'w4') {
+            await supabase.functions.invoke('save-ssn', {
+                body: {
+                    caregiverId: caregiver.id,
+                    ssn: w4Data.ssn?.replace(/-/g, '') || '',
+                    dob: '',
+                    ein: '',
+                }
+            })
+
             await saveTaxFormData(caregiver.id, 'w4', w4Data)
+
+            await supabase.functions.invoke('generate-w4', {
+                body: {
+                    caregiverId: caregiver.id,
+                    w4Data: {
+                        ...w4Data,
+                        ssn: w4Data.ssn?.replace(/-/g, '') || ''
+                    }
+                }
+            })
         }
 
         if (formId === 'w9') {
             await supabase.functions.invoke('save-ssn', {
                 body: {
                     caregiverId: caregiver.id,
-                    ssn: w9Data.ssn || '',
+                    ssn: w9Data.ssn?.replace(/-/g, '') || '',
                     dob: '',
-                    ein: w9Data.ein || '',
+                    ein: w9Data.ein?.replace(/-/g, '') || '',
                 }
             })
             await saveTaxFormData(caregiver.id, 'w9', w9Data)
+
+            await supabase.functions.invoke('generate-w9', {
+                body: {
+                    caregiverId: caregiver.id,
+                    w9Data: {
+                        ...w9Data,
+                        ssn: w9Data.ssn?.replace(/-/g, '') || '',
+                        ein: w9Data.ein?.replace(/-/g, '') || '',
+                    }
+                }
+            })
         }
 
         setSaved(prev => ({ ...prev, [formId]: true }))
