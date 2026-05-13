@@ -102,7 +102,7 @@ export default function AdminDashboard() {
                         recentCaregivers.map((caregiver) => (
                             <div
                                 key={caregiver.id}
-                                onClick={() => navigate(`/admin/caregivers/${caregiver.id}`)}
+                                onClick={() => navigate(`/admin/employees/${caregiver.id}`)}
                                 className="px-6 py-4 flex items-center justify-between hover:bg-muted/30 cursor-pointer transition-colors"
                             >
                                 <div className="flex items-center gap-3">

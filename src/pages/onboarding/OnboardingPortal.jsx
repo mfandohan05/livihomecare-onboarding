@@ -56,55 +56,45 @@ export default function OnboardingPortal() {
     useSaveProgress(token, activeStep, steps, formData)
 
     useEffect(() => {
-    const fetchCaregiver = async () => {
-        const data = await getCaregiverByToken(token)
-        setCaregiver(data)
+        const fetchCaregiver = async () => {
+            const data = await getCaregiverByToken(token)
+            setCaregiver(data)
 
-        if (data) {
-            const roleSteps = stepsByRole[data.role]
+            if (data) {
+                const roleSteps = stepsByRole[data.role]
 
-            if (data.status === 'completed') {
-                setSteps(roleSteps.map(step => ({ ...step, status: 'completed' })))
-                setActiveStep(roleSteps[roleSteps.length - 1].id)
-                setLoading(false)
-                return
-            }
+                if (data.status === 'completed') {
+                    setSteps(roleSteps.map(step => ({ ...step, status: 'completed' })))
+                    setActiveStep(roleSteps[roleSteps.length - 1].id)
+                    setLoading(false)
+                    return
+                }
 
-            setSteps(roleSteps)
+                setSteps(roleSteps)
 
-            const dbProgress = await loadProgress(data.id)
-            if (dbProgress) {
-                setActiveStep(dbProgress.active_step)
-                setFormData(prev => ({ ...prev, ...dbProgress.form_data }))
-                setSteps(roleSteps.map(step => ({
-                    ...step,
-                    status: dbProgress.completed_steps.includes(step.id)
-                        ? 'completed'
-                        : step.id === dbProgress.active_step
-                        ? 'active'
-                        : 'locked'
-                })))
-            } else {
-                const localProgress = loadLocalProgress(token)
-                if (localProgress) {
-                    setActiveStep(localProgress.activeStep)
-                    setFormData(prev => ({ ...prev, ...localProgress.formData }))
+                const dbProgress = await loadProgress(data.id)
+                if (dbProgress) {
+                    setActiveStep(dbProgress.active_step)
+                    setFormData(prev => ({ ...prev, ...dbProgress.form_data }))
                     setSteps(roleSteps.map(step => ({
                         ...step,
-                        status: localProgress.completedSteps.includes(step.id)
+                        status: dbProgress.completed_steps.includes(step.id)
                             ? 'completed'
-                            : step.id === localProgress.activeStep
-                            ? 'active'
-                            : 'locked'
+                            : step.id === dbProgress.active_step
+                                ? 'active'
+                                : 'locked'
                     })))
+                } else {
+                    localStorage.removeItem(`onboarding_${data.token}`)
+                    setSteps(roleSteps)
+                    setActiveStep(1)
                 }
             }
-        }
 
-        setLoading(false)
-    }
-    fetchCaregiver()
-}, [token])
+            setLoading(false)
+        }
+        fetchCaregiver()
+    }, [token])
 
 
     // update status to in_progress
@@ -120,12 +110,12 @@ export default function OnboardingPortal() {
     }, [caregiver?.id])
 
     useEffect(() => {
-    if (!caregiver) return
-    const key = `livi_session_start_${token}`
-    if (!localStorage.getItem(key)) {
-        localStorage.setItem(key, new Date().toISOString())
-    }
-}, [caregiver?.id])
+        if (!caregiver) return
+        const key = `livi_session_start_${token}`
+        if (!localStorage.getItem(key)) {
+            localStorage.setItem(key, new Date().toISOString())
+        }
+    }, [caregiver?.id])
 
 
     // mark last step completed
@@ -142,11 +132,11 @@ export default function OnboardingPortal() {
 
             const saveLog = async () => {
                 const { data } = await supabase
-                .from('caregiver_time_logs')
-                .select('id')
-                .eq('caregiver_id', caregiver.id)
-                .eq('completed', true)
-                .maybeSingle()
+                    .from('caregiver_time_logs')
+                    .select('id')
+                    .eq('caregiver_id', caregiver.id)
+                    .eq('completed', true)
+                    .maybeSingle()
 
                 if (!data) {
                     const actualStart = localStorage.getItem(`livi_session_start_${token}`)

@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Download, Upload, Eye, EyeOff, Copy, Check, Loader2 } from 'lucide-react'
+import { ArrowLeft, Download, Upload, Eye, EyeOff, Copy, Check, Loader2, CheckCircle, Clock } from 'lucide-react'
 import {
     AlertDialog,
     AlertDialogContent,
@@ -43,6 +43,20 @@ const docLabel = (type) => {
     return labels[type] || type
 }
 
+const stepFormDataKey = {
+    1: null,
+    2: 'uploads',
+    3: 'personalInfo',
+    4: 'erspApplication',
+    5: 'orientationQuiz',
+    6: 'competency',
+    7: 'erspGuide',
+    8: 'signatures',
+    9: null,
+    10: 'offerLetter',
+    11: null,
+}
+
 export default function AdminCaregiverDetail() {
     const { id } = useParams()
     const navigate = useNavigate()
@@ -65,6 +79,10 @@ export default function AdminCaregiverDetail() {
     const [reauthError, setReauthError] = useState(null)
     const [reauthLoading, setReauthLoading] = useState(false)
     const [reauthTarget, setReauthTarget] = useState(null)
+    const [personalInfo, setPersonalInfo] = useState({})
+    const [managingProgress, setManagingProgress] = useState(false)
+    const [deletingStep, setDeletingStep] = useState(null)
+    const [resetting, setResetting] = useState(false)
 
 
 
@@ -88,6 +106,8 @@ export default function AdminCaregiverDetail() {
         setCaregiver(caregiverData)
         setDocuments(docsData || [])
         setProgress(progressData)
+        const personalInfo = progressData?.form_data?.personalInfo || {};
+        setPersonalInfo(personalInfo)
         setTimeLog(timeData)
         setLoading(false)
     }
@@ -204,6 +224,84 @@ export default function AdminCaregiverDetail() {
         setCopied(true)
         setTimeout(() => setCopied(false), 2000)
     }
+
+    const handleDeleteStepProgress = async (stepId) => {
+    setDeletingStep(stepId)
+
+    const updatedCompletedSteps = progress.completed_steps.filter(s => s !== stepId)
+    const newActiveStep = updatedCompletedSteps.length > 0
+        ? Math.min(stepId, Math.min(...updatedCompletedSteps) + 1)
+        : 1
+
+    const formDataKey = stepFormDataKey[stepId]
+    let updatedFormData = { ...progress.form_data }
+    if (formDataKey) updatedFormData[formDataKey] = {}
+
+    await supabase
+        .from('caregiver_progress')
+        .update({
+            completed_steps: updatedCompletedSteps,
+            active_step: newActiveStep,
+            form_data: updatedFormData,
+            last_saved: new Date().toISOString()
+        })
+        .eq('caregiver_id', id)
+
+    if (stepId === 9) {
+        await supabase.from('caregiver_tax_forms').delete().eq('caregiver_id', id)
+        await supabase
+            .from('caregiver_documents')
+            .delete()
+            .eq('caregiver_id', id)
+            .in('document_type', ['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'])
+
+        const taxFiles = documents
+            .filter(d => ['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'].includes(d.document_type))
+            .map(d => d.file_path)
+        if (taxFiles.length > 0) await supabase.storage.from('generated-pdfs').remove(taxFiles)
+    }
+
+    if (stepId === 2) {
+        const uploadedDocs = documents.filter(d =>
+            !['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'].includes(d.document_type)
+        )
+        const filePaths = uploadedDocs.map(d => d.file_path)
+        if (filePaths.length > 0) await supabase.storage.from('documents').remove(filePaths)
+        await supabase
+            .from('caregiver_documents')
+            .delete()
+            .eq('caregiver_id', id)
+            .not('document_type', 'in', '("i9_completed","w4_completed","w9_completed","nc4ez_completed")')
+    }
+
+    await fetchAll()
+    setDeletingStep(null)
+}
+
+const handleResetProgress = async () => {
+    setResetting(true)
+
+    await supabase.from('caregiver_progress').delete().eq('caregiver_id', id)
+    await supabase.from('caregivers').update({ status: 'pending', link_expires_at: null }).eq('id', id)
+    await supabase.from('caregiver_time_logs').delete().eq('caregiver_id', id)
+    await supabase.from('caregiver_tax_forms').delete().eq('caregiver_id', id)
+
+    const docFiles = documents
+        .filter(d => !['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'].includes(d.document_type))
+        .map(d => d.file_path)
+    const pdfFiles = documents
+        .filter(d => ['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'].includes(d.document_type))
+        .map(d => d.file_path)
+
+    if (docFiles.length > 0) await supabase.storage.from('documents').remove(docFiles)
+    if (pdfFiles.length > 0) await supabase.storage.from('generated-pdfs').remove(pdfFiles)
+
+    await supabase.from('caregiver_documents').delete().eq('caregiver_id', id)
+
+    await fetchAll()
+    setResetting(false)
+    setManagingProgress(false)
+}
 
     const activeTime = timeLog
         ? `${Math.floor(timeLog.active_seconds / 3600)}h ${Math.floor((timeLog.active_seconds % 3600) / 60)}m`
@@ -349,6 +447,111 @@ export default function AdminCaregiverDetail() {
                             )}
                         </div>
                     </div>
+
+                    {/* Caregiver Provided Info */}
+                    {Object.keys(personalInfo).length > 0 && (
+                        <div className="bg-white rounded-xl border border-border p-6">
+                            <h2 className="font-semibold mb-4">Personal Information (Caregiver Provided)</h2>
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <p className="text-muted-foreground">Full Name</p>
+                                    <p className="font-medium">{personalInfo.firstName} {personalInfo.lastName}</p>
+                                </div>
+                                <div>
+                                    <p className="text-muted-foreground">Email</p>
+                                    <p className="font-medium">{personalInfo.email || '—'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-muted-foreground">Primary Phone</p>
+                                    <p className="font-medium">{personalInfo.primaryPhone || '—'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-muted-foreground">Secondary Phone</p>
+                                    <p className="font-medium">{personalInfo.secondaryPhone || '—'}</p>
+                                </div>
+                                <div className="col-span-2">
+                                    <p className="text-muted-foreground">Address</p>
+                                    <p className="font-medium">
+                                        {personalInfo.streetAddress}, {personalInfo.city}, {personalInfo.state} {personalInfo.zip}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Primary Emergency Contact */}
+                            {personalInfo.primaryEmergencyFirstName && (
+                                <div className="mt-6">
+                                    <h3 className="text-sm font-medium mb-3 pb-2 border-b">Primary Emergency Contact</h3>
+                                    <div className="grid grid-cols-2 gap-4 text-sm">
+                                        <div>
+                                            <p className="text-muted-foreground">Name</p>
+                                            <p className="font-medium">{personalInfo.primaryEmergencyFirstName} {personalInfo.primaryEmergencyLastName}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-muted-foreground">Relationship</p>
+                                            <p className="font-medium">{personalInfo.primaryEmergencyRelationship || '—'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-muted-foreground">Primary Phone</p>
+                                            <p className="font-medium">{personalInfo.primaryEmergencyPrimaryPhone || '—'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-muted-foreground">Secondary Phone</p>
+                                            <p className="font-medium">{personalInfo.primaryEmergencySecondaryPhone || '—'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-muted-foreground">Email</p>
+                                            <p className="font-medium">{personalInfo.primaryEmergencyEmail || '—'}</p>
+                                        </div>
+                                        {personalInfo.primaryEmergencyStreetAddress && (
+                                            <div>
+                                                <p className="text-muted-foreground">Address</p>
+                                                <p className="font-medium">
+                                                    {personalInfo.primaryEmergencyStreetAddress}, {personalInfo.primaryEmergencyCity}, {personalInfo.primaryEmergencyState} {personalInfo.primaryEmergencyZip}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Secondary Emergency Contact */}
+                            {personalInfo.secondaryEmergencyFirstName && (
+                                <div className="mt-6">
+                                    <h3 className="text-sm font-medium mb-3 pb-2 border-b">Secondary Emergency Contact</h3>
+                                    <div className="grid grid-cols-2 gap-4 text-sm">
+                                        <div>
+                                            <p className="text-muted-foreground">Name</p>
+                                            <p className="font-medium">{personalInfo.secondaryEmergencyFirstName} {personalInfo.secondaryEmergencyLastName}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-muted-foreground">Relationship</p>
+                                            <p className="font-medium">{personalInfo.secondaryEmergencyRelationship || '—'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-muted-foreground">Primary Phone</p>
+                                            <p className="font-medium">{personalInfo.secondaryEmergencyPrimaryPhone || '—'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-muted-foreground">Secondary Phone</p>
+                                            <p className="font-medium">{personalInfo.secondaryEmergencySecondaryPhone || '—'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-muted-foreground">Email</p>
+                                            <p className="font-medium">{personalInfo.secondaryEmergencyEmail || '—'}</p>
+                                        </div>
+                                        {personalInfo.secondaryEmergencyStreetAddress && (
+                                            <div>
+                                                <p className="text-muted-foreground">Address</p>
+                                                <p className="font-medium">
+                                                    {personalInfo.secondaryEmergencyStreetAddress}, {personalInfo.secondaryEmergencyCity}, {personalInfo.secondaryEmergencyState} {personalInfo.secondaryEmergencyZip}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {/* Documents */}
                     <div className="bg-white rounded-xl border border-border p-6">
@@ -533,6 +736,73 @@ export default function AdminCaregiverDetail() {
                             <p className="text-sm text-muted-foreground">Not started yet</p>
                         )}
                     </div>
+                    {/* Manage Progress */}
+{progress && (
+    <div className="bg-white rounded-xl border border-border p-6">
+        <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold">Manage Progress</h2>
+            <button
+                onClick={() => setManagingProgress(prev => !prev)}
+                className="text-xs text-[#577C09] hover:underline"
+            >
+                {managingProgress ? 'Done' : 'Manage'}
+            </button>
+        </div>
+
+        <div className="space-y-2">
+            {progress.completed_steps?.length > 0 ? (
+                progress.completed_steps.map((stepId) => (
+                    <div
+                        key={stepId}
+                        className="flex items-center justify-between py-2 px-3 rounded-lg bg-[#E8F0D0]"
+                    >
+                        <div className="flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-[#577C09]" />
+                            <span className="text-sm text-[#577C09] font-medium">Step {stepId}</span>
+                        </div>
+                        {managingProgress && (
+                            <button
+                                onClick={() => handleDeleteStepProgress(stepId)}
+                                disabled={deletingStep === stepId}
+                                className="text-xs text-red-500 hover:underline disabled:opacity-50"
+                            >
+                                {deletingStep === stepId ? 'Removing...' : 'Remove'}
+                            </button>
+                        )}
+                    </div>
+                ))
+            ) : (
+                <p className="text-sm text-muted-foreground">No steps completed yet</p>
+            )}
+        </div>
+
+        {progress.active_step && (
+            <div className="mt-3 py-2 px-3 rounded-lg bg-amber-50 border border-amber-200">
+                <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-amber-600" />
+                    <span className="text-sm text-amber-700 font-medium">
+                        Currently on Step {progress.active_step}
+                    </span>
+                </div>
+            </div>
+        )}
+
+        {managingProgress && (
+            <div className="mt-4 pt-4 border-t">
+                <p className="text-xs text-muted-foreground mb-3">
+                    Resetting progress will clear all completed steps, documents, time logs, and return the caregiver to the beginning of onboarding.
+                </p>
+                <button
+                    onClick={handleResetProgress}
+                    disabled={resetting}
+                    className="w-full py-2 px-4 rounded-lg border border-red-200 text-red-600 text-sm hover:bg-red-50 transition-colors disabled:opacity-50"
+                >
+                    {resetting ? 'Resetting...' : 'Reset All Progress'}
+                </button>
+            </div>
+        )}
+    </div>
+)}
 
                     {/* Time & Pay */}
                     <div className="bg-white rounded-xl border border-border p-6">
