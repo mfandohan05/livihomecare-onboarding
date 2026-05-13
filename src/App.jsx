@@ -4,6 +4,7 @@ import AdminRoute from './components/admin/AdminRoute';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminCaregivers from './pages/admin/AdminCaregivers';
 import AdminCaregiverDetail from './pages/admin/AdminCaregiverDetail';
+import AdminCaregiverMap from './pages/admin/AdminCaregiverMap';
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 
 
@@ -30,6 +31,12 @@ function App() {
             <AdminCaregiverDetail />
           </AdminRoute>
         } />
+        <Route path="/admin/map" element={
+    <AdminRoute>
+        <AdminCaregiverMap />
+    </AdminRoute>
+} />
+
       </Routes>
     </BrowserRouter>
   )

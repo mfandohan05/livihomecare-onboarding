@@ -251,7 +251,7 @@ export default function AdminCaregivers() {
                 onClose={() => setShowNewDialog(false)}
                 onCreated={(newCaregiver) => {
                     setShowNewDialog(false)
-                    navigate(`/admin/caregivers/${newCaregiver.id}`)
+                    navigate(`/admin/employees/${newCaregiver.id}`)
                 }}
             />
 
@@ -309,7 +309,7 @@ export default function AdminCaregivers() {
                             <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Employment Type</th>
                             <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Phone</th>
                             <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Start Date</th>
-                            <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Progress</th>
+
                             <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Active Time</th>
                             <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</th>
                         </tr>
@@ -325,7 +325,6 @@ export default function AdminCaregivers() {
                             filtered.map((caregiver) => {
                                 const progress = caregiver.caregiver_progress?.[0]
                                 const timeLog = caregiver.caregiver_time_logs?.[0]
-                                const completedCount = progress?.completed_steps?.length || 0
                                 const activeSeconds = timeLog?.active_seconds || 0
                                 const activeTime = activeSeconds > 0
                                     ? `${Math.floor(activeSeconds / 3600)}h ${Math.floor((activeSeconds % 3600) / 60)}m`
@@ -353,16 +352,6 @@ export default function AdminCaregivers() {
                                         <td className="px-6 py-4 text-sm text-muted-foreground">{caregiver.phone || '—'}</td>
                                         <td className="px-6 py-4 text-sm text-muted-foreground">
                                             {caregiver.start_date ? new Date(caregiver.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            {progress ? (
-                                                <div>
-                                                    <p className="text-sm font-medium">{completedCount} steps done</p>
-                                                    <p className="text-xs text-muted-foreground">Step {progress.active_step} active</p>
-                                                </div>
-                                            ) : (
-                                                <span className="text-sm text-muted-foreground">Not started</span>
-                                            )}
                                         </td>
                                         <td className="px-6 py-4 text-sm text-muted-foreground">{activeTime}</td>
                                         <td className="px-6 py-4">

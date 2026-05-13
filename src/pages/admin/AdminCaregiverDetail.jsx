@@ -83,6 +83,11 @@ export default function AdminCaregiverDetail() {
     const [managingProgress, setManagingProgress] = useState(false)
     const [deletingStep, setDeletingStep] = useState(null)
     const [resetting, setResetting] = useState(false)
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+    const [deletePassword, setDeletePassword] = useState('')
+    const [deleteError, setDeleteError] = useState(null)
+    const [deleteLoading, setDeleteLoading] = useState(false)
+    const competency = progress?.form_data?.compentency;
 
 
 
@@ -113,14 +118,18 @@ export default function AdminCaregiverDetail() {
     }
 
     const handleDownload = async (doc) => {
-        const { data } = await supabase.storage
-            .from(doc.file_path.startsWith(id) ? 'generated-pdfs' : 'documents')
-            .createSignedUrl(doc.file_path, 3600)
+    const bucket = ['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'].includes(doc.document_type)
+        ? 'generated-pdfs'
+        : 'documents'
 
-        if (data?.signedUrl) {
-            window.open(data.signedUrl, '_blank')
-        }
+    const { data } = await supabase.storage
+        .from(bucket)
+        .createSignedUrl(doc.file_path, 3600)
+
+    if (data?.signedUrl) {
+        window.open(data.signedUrl, '_blank')
     }
+}
 
     const handleUpload = async (documentType, file) => {
         setUploadingDoc(documentType)
@@ -226,83 +235,118 @@ export default function AdminCaregiverDetail() {
     }
 
     const handleDeleteStepProgress = async (stepId) => {
-    setDeletingStep(stepId)
+        setDeletingStep(stepId)
 
-    const updatedCompletedSteps = progress.completed_steps.filter(s => s !== stepId)
-    const newActiveStep = updatedCompletedSteps.length > 0
-        ? Math.min(stepId, Math.min(...updatedCompletedSteps) + 1)
-        : 1
+        const updatedCompletedSteps = progress.completed_steps.filter(s => s !== stepId)
+        const newActiveStep = updatedCompletedSteps.length > 0
+            ? Math.min(stepId, Math.min(...updatedCompletedSteps) + 1)
+            : 1
 
-    const formDataKey = stepFormDataKey[stepId]
-    let updatedFormData = { ...progress.form_data }
-    if (formDataKey) updatedFormData[formDataKey] = {}
+        const formDataKey = stepFormDataKey[stepId]
+        let updatedFormData = { ...progress.form_data }
+        if (formDataKey) updatedFormData[formDataKey] = {}
 
-    await supabase
-        .from('caregiver_progress')
-        .update({
-            completed_steps: updatedCompletedSteps,
-            active_step: newActiveStep,
-            form_data: updatedFormData,
-            last_saved: new Date().toISOString()
-        })
-        .eq('caregiver_id', id)
-
-    if (stepId === 9) {
-        await supabase.from('caregiver_tax_forms').delete().eq('caregiver_id', id)
         await supabase
-            .from('caregiver_documents')
-            .delete()
+            .from('caregiver_progress')
+            .update({
+                completed_steps: updatedCompletedSteps,
+                active_step: newActiveStep,
+                form_data: updatedFormData,
+                last_saved: new Date().toISOString()
+            })
             .eq('caregiver_id', id)
-            .in('document_type', ['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'])
 
-        const taxFiles = documents
+        if (stepId === 9) {
+            await supabase.from('caregiver_tax_forms').delete().eq('caregiver_id', id)
+            await supabase
+                .from('caregiver_documents')
+                .delete()
+                .eq('caregiver_id', id)
+                .in('document_type', ['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'])
+
+            const taxFiles = documents
+                .filter(d => ['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'].includes(d.document_type))
+                .map(d => d.file_path)
+            if (taxFiles.length > 0) await supabase.storage.from('generated-pdfs').remove(taxFiles)
+        }
+
+        if (stepId === 2) {
+            const uploadedDocs = documents.filter(d =>
+                !['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'].includes(d.document_type)
+            )
+            const filePaths = uploadedDocs.map(d => d.file_path)
+            if (filePaths.length > 0) await supabase.storage.from('documents').remove(filePaths)
+            await supabase
+                .from('caregiver_documents')
+                .delete()
+                .eq('caregiver_id', id)
+                .not('document_type', 'in', '("i9_completed","w4_completed","w9_completed","nc4ez_completed")')
+        }
+
+        await fetchAll()
+        setDeletingStep(null)
+    }
+
+    const handleResetProgress = async () => {
+        setResetting(true)
+
+        await supabase.from('caregiver_progress').delete().eq('caregiver_id', id)
+        await supabase.from('caregivers').update({ status: 'pending', link_expires_at: null }).eq('id', id)
+        await supabase.from('caregiver_time_logs').delete().eq('caregiver_id', id)
+        await supabase.from('caregiver_tax_forms').delete().eq('caregiver_id', id)
+
+        const docFiles = documents
+            .filter(d => !['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'].includes(d.document_type))
+            .map(d => d.file_path)
+        const pdfFiles = documents
             .filter(d => ['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'].includes(d.document_type))
             .map(d => d.file_path)
-        if (taxFiles.length > 0) await supabase.storage.from('generated-pdfs').remove(taxFiles)
+
+        if (docFiles.length > 0) await supabase.storage.from('documents').remove(docFiles)
+        if (pdfFiles.length > 0) await supabase.storage.from('generated-pdfs').remove(pdfFiles)
+
+        await supabase.from('caregiver_documents').delete().eq('caregiver_id', id)
+
+        await fetchAll()
+        setResetting(false)
+        setManagingProgress(false)
     }
 
-    if (stepId === 2) {
-        const uploadedDocs = documents.filter(d =>
-            !['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'].includes(d.document_type)
-        )
-        const filePaths = uploadedDocs.map(d => d.file_path)
-        if (filePaths.length > 0) await supabase.storage.from('documents').remove(filePaths)
-        await supabase
-            .from('caregiver_documents')
-            .delete()
-            .eq('caregiver_id', id)
-            .not('document_type', 'in', '("i9_completed","w4_completed","w9_completed","nc4ez_completed")')
+    const handleDelete = async () => {
+        setDeleteLoading(true)
+        setDeleteError(null)
+
+        const { data: { session } } = await supabase.auth.getSession()
+        const { error: authError } = await supabase.auth.signInWithPassword({
+            email: session.user.email,
+            password: deletePassword
+        })
+
+        if (authError) {
+            setDeleteError('Incorrect password')
+            setDeleteLoading(false)
+            return
+        }
+
+        const docFiles = documents
+            .filter(d => !['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'].includes(d.document_type))
+            .map(d => d.file_path)
+        const pdfFiles = documents
+            .filter(d => ['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'].includes(d.document_type))
+            .map(d => d.file_path)
+
+        if (docFiles.length > 0) await supabase.storage.from('documents').remove(docFiles)
+        if (pdfFiles.length > 0) await supabase.storage.from('generated-pdfs').remove(pdfFiles)
+
+        await supabase.from('caregiver_documents').delete().eq('caregiver_id', id)
+        await supabase.from('caregiver_progress').delete().eq('caregiver_id', id)
+        await supabase.from('caregiver_time_logs').delete().eq('caregiver_id', id)
+        await supabase.from('caregiver_tax_forms').delete().eq('caregiver_id', id)
+        await supabase.from('caregiver_banking').delete().eq('caregiver_id', id)
+        await supabase.from('caregivers').delete().eq('id', id)
+
+        navigate('/admin/employees')
     }
-
-    await fetchAll()
-    setDeletingStep(null)
-}
-
-const handleResetProgress = async () => {
-    setResetting(true)
-
-    await supabase.from('caregiver_progress').delete().eq('caregiver_id', id)
-    await supabase.from('caregivers').update({ status: 'pending', link_expires_at: null }).eq('id', id)
-    await supabase.from('caregiver_time_logs').delete().eq('caregiver_id', id)
-    await supabase.from('caregiver_tax_forms').delete().eq('caregiver_id', id)
-
-    const docFiles = documents
-        .filter(d => !['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'].includes(d.document_type))
-        .map(d => d.file_path)
-    const pdfFiles = documents
-        .filter(d => ['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'].includes(d.document_type))
-        .map(d => d.file_path)
-
-    if (docFiles.length > 0) await supabase.storage.from('documents').remove(docFiles)
-    if (pdfFiles.length > 0) await supabase.storage.from('generated-pdfs').remove(pdfFiles)
-
-    await supabase.from('caregiver_documents').delete().eq('caregiver_id', id)
-
-    await fetchAll()
-    setResetting(false)
-    setManagingProgress(false)
-}
-
     const activeTime = timeLog
         ? `${Math.floor(timeLog.active_seconds / 3600)}h ${Math.floor((timeLog.active_seconds % 3600) / 60)}m`
         : null
@@ -334,7 +378,14 @@ const handleResetProgress = async () => {
     const uploadableDocs = caregiver.role === 'nurse'
         ? ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'nursingLicense', 'certifications']
         : ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'certifications']
-
+    const groupedSkills = Object.entries(competency?.checked || {})
+    .filter(([_, checked]) => checked)
+    .reduce((acc, [key]) => {
+        const [category, skill] = key.split('__')
+        if (!acc[category]) acc[category] = []
+        acc[category].push(skill)
+        return acc
+    }, {})
     return (
         <AdminLayout>
             {/* Reauth Dialog */}
@@ -383,6 +434,50 @@ const handleResetProgress = async () => {
                 </AlertDialogContent>
             </AlertDialog>
             {/* Back button */}
+            <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+                <AlertDialogContent className="max-w-sm">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete {caregiver?.name}?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete this employee and all of their data including documents, forms, progress and time logs. This cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="space-y-4 pt-2">
+                        <div className="space-y-1.5">
+                            <Label htmlFor="delete_password">Enter your password to confirm</Label>
+                            <Input
+                                id="delete_password"
+                                type="password"
+                                value={deletePassword}
+                                onChange={(e) => setDeletePassword(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleDelete()}
+                                placeholder="••••••••"
+                                autoFocus
+                            />
+                        </div>
+                        {deleteError && <p className="text-sm text-red-500">{deleteError}</p>}
+                        <div className="flex gap-3">
+                            <Button
+                                onClick={handleDelete}
+                                disabled={!deletePassword || deleteLoading}
+                                className="bg-red-500 hover:bg-red-600 text-white disabled:opacity-50"
+                            >
+                                {deleteLoading ? 'Deleting...' : 'Delete Employee'}
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setShowDeleteConfirm(false)
+                                    setDeletePassword('')
+                                    setDeleteError(null)
+                                }}
+                            >
+                                Cancel
+                            </Button>
+                        </div>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialog>
             <button
                 onClick={() => navigate('/admin/employees')}
                 className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
@@ -402,9 +497,14 @@ const handleResetProgress = async () => {
                         <p className="text-muted-foreground capitalize">{caregiver.role} · {caregiver.position_title}</p>
                     </div>
                 </div>
-                <span className={`text-sm font-medium px-3 py-1.5 rounded-full ${statusColor(caregiver.status)}`}>
+                <div className='flex flex-row gap-'>
+                    <span className={`text-sm font-medium px-3 py-1.5 rounded-full ${statusColor(caregiver.status)}`}>
                     {statusLabel(caregiver.status)}
                 </span>
+                    
+                </div>
+                
+                
             </div>
 
             <div className="grid grid-cols-3 gap-6">
@@ -552,7 +652,40 @@ const handleResetProgress = async () => {
                             )}
                         </div>
                     )}
+{/* Competency Checklist */}
+{competency && Object.keys(competency.checked || {}).length > 0 && (
+    <div className="bg-white rounded-xl border border-border p-6">
+        <h2 className="font-semibold mb-4">Competency Checklist</h2>
 
+        {Object.entries(groupedSkills).map(([category, skills]) => (
+            <div key={category} className="mb-4">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 capitalize">
+                    {category.replace(/_/g, ' ')}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                    {skills.map(skill => (
+                        <span key={skill} className="text-xs font-medium px-2.5 py-1 rounded-full bg-[#E8F0D0] text-[#577C09]">
+                            {skill}
+                        </span>
+                    ))}
+                </div>
+            </div>
+        ))}
+
+        {competency.lunch && (
+            <div className="mt-4 mb-4">
+                <p className="text-xs text-muted-foreground mb-1">Nutritious lunch they would prepare</p>
+                <p className="text-sm bg-muted/30 rounded-lg px-4 py-3">{competency.lunch}</p>
+            </div>
+        )}
+        {competency.dinner && (
+            <div>
+                <p className="text-xs text-muted-foreground mb-1">Nutritious dinner they would prepare</p>
+                <p className="text-sm bg-muted/30 rounded-lg px-4 py-3">{competency.dinner}</p>
+            </div>
+        )}
+    </div>
+)}
                     {/* Documents */}
                     <div className="bg-white rounded-xl border border-border p-6">
                         <h2 className="font-semibold mb-4">Documents</h2>
@@ -681,8 +814,15 @@ const handleResetProgress = async () => {
                                     )}
                                 </button>
                             </div>
+                            
                         </div>
                     </div>
+                    <button
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="text-sm text-red-500 hover:text-red-600 hover:underline transition-colors"
+                >
+                    Delete employee profile
+                </button>
                 </div>
 
                 {/* Right column */}
@@ -737,72 +877,72 @@ const handleResetProgress = async () => {
                         )}
                     </div>
                     {/* Manage Progress */}
-{progress && (
-    <div className="bg-white rounded-xl border border-border p-6">
-        <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold">Manage Progress</h2>
-            <button
-                onClick={() => setManagingProgress(prev => !prev)}
-                className="text-xs text-[#577C09] hover:underline"
-            >
-                {managingProgress ? 'Done' : 'Manage'}
-            </button>
-        </div>
+                    {progress && (
+                        <div className="bg-white rounded-xl border border-border p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="font-semibold">Manage Progress</h2>
+                                <button
+                                    onClick={() => setManagingProgress(prev => !prev)}
+                                    className="text-xs text-[#577C09] hover:underline"
+                                >
+                                    {managingProgress ? 'Done' : 'Manage'}
+                                </button>
+                            </div>
 
-        <div className="space-y-2">
-            {progress.completed_steps?.length > 0 ? (
-                progress.completed_steps.map((stepId) => (
-                    <div
-                        key={stepId}
-                        className="flex items-center justify-between py-2 px-3 rounded-lg bg-[#E8F0D0]"
-                    >
-                        <div className="flex items-center gap-2">
-                            <CheckCircle className="w-4 h-4 text-[#577C09]" />
-                            <span className="text-sm text-[#577C09] font-medium">Step {stepId}</span>
+                            <div className="space-y-2">
+                                {progress.completed_steps?.length > 0 ? (
+                                    progress.completed_steps.map((stepId) => (
+                                        <div
+                                            key={stepId}
+                                            className="flex items-center justify-between py-2 px-3 rounded-lg bg-[#E8F0D0]"
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <CheckCircle className="w-4 h-4 text-[#577C09]" />
+                                                <span className="text-sm text-[#577C09] font-medium">Step {stepId}</span>
+                                            </div>
+                                            {managingProgress && (
+                                                <button
+                                                    onClick={() => handleDeleteStepProgress(stepId)}
+                                                    disabled={deletingStep === stepId}
+                                                    className="text-xs text-red-500 hover:underline disabled:opacity-50"
+                                                >
+                                                    {deletingStep === stepId ? 'Removing...' : 'Remove'}
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-sm text-muted-foreground">No steps completed yet</p>
+                                )}
+                            </div>
+
+                            {progress.active_step && (
+                                <div className="mt-3 py-2 px-3 rounded-lg bg-amber-50 border border-amber-200">
+                                    <div className="flex items-center gap-2">
+                                        <Clock className="w-4 h-4 text-amber-600" />
+                                        <span className="text-sm text-amber-700 font-medium">
+                                            Currently on Step {progress.active_step}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {managingProgress && (
+                                <div className="mt-4 pt-4 border-t">
+                                    <p className="text-xs text-muted-foreground mb-3">
+                                        Resetting progress will clear all completed steps, documents, time logs, and return the caregiver to the beginning of onboarding.
+                                    </p>
+                                    <button
+                                        onClick={handleResetProgress}
+                                        disabled={resetting}
+                                        className="w-full py-2 px-4 rounded-lg border border-red-200 text-red-600 text-sm hover:bg-red-50 transition-colors disabled:opacity-50"
+                                    >
+                                        {resetting ? 'Resetting...' : 'Reset All Progress'}
+                                    </button>
+                                </div>
+                            )}
                         </div>
-                        {managingProgress && (
-                            <button
-                                onClick={() => handleDeleteStepProgress(stepId)}
-                                disabled={deletingStep === stepId}
-                                className="text-xs text-red-500 hover:underline disabled:opacity-50"
-                            >
-                                {deletingStep === stepId ? 'Removing...' : 'Remove'}
-                            </button>
-                        )}
-                    </div>
-                ))
-            ) : (
-                <p className="text-sm text-muted-foreground">No steps completed yet</p>
-            )}
-        </div>
-
-        {progress.active_step && (
-            <div className="mt-3 py-2 px-3 rounded-lg bg-amber-50 border border-amber-200">
-                <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-amber-600" />
-                    <span className="text-sm text-amber-700 font-medium">
-                        Currently on Step {progress.active_step}
-                    </span>
-                </div>
-            </div>
-        )}
-
-        {managingProgress && (
-            <div className="mt-4 pt-4 border-t">
-                <p className="text-xs text-muted-foreground mb-3">
-                    Resetting progress will clear all completed steps, documents, time logs, and return the caregiver to the beginning of onboarding.
-                </p>
-                <button
-                    onClick={handleResetProgress}
-                    disabled={resetting}
-                    className="w-full py-2 px-4 rounded-lg border border-red-200 text-red-600 text-sm hover:bg-red-50 transition-colors disabled:opacity-50"
-                >
-                    {resetting ? 'Resetting...' : 'Reset All Progress'}
-                </button>
-            </div>
-        )}
-    </div>
-)}
+                    )}
 
                     {/* Time & Pay */}
                     <div className="bg-white rounded-xl border border-border p-6">

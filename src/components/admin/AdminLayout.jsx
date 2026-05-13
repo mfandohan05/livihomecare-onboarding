@@ -13,7 +13,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { LayoutDashboard, Users, LogOut, ChevronDown } from 'lucide-react'
+import { LayoutDashboard, Users, LogOut, ChevronDown, Map } from 'lucide-react'
 import companyLogo from '@/assets/logo.png'
 
 export default function AdminLayout({ children }) {
@@ -45,6 +45,7 @@ export default function AdminLayout({ children }) {
     const navItems = [
         { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
         { label: 'Employees', path: '/admin/employees', icon: Users },
+        { label: 'Caregiver Map', path: '/admin/map', icon: Map }
     ]
 
     const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/')
