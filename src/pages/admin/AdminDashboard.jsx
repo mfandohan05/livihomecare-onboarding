@@ -62,13 +62,13 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between mb-8">
                 <div>
                     <h1 className="text-2xl font-bold">Dashboard</h1>
-                    <p className="text-muted-foreground">Manage your caregivers and onboarding</p>
+                    <p className="text-muted-foreground">Manage your employees and onboarding</p>
                 </div>
             </div>
 
             <div className="grid grid-cols-4 gap-4 mb-8">
                 {[
-                    { label: 'Total Caregivers', value: stats.total, icon: Users, color: 'text-blue-600 bg-blue-50' },
+                    { label: 'Total Employees Enrolled', value: stats.total, icon: Users, color: 'text-blue-600 bg-blue-50' },
                     { label: 'Pending', value: stats.pending, icon: AlertCircle, color: 'text-muted-foreground bg-muted' },
                     { label: 'In Progress', value: stats.inProgress, icon: Clock, color: 'text-amber-600 bg-amber-50' },
                     { label: 'Completed', value: stats.completed, icon: CheckCircle, color: 'text-[#577C09] bg-[#E8F0D0]' },
@@ -85,9 +85,9 @@ export default function AdminDashboard() {
 
             <div className="bg-white rounded-xl border border-border">
                 <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-                    <h2 className="font-semibold">Recent Caregivers</h2>
+                    <h2 className="font-semibold">Recent Employees</h2>
                     <button
-                        onClick={() => navigate('/admin/caregivers')}
+                        onClick={() => navigate('/admin/employees')}
                         className="text-sm text-[#577C09] hover:underline"
                     >
                         View all

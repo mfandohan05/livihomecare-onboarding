@@ -257,8 +257,8 @@ export default function AdminCaregivers() {
 
             <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-2xl font-bold">Caregivers</h1>
-                    <p className="text-muted-foreground">{caregivers.length} total caregivers</p>
+                    <h1 className="text-2xl font-bold">Employees</h1>
+                    <p className="text-muted-foreground">{caregivers.length} total employees enrolled</p>
                 </div>
                 <Button
                     onClick={() => setShowNewDialog(true)}
@@ -334,7 +334,7 @@ export default function AdminCaregivers() {
                                 return (
                                     <tr
                                         key={caregiver.id}
-                                        onClick={() => navigate(`/admin/caregivers/${caregiver.id}`)}
+                                        onClick={() => navigate(`/admin/employees/${caregiver.id}`)}
                                         className="hover:bg-muted/30 cursor-pointer transition-colors"
                                     >
                                         <td className="px-6 py-4">

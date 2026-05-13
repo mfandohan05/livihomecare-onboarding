@@ -44,7 +44,7 @@ export default function AdminLayout({ children }) {
 
     const navItems = [
         { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
-        { label: 'Caregivers', path: '/admin/caregivers', icon: Users },
+        { label: 'Employees', path: '/admin/employees', icon: Users },
     ]
 
     const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/')

@@ -3,7 +3,9 @@ import AdminLogin from './pages/admin/AdminLogin';
 import AdminRoute from './components/admin/AdminRoute';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminCaregivers from './pages/admin/AdminCaregivers';
+import AdminCaregiverDetail from './pages/admin/AdminCaregiverDetail';
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+
 
 function App() {
 
@@ -18,9 +20,14 @@ function App() {
             <AdminDashboard />
           </AdminRoute>
         } />
-        <Route path="/admin/caregivers" element={
+        <Route path="/admin/employees" element={
           <AdminRoute>
             <AdminCaregivers />
+          </AdminRoute>
+        } />
+        <Route path="/admin/employees/:id" element={
+          <AdminRoute>
+            <AdminCaregiverDetail />
           </AdminRoute>
         } />
       </Routes>
