@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -559,6 +559,38 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver }) {
     const [w4Data, setW4Data] = useState({})
     const [w9Data, setW9Data] = useState({})
     const [nc4ezUpload, setNc4ezUpload] = useState(null)
+
+    useEffect(() => {
+        const restoreSaved = async () => {
+            const { data, error } = await supabase
+                .from('caregiver_tax_forms')
+                .select('*')
+                .eq('caregiver_id', caregiver.id)
+                .maybeSingle()
+
+            if (error || !data) return
+
+            const restoredSaved = isContractor ? {
+                i9: !!data.i9_data && Object.keys(data.i9_data).length > 0,
+                w9: !!data.w9_data && Object.keys(data.w9_data).length > 0,
+            } : {
+                i9: !!data.i9_data && Object.keys(data.i9_data).length > 0,
+                w4: !!data.w4_data && Object.keys(data.w4_data).length > 0,
+                nc4ez: !!data.nc4ez_file_path,
+            }
+
+            setSaved(restoredSaved)
+
+            const firstUnsaved = steps.findIndex(s => !restoredSaved[s.id])
+            if (firstUnsaved !== -1) {
+                setCurrentStep(firstUnsaved)
+            } else {
+                setCurrentStep(steps.length - 1)
+            }
+        }
+        restoreSaved()
+    }, [caregiver.id])
+
 
     const allDone = Object.values(saved).every(Boolean)
 

@@ -20,6 +20,7 @@ import { useOnboardingTimer } from '@/hooks/useOnboardingTimer'
 import { useSaveProgress, loadProgress as loadLocalProgress } from '@/hooks/useOnboardingProgress'
 
 import { getCaregiverByToken, updateCaregiverStatus, saveProgress, loadProgress, saveTimeLog } from '@/lib/caregiver'
+import { supabase } from '@/lib/supabase'
 
 
 export default function OnboardingPortal() {
@@ -50,84 +51,112 @@ export default function OnboardingPortal() {
         erspApplication: { popupOpened: false, popupClosed: false },
         erspGuide: { confirmed: false }
     })
+    const [timeLogSaved, setTimeLogSaved] = useState(false);
 
     useSaveProgress(token, activeStep, steps, formData)
 
-    // fetch caregiver
     useEffect(() => {
     const fetchCaregiver = async () => {
         const data = await getCaregiverByToken(token)
         setCaregiver(data)
+
         if (data) {
             const roleSteps = stepsByRole[data.role]
+
             if (data.status === 'completed') {
-                const completedSteps = roleSteps.map(step => ({ ...step, status: 'completed' }))
-                setSteps(completedSteps)
+                setSteps(roleSteps.map(step => ({ ...step, status: 'completed' })))
                 setActiveStep(roleSteps[roleSteps.length - 1].id)
-            } else {
-                setSteps(roleSteps)
+                setLoading(false)
+                return
             }
-        }
-        setLoading(false)
-        }
-    fetchCaregiver()
-    }, [token])
 
-    // update status to in_progress
-    useEffect(() => {
-        if (!caregiver) return
-        updateCaregiverStatus(caregiver.id, 'in_progress')
-        console.log(`${caregiver.name} is now in progress.`)
-    }, [caregiver?.id])
+            setSteps(roleSteps)
 
-    // restore progress
-    useEffect(() => {
-        const restoreProgress = async () => {
-            const dbProgress = await loadProgress(caregiver.id)
+            const dbProgress = await loadProgress(data.id)
             if (dbProgress) {
                 setActiveStep(dbProgress.active_step)
                 setFormData(prev => ({ ...prev, ...dbProgress.form_data }))
-                setSteps(prev => prev.map(step => ({
+                setSteps(roleSteps.map(step => ({
                     ...step,
                     status: dbProgress.completed_steps.includes(step.id)
                         ? 'completed'
                         : step.id === dbProgress.active_step
+                        ? 'active'
+                        : 'locked'
+                })))
+            } else {
+                const localProgress = loadLocalProgress(token)
+                if (localProgress) {
+                    setActiveStep(localProgress.activeStep)
+                    setFormData(prev => ({ ...prev, ...localProgress.formData }))
+                    setSteps(roleSteps.map(step => ({
+                        ...step,
+                        status: localProgress.completedSteps.includes(step.id)
+                            ? 'completed'
+                            : step.id === localProgress.activeStep
                             ? 'active'
                             : 'locked'
-                })))
-                return
-            }
-            const localProgress = loadLocalProgress(token)
-            if (localProgress) {
-                setActiveStep(localProgress.activeStep)
-                setFormData(prev => ({ ...prev, ...localProgress.formData }))
-                setSteps(prev => prev.map(step => ({
-                    ...step,
-                    status: localProgress.completedSteps.includes(step.id)
-                        ? 'completed'
-                        : step.id === localProgress.activeStep
-                            ? 'active'
-                            : 'locked'
-                })))
+                    })))
+                }
             }
         }
-        if (caregiver) restoreProgress()
-    }, [caregiver])
+
+        setLoading(false)
+    }
+    fetchCaregiver()
+}, [token])
+
+
+    // update status to in_progress
+    useEffect(() => {
+        if (!caregiver) {
+            return
+        }
+        if (caregiver.status === "completed") {
+            return;
+        }
+        updateCaregiverStatus(caregiver.id, 'in_progress')
+        console.log(`${caregiver.name} is now in progress.`)
+    }, [caregiver?.id])
+
+    useEffect(() => {
+    if (!caregiver) return
+    const key = `livi_session_start_${token}`
+    if (!localStorage.getItem(key)) {
+        localStorage.setItem(key, new Date().toISOString())
+    }
+}, [caregiver?.id])
+
 
     // mark last step completed
     useEffect(() => {
-    if (!steps.length) {
-        return;
-    } 
-    const lastStep = steps[steps.length - 1]
-    if (activeStep === lastStep.id) {
-        setSteps(prev => prev.map(step =>
-            step.id === lastStep.id ? { ...step, status: 'completed' } : step
-        ))
-        updateCaregiverStatus(caregiver.id, 'completed')
-        saveTimeLog(caregiver.id, getHoursWorked());
-    }
-}, [activeStep])
+        if (!steps.length) {
+            return;
+        }
+        const lastStep = steps[steps.length - 1]
+        if (activeStep === lastStep.id) {
+            setSteps(prev => prev.map(step =>
+                step.id === lastStep.id ? { ...step, status: 'completed' } : step
+            ))
+            updateCaregiverStatus(caregiver.id, 'completed')
+
+            const saveLog = async () => {
+                const { data } = await supabase
+                .from('caregiver_time_logs')
+                .select('id')
+                .eq('caregiver_id', caregiver.id)
+                .eq('completed', true)
+                .maybeSingle()
+
+                if (!data) {
+                    const actualStart = localStorage.getItem(`livi_session_start_${token}`)
+                    saveTimeLog(caregiver.id, getHoursWorked(), actualStart);
+                }
+            }
+
+            saveLog();
+        }
+    }, [activeStep])
 
     if (loading) {
         return (
@@ -218,7 +247,7 @@ export default function OnboardingPortal() {
             case 'New Hire Orientation':
                 return <NewHireOrientationPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.orientationQuiz} onChange={async (data) => {
                     updateFormData('orientationQuiz', data)
-                    await saveProgress(caregiver.id, activeStep, steps.filter(s => s.status === 'completed').map(s => s.id), {...formData, orientationQuiz: data})
+                    await saveProgress(caregiver.id, activeStep, steps.filter(s => s.status === 'completed').map(s => s.id), { ...formData, orientationQuiz: data })
                 }} />
             case 'Competency Checklist':
                 return <SkillsCompetencyPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.competency} onChange={async (data) => {
@@ -227,7 +256,7 @@ export default function OnboardingPortal() {
                         caregiver.id,
                         activeStep,
                         steps.filter(s => s.status === 'completed').map(s => s.id),
-                        {...formData, competency: data}
+                        { ...formData, competency: data }
                     )
                 }} />
             case 'How to Use eRSP':
@@ -240,22 +269,30 @@ export default function OnboardingPortal() {
                         caregiver.id,
                         activeStep,
                         steps.filter(s => s.status === 'completed').map(s => s.id),
-                        {...formData, signatures: data.signatures, formsCompleted: data.completed}
+                        { ...formData, signatures: data.signatures, formsCompleted: data.completed }
                     )
                 }} onHepBChange={(status) => updateFormData('hepBStatus', status)} />
             case 'Tax Forms':
             case 'Tax Forms (W-9)':
                 return <TaxFormsPage stepLabel={stepLabel} onNext={handleNext} role={role} caregiver={caregiver} />
             case 'Offer Letter':
-                return <OfferLetterPage stepLabel={stepLabel} caregiver={caregiver} onNext={handleNext} initialData={formData.offerLetter} onChange={(data) => updateFormData('offerLetter', data)} />
+                return <OfferLetterPage stepLabel={stepLabel} caregiver={caregiver} onNext={handleNext} initialData={formData.offerLetter} onChange={async (data) => {
+                    updateFormData('offerLetter', data)
+                    await saveProgress(
+                        caregiver.id,
+                        activeStep,
+                        steps.filter(s => s.status === 'completed').map(s => s.id),
+                        { ...formData, offerLetter: data }
+                    )
+                }} />
             case 'Completed!':
                 return <CompletedPage stepLabel={stepLabel} caregiver={caregiver} getHoursWorked={getHoursWorked} updateCaregiverStatus={updateCaregiverStatus} />
             default:
                 return null
         }
     }
-    const isCompleted = caregiver?.status === 'completed' || 
-    steps.every(s => s.status === 'completed')
+    const isCompleted = caregiver?.status === 'completed' ||
+        steps.every(s => s.status === 'completed')
     return (
         <SidebarProvider>
             <SidebarComponent

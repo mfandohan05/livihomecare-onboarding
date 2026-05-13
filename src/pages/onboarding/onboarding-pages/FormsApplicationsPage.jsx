@@ -497,7 +497,6 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
                                 'Universal Precautions',
                                 'Cleanup Procedures',
                                 'Hepatitis B and Tuberculosis Awareness and Procedures',
-                                'Blood Borne Pathogens Training',
                                 'Safe Transfer of Clients (Back Safety)',
                                 'Home and Fire Safety',
                                 'Emergency Preparedness',
@@ -506,7 +505,6 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
                                 'HIPAA and Client Confidentiality',
                                 'Documentation',
                                 'Home Expectations',
-                                'In-Service Training',
                             ].map((item, i) => (
                                 <li key={i} className="flex items-start gap-2">
                                     <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#577C09] shrink-0" />

@@ -152,12 +152,12 @@ export async function saveTaxFormData(caregiverId, formType, data) {
   if (error) console.error('Error saving tax form data:', error)
 }
 
-export async function saveTimeLog(caregiverId, hoursWorked) {
+export async function saveTimeLog(caregiverId, hoursWorked, sessionStart) {
   const { error } = await supabase
     .from('caregiver_time_logs')
     .insert({
       caregiver_id: caregiverId,
-      session_start: new Date(Date.now() - hoursWorked * 60 * 60 * 1000).toISOString(),
+      session_start: sessionStart || new Date().toISOString,
       session_end: new Date().toISOString(),
       active_seconds: Math.round(hoursWorked * 3600),
       completed: true
