@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import {
@@ -6,12 +7,35 @@ import {
     NavigationMenuList,
     NavigationMenuLink,
 } from '@/components/ui/navigation-menu'
-import { LayoutDashboard, Users, LogOut, Plus } from 'lucide-react'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { LayoutDashboard, Users, LogOut, ChevronDown } from 'lucide-react'
 import companyLogo from '@/assets/logo.png'
 
 export default function AdminLayout({ children }) {
     const navigate = useNavigate()
     const location = useLocation()
+    const [adminName, setAdminName] = useState('')
+
+    useEffect(() => {
+        const fetchAdmin = async () => {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) return
+
+            const { data } = await supabase
+                .from('admin_users')
+                .select('name')
+                .eq('id', session.user.id)
+                .single()
+
+            if (data) setAdminName(data.name)
+        }
+        fetchAdmin()
+    }, [])
 
     const handleSignOut = async () => {
         await supabase.auth.signOut()
@@ -58,22 +82,26 @@ export default function AdminLayout({ children }) {
                     </NavigationMenu>
                 </div>
 
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => navigate('/admin/caregivers/new')}
-                        className="flex items-center gap-2 bg-[#577C09] hover:bg-[#3D5906] text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
-                    >
-                        <Plus className="w-4 h-4" />
-                        New Caregiver
-                    </button>
-                    <button
-                        onClick={handleSignOut}
-                        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-md hover:bg-muted"
-                    >
-                        <LogOut className="w-4 h-4" />
-                        Sign out
-                    </button>
-                </div>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-md hover:bg-muted">
+                            <div className="w-7 h-7 rounded-full bg-[#577C09] flex items-center justify-center text-white text-xs font-medium">
+                                {adminName ? adminName.split(' ').map(n => n[0]).join('').slice(0, 2) : '?'}
+                            </div>
+                            <span>Hi, {adminName ? adminName.split(' ')[0] : '...'}</span>
+                            <ChevronDown className="w-3 h-3" />
+                        </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem
+                            onClick={handleSignOut}
+                            className="flex items-center gap-2 text-red-600 cursor-pointer"
+                        >
+                            <LogOut className="w-4 h-4" />
+                            Sign out
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
 
             <div className="max-w-6xl mx-auto px-8 py-10">
