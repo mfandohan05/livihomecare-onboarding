@@ -468,66 +468,134 @@ function W9Form({ data, onChange, onSave, saved }) {
     )
 }
 
-function NC4EZForm({ upload, setUpload, saved, onSave }) {
-    const handleFile = (e) => {
-        const file = e.target.files[0]
-        if (file) setUpload(file)
-    }
+function NC4EZForm({ data, onChange, onSave, saved }) {
+    const set = (key) => (e) => onChange({ ...data, [key]: e.target.value })
+
+    const filingOptions = [
+        { value: 'single', label: 'Single or Married Filing Separately' },
+        { value: 'head', label: 'Head of Household' },
+        { value: 'joint', label: 'Married Filing Jointly or Surviving Spouse' },
+    ]
+
+    const canSave = data.firstName && data.lastName && data.ssn &&
+        data.address && data.city && data.state && data.zip &&
+        data.county && data.filingStatus
 
     return (
         <div className="space-y-6">
             <div className="bg-[#E8F0D0] rounded-lg p-4">
                 <p className="text-sm text-[#3D5906]">
-                    <span className="font-medium">What is the NC-4EZ?</span> This is the North Carolina state employee withholding certificate. It tells Livi Home Care how much NC state income tax to withhold from your paychecks.
+                    <span className="font-medium">NC-4EZ</span> is the North Carolina state withholding certificate. It tells Livi Home Care how much NC state income tax to withhold from your paychecks.
                 </p>
             </div>
 
-            <div className="border border-border rounded-lg p-5 space-y-4">
-                <div>
-                    <p className="text-sm font-medium mb-1">Step 1 — Download the blank form</p>
-                    <p className="text-xs text-muted-foreground mb-3">Download the official NC-4EZ form from the NC Department of Revenue.</p>
-                    <a href="https://www.ncdor.gov/nc-4ez-employees-withholding-allowance-certificate/open" target="_blank" rel="noreferrer">
-                        <Button variant="outline" className="gap-2 border-[#577C09] text-[#577C09] hover:bg-[#E8F0D0]">
-                            <Download className="w-4 h-4" />
-                            Download NC-4EZ
-                        </Button>
-                    </a>
-                </div>
-                <div className="border-t pt-4">
-                    <p className="text-sm font-medium mb-1">Step 2 — Fill it out and upload</p>
-                    <p className="text-xs text-muted-foreground mb-3">Print, fill out, then take a clear photo or scan and upload it below.</p>
-                    {upload ? (
-                        <div className="flex items-center justify-between border border-[#577C09] bg-[#E8F0D0] rounded-lg px-4 py-3">
-                            <div className="flex items-center gap-2">
-                                <CheckCircle className="w-4 h-4 text-[#577C09]" />
-                                <span className="text-sm text-[#577C09] font-medium truncate max-w-[200px]">{upload.name}</span>
-                            </div>
-                            <button onClick={() => setUpload(null)} className="text-xs text-muted-foreground hover:text-destructive ml-4">Remove</button>
+            <div>
+                <h3 className="text-sm font-medium mb-4 pb-2 border-b">Personal Information</h3>
+                <div className="space-y-4">
+                    <div className="grid grid-cols-3 gap-4">
+                        <div className="col-span-1">
+                            <Field label="First name" id="nc4ez_firstName" required>
+                                <Input id="nc4ez_firstName" value={data.firstName || ''} onChange={set('firstName')} placeholder="Maria" />
+                            </Field>
                         </div>
-                    ) : (
-                        <label className="cursor-pointer">
-                            <input type="file" accept="image/*,.pdf" className="hidden" onChange={handleFile} />
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground border border-dashed border-border rounded-lg px-4 py-3 hover:border-[#577C09] hover:text-[#577C09] transition-colors w-fit">
-                                <Upload className="w-4 h-4" />
-                                Click to upload — JPG, PNG, or PDF
-                            </div>
-                        </label>
-                    )}
+                        <div className="col-span-1">
+                            <Field label="M.I." id="nc4ez_mi">
+                                <Input id="nc4ez_mi" value={data.middleInitial || ''} onChange={set('middleInitial')} placeholder="A" maxLength={1} />
+                            </Field>
+                        </div>
+                        <div className="col-span-1">
+                            <Field label="Last name" id="nc4ez_lastName" required>
+                                <Input id="nc4ez_lastName" value={data.lastName || ''} onChange={set('lastName')} placeholder="Santos" />
+                            </Field>
+                        </div>
+                    </div>
+                    <Field label="Social Security Number" id="nc4ez_ssn" required>
+                        <Input id="nc4ez_ssn" value={data.ssn || ''} onChange={(e) => {
+                            const digits = e.target.value.replace(/\D/g, '').slice(0, 9)
+                            let formatted = digits
+                            if (digits.length > 5) formatted = `${digits.slice(0,3)}-${digits.slice(3,5)}-${digits.slice(5)}`
+                            else if (digits.length > 3) formatted = `${digits.slice(0,3)}-${digits.slice(3)}`
+                            onChange({ ...data, ssn: formatted })
+                        }} placeholder="XXX-XX-XXXX" />
+                    </Field>
+                    <Field label="Address" id="nc4ez_address" required>
+                        <Input id="nc4ez_address" value={data.address || ''} onChange={set('address')} placeholder="123 Main St" />
+                    </Field>
+                    <div className="grid grid-cols-4 gap-4">
+                        <div className="col-span-2">
+                            <Field label="City" id="nc4ez_city" required>
+                                <Input id="nc4ez_city" value={data.city || ''} onChange={set('city')} placeholder="Charlotte" />
+                            </Field>
+                        </div>
+                        <div>
+                            <Field label="State" id="nc4ez_state" required>
+                                <Input id="nc4ez_state" value={data.state || ''} onChange={set('state')} placeholder="NC" maxLength={2} />
+                            </Field>
+                        </div>
+                        <div>
+                            <Field label="ZIP" id="nc4ez_zip" required>
+                                <Input id="nc4ez_zip" value={data.zip || ''} onChange={set('zip')} placeholder="28201" maxLength={5} />
+                            </Field>
+                        </div>
+                    </div>
+                    <Field label="County (first 5 letters)" id="nc4ez_county" required>
+                        <Input id="nc4ez_county" value={data.county || ''} onChange={set('county')} placeholder="Meckl" maxLength={5} />
+                    </Field>
+                </div>
+            </div>
+
+            <div>
+                <h3 className="text-sm font-medium mb-4 pb-2 border-b">Filing Status <span className="text-red-500">*</span></h3>
+                <div className="space-y-2">
+                    {filingOptions.map((opt) => (
+                        <RadioOption key={opt.value} value={opt.value} label={opt.label} checked={data.filingStatus === opt.value} onChange={(v) => onChange({ ...data, filingStatus: v })} />
+                    ))}
+                </div>
+            </div>
+
+            <div>
+                <h3 className="text-sm font-medium mb-4 pb-2 border-b">Withholding</h3>
+                <div className="space-y-4">
+                    <Field label="Line 1 — Total number of allowances" id="nc4ez_allowances">
+                        <Input id="nc4ez_allowances" value={data.allowances || ''} onChange={set('allowances')} placeholder="0" />
+                    </Field>
+                    <Field label="Line 2 — Additional amount to withhold each pay period ($)" id="nc4ez_additional">
+                        <Input id="nc4ez_additional" value={data.additionalWithholding || ''} onChange={set('additionalWithholding')} placeholder="0" />
+                    </Field>
+                </div>
+            </div>
+
+            <div>
+                <h3 className="text-sm font-medium mb-4 pb-2 border-b">Exemptions <span className="text-xs font-normal text-muted-foreground">(optional)</span></h3>
+                <div className="space-y-3">
+                    <Checkbox
+                        checked={data.exempt3 || false}
+                        onChange={(v) => onChange({ ...data, exempt3: v })}
+                        label="Line 3 — I certify that I am exempt from NC withholding (had no tax liability last year and expect none this year)"
+                    />
+                    <Checkbox
+                        checked={data.exempt4 || false}
+                        onChange={(v) => onChange({ ...data, exempt4: v })}
+                        label="Line 4 — I certify that I am exempt under the Servicemembers Civil Relief Act"
+                    />
                 </div>
             </div>
 
             <div className="border-t pt-6">
+                <p className="text-xs text-muted-foreground mb-4">
+                    I certify, under penalties provided by law, that I am entitled to the number of withholding allowances claimed on Line 1 above, or if claiming exemption from withholding, that I am entitled to claim the exempt status on Line 3 or 4, whichever applies.
+                </p>
+                <p className="text-xs text-muted-foreground mb-4">Date: {today}</p>
                 {saved ? (
                     <div className="flex items-center gap-2 text-[#577C09] text-sm font-medium">
                         <CheckCircle className="w-4 h-4" />
-                        NC-4EZ uploaded successfully
+                        NC-4EZ saved successfully
                     </div>
                 ) : (
-                    <Button onClick={onSave} disabled={!upload} className="bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed">
-                        Save & Continue
+                    <Button onClick={onSave} disabled={!canSave} className="bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Save NC-4EZ
                     </Button>
                 )}
-                {!upload && <p className="text-xs text-muted-foreground mt-2">Please upload your completed NC-4EZ to continue.</p>}
             </div>
         </div>
     )
@@ -559,6 +627,8 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver }) {
     const [w4Data, setW4Data] = useState({})
     const [w9Data, setW9Data] = useState({})
     const [nc4ezUpload, setNc4ezUpload] = useState(null)
+    const [nc4ezData, setNc4ezData] = useState({});
+
 
     useEffect(() => {
         const restoreSaved = async () => {
@@ -660,6 +730,36 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver }) {
                 }
             })
         }
+
+        if (formId === 'nc4ez') {
+     const nc4ezResult = await supabase.functions.invoke('generate-nc4ez', {
+        body: {
+            caregiverId: caregiver.id,
+            caregiverName: caregiver.name,
+            nc4ezData: {
+                ...nc4ezData,
+                ssn: nc4ezData.ssn?.replace(/-/g, '') || ''
+            }
+        }
+    })
+
+    if (nc4ezResult.error) {
+        const errorText = await nc4ezResult.error.context.text();
+        console.log("error: ", errorText)
+    }
+
+    // save to caregiver_documents via the edge function
+    // also save record directly for restore tracking
+    await supabase
+        .from('caregiver_documents')
+        .upsert({
+            caregiver_id: caregiver.id,
+            document_type: 'nc4ez_completed',
+            file_name: `${caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')}_NC4EZ_Completed.pdf`,
+            file_path: `${caregiver.id}/${caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')}_NC4EZ_Completed.pdf`,
+            mime_type: 'application/pdf',
+        }, { onConflict: 'caregiver_id, document_type' })
+}
 
         setSaved(prev => ({ ...prev, [formId]: true }))
         setConfirming(null);
@@ -764,7 +864,7 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver }) {
                         <W4Form data={w4Data} onChange={setW4Data} onSave={() => handleSave('w4')} saved={saved.w4} />
                     )}
                     {!isContractor && currentStep === 2 && (
-                        <NC4EZForm upload={nc4ezUpload} setUpload={setNc4ezUpload} saved={saved.nc4ez} onSave={() => handleSave('nc4ez')} />
+                        <NC4EZForm data={nc4ezData} onChange={setNc4ezData} onSave={() => handleSave('nc4ez')} saved={saved.nc4ez} />
                     )}
                     {isContractor && currentStep === 1 && (
                         <W9Form data={w9Data} onChange={setW9Data} onSave={() => handleSave('w9')} saved={saved.w9} />
