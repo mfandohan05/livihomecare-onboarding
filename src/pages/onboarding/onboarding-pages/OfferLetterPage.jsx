@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { FileSignature, CheckCircle } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
 const today = new Date().toLocaleDateString('en-US', {
   year: 'numeric',
@@ -61,7 +62,7 @@ function CaregiverOfferLetter({ caregiver }) {
           <p className="font-medium">Scheduling & Hours:</p>
           <p className="text-muted-foreground">
             This position does <strong>not guarantee a minimum number of hours, a fixed schedule,
-            or a specific number of client assignments</strong>. Work hours, schedules, and client
+              or a specific number of client assignments</strong>. Work hours, schedules, and client
             placements are based on client needs, your availability, and operational requirements,
             all of which may fluctuate.
           </p>
@@ -282,6 +283,142 @@ function NurseContractorAgreement({ caregiver }) {
   )
 }
 
+function NurseDirectorAgreement({ caregiver }) {
+  return (
+    <div className="space-y-5 text-sm leading-relaxed">
+      <p className="text-lg font-semibold">Agency Director Agreement</p>
+      <div>
+        <p className="font-medium">Title: Agency Director</p>
+        <p className="mt-2">
+          This Agreement is between Livi Home Care ("The Agency") and <strong>{caregiver.name}</strong> ("The Director").
+          Whereas the Agency desires to engage the services of the Director, and the Director desires to
+          provide such services under the terms and conditions set forth herein, the parties agree as follows:
+        </p>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <p className="font-medium">Start Date:</p>
+          <p className="text-muted-foreground">{caregiver.start_date || '________________'}</p>
+        </div>
+        <div>
+          <p className="font-medium">Pay Rate:</p>
+          <p className="text-muted-foreground">
+            ${caregiver.pay_rate ? `${caregiver.pay_rate}.00` : '_______.00'} per hour
+          </p>
+        </div>
+        <div>
+          <p className="font-medium">Pay Frequency:</p>
+          <p className="text-muted-foreground">Weekly</p>
+        </div>
+      </div>
+      {/* Replace content below with actual director agreement terms */}
+      <div>
+        <p className="font-medium">Duties and Responsibilities:</p>
+        <p className="text-muted-foreground mt-1">
+          [Director duties and responsibilities to be added here]
+        </p>
+      </div>
+      <div>
+        <p className="font-medium">Confidentiality:</p>
+        <p className="text-muted-foreground mt-1">
+          The Director agrees to maintain confidentiality regarding all Agency and client information,
+          in compliance with HIPAA regulations and any other applicable privacy standards.
+        </p>
+      </div>
+      <div>
+        <p className="font-medium">Governing Law:</p>
+        <p className="text-muted-foreground mt-1">
+          This Agreement shall be governed under the laws of the State of North Carolina.
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function OtherOfferLetter({ caregiver, signed, signature, onSignatureChange, onSign }) {
+  const [pdfUrl, setPdfUrl] = useState(null)
+  const [loadingPdf, setLoadingPdf] = useState(true)
+  const [notUploaded, setNotUploaded] = useState(false)
+
+  useEffect(() => {
+    const fetchPdf = async () => {
+      const { data: doc } = await supabase
+        .from('caregiver_documents')
+        .select('file_path')
+        .eq('caregiver_id', caregiver.id)
+        .eq('document_type', 'offer_letter_other')
+        .maybeSingle()
+
+      if (!doc) { setNotUploaded(true); setLoadingPdf(false); return }
+
+      const { data } = await supabase.storage
+        .from('documents')
+        .createSignedUrl(doc.file_path, 3600)
+
+      if (data?.signedUrl) setPdfUrl(data.signedUrl)
+      setLoadingPdf(false)
+    }
+    fetchPdf()
+  }, [caregiver.id])
+
+  if (loadingPdf) return <p className="text-sm text-muted-foreground py-4">Loading offer letter...</p>
+
+  if (notUploaded) return (
+    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+      <p className="text-sm text-amber-800 font-medium">Offer letter not yet available</p>
+      <p className="text-xs text-amber-700 mt-1">
+        Livi Home Care is preparing your offer letter. Please check back shortly or contact the office.
+      </p>
+    </div>
+  )
+
+  return (
+    <div className="space-y-6">
+      <div className="border border-border rounded-xl overflow-hidden" style={{ height: '500px' }}>
+        <iframe src={pdfUrl} className="w-full h-full" title="Offer Letter" />
+      </div>
+      <div className="border-t pt-6">
+        <p className="font-medium mb-4">Acknowledgment and Acceptance</p>
+        <p className="text-muted-foreground text-sm mb-6">
+          I have read and agree to the terms outlined in this offer letter.
+        </p>
+        {signed ? (
+          <div className="flex items-center gap-2 text-[#577C09] font-medium">
+            <CheckCircle className="w-4 h-4" />
+            Offer letter signed — {today}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="otherSignature">
+                Full name (signature) <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="otherSignature"
+                placeholder={caregiver.name}
+                value={signature}
+                onChange={(e) => onSignatureChange(e.target.value)}
+                className="font-serif italic"
+              />
+              <p className="text-xs text-muted-foreground">
+                By typing your name, you are providing a legally binding electronic signature.
+              </p>
+            </div>
+            <p className="text-xs text-muted-foreground">Date: {today}</p>
+            <Button
+              onClick={onSign}
+              disabled={!signature.trim()}
+              className="bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50"
+            >
+              Sign & Accept Offer
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function OfferLetterPage({ stepLabel, caregiver, onNext, initialData, onChange }) {
   const [signature, setSignature] = useState(initialData?.signature || '')
   const [address, setAddress] = useState(initialData?.address || '')
@@ -290,7 +427,10 @@ export default function OfferLetterPage({ stepLabel, caregiver, onNext, initialD
   const [zip, setZip] = useState(initialData?.zip || '')
   const [signed, setSigned] = useState(initialData?.signed || false)
 
-  const isNurse = caregiver.role === 'nurse'
+  const isNurse = caregiver.role === 'nurse_prn' || caregiver.role === 'nurse_director';
+  const isPrnNurse = caregiver.role === 'nurse_prn';
+  const isDirector = caregiver.role === 'nurse_director'
+  const isOther = caregiver.role === 'other'
 
   const canSign = signature.trim() && (
     isNurse ? true : address.trim() && city.trim() && state.trim() && zip.trim()
@@ -309,130 +449,107 @@ export default function OfferLetterPage({ stepLabel, caregiver, onNext, initialD
         <span className="text-[#577C09] font-medium">{stepLabel}</span>
       </div>
       <h1 className="text-3xl font-bold mb-2">
-        {isNurse ? 'Contractor Agreement' : 'Offer Letter'}
+        {isPrnNurse ? 'Contractor Agreement' : isDirector ? 'Director Agreement' : 'Offer Letter'}
       </h1>
       <p className="text-muted-foreground mb-8">
         Please read carefully and sign at the bottom to accept your position with Livi Home Care.
       </p>
 
       <div className="border border-border rounded-xl p-8 mb-8">
-        {isNurse
-          ? <NurseContractorAgreement caregiver={caregiver} />
-          : <CaregiverOfferLetter caregiver={caregiver} />
-        }
-
-        {/* Signature Section */}
-        <div className="border-t pt-6 mt-6">
-          <p className="font-medium mb-4">Acknowledgment and Acceptance</p>
-          <p className="text-muted-foreground mb-6">
-            {isNurse
-              ? `I, ${caregiver.name}, agree to the terms of this Independent Contractor Agreement with Livi Home Care.`
-              : `I accept the position of ${caregiver.position_title} with Livi Home Care under the terms outlined in this offer letter.`
-            }
-          </p>
-
-          {signed ? (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-[#577C09] font-medium">
-                <CheckCircle className="w-4 h-4" />
-                {isNurse ? 'Agreement signed' : 'Offer letter signed'} — {today}
-              </div>
-              <p className="text-muted-foreground text-xs">
-                Signed by: <span className="font-serif italic">{signature}</span>
+        {isOther ? (
+          <OtherOfferLetter
+            caregiver={caregiver}
+            signed={signed}
+            signature={signature}
+            onSignatureChange={(val) => {
+              setSignature(val)
+              onChange({ signature: val, address, city, state, zip, signed })
+            }}
+            onSign={() => {
+              setSigned(true)
+              onChange({ signature, address, city, state, zip, signed: true })
+            }}
+          />
+        ) : (
+          <>
+            {isPrnNurse && <NurseContractorAgreement caregiver={caregiver} />}
+{isDirector && <NurseDirectorAgreement caregiver={caregiver} />}
+{!isNurse && !isOther && <CaregiverOfferLetter caregiver={caregiver} />}
+            {/* Signature Section */}
+            <div className="border-t pt-6 mt-6">
+              <p className="font-medium mb-4">Acknowledgment and Acceptance</p>
+              <p className="text-muted-foreground mb-6">
+                {isNurse
+                  ? `I, ${caregiver.name}, agree to the terms of this Independent Contractor Agreement with Livi Home Care.`
+                  : `I accept the position of ${caregiver.position_title} with Livi Home Care under the terms outlined in this offer letter.`
+                }
               </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="offerSignature">
-                  Full name (signature) <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="offerSignature"
-                  placeholder={caregiver.name}
-                  value={signature}
-                  onChange={(e) => {
-                    setSignature(e.target.value)
-                    onChange({ signature: e.target.value, address, city, state, zip, signed })
-                  }}
-                  className="font-serif italic"
-                />
-                <p className="text-xs text-muted-foreground">
-                  By typing your name, you are providing a legally binding electronic signature.
-                </p>
-              </div>
-
-              {!isNurse && (
-                <>
+              {signed ? (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-[#577C09] font-medium">
+                    <CheckCircle className="w-4 h-4" />
+                    {isNurse ? 'Agreement signed' : 'Offer letter signed'} — {today}
+                  </div>
+                  <p className="text-muted-foreground text-xs">
+                    Signed by: <span className="font-serif italic">{signature}</span>
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="offerAddress">
-                      Street address <span className="text-red-500">*</span>
+                    <Label htmlFor="offerSignature">
+                      Full name (signature) <span className="text-red-500">*</span>
                     </Label>
                     <Input
-                      id="offerAddress"
-                      placeholder="123 Main St"
-                      value={address}
+                      id="offerSignature"
+                      placeholder={caregiver.name}
+                      value={signature}
                       onChange={(e) => {
-                        setAddress(e.target.value)
-                        onChange({ signature, address: e.target.value, city, state, zip, signed })
+                        setSignature(e.target.value)
+                        onChange({ signature: e.target.value, address, city, state, zip, signed })
                       }}
+                      className="font-serif italic"
                     />
+                    <p className="text-xs text-muted-foreground">
+                      By typing your name, you are providing a legally binding electronic signature.
+                    </p>
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-2 col-span-1">
-                      <Label htmlFor="offerCity">City <span className="text-red-500">*</span></Label>
-                      <Input
-                        id="offerCity"
-                        placeholder="Charlotte"
-                        value={city}
-                        onChange={(e) => {
-                          setCity(e.target.value)
-                          onChange({ signature, address, city: e.target.value, state, zip, signed })
-                        }}
-                      />
-                    </div>
-                    <div className="space-y-2 col-span-1">
-                      <Label htmlFor="offerState">State <span className="text-red-500">*</span></Label>
-                      <Input
-                        id="offerState"
-                        placeholder="NC"
-                        maxLength={2}
-                        value={state}
-                        onChange={(e) => {
-                          setState(e.target.value)
-                          onChange({ signature, address, city, state: e.target.value, zip, signed })
-                        }}
-                      />
-                    </div>
-                    <div className="space-y-2 col-span-1">
-                      <Label htmlFor="offerZip">Zip <span className="text-red-500">*</span></Label>
-                      <Input
-                        id="offerZip"
-                        placeholder="28201"
-                        maxLength={5}
-                        value={zip}
-                        onChange={(e) => {
-                          setZip(e.target.value)
-                          onChange({ signature, address, city, state, zip: e.target.value, signed })
-                        }}
-                      />
-                    </div>
-                  </div>
-                </>
+                  {!isNurse && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="offerAddress">Street address <span className="text-red-500">*</span></Label>
+                        <Input id="offerAddress" placeholder="123 Main St" value={address}
+                          onChange={(e) => { setAddress(e.target.value); onChange({ signature, address: e.target.value, city, state, zip, signed }) }} />
+                      </div>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="space-y-2 col-span-1">
+                          <Label htmlFor="offerCity">City <span className="text-red-500">*</span></Label>
+                          <Input id="offerCity" placeholder="Charlotte" value={city}
+                            onChange={(e) => { setCity(e.target.value); onChange({ signature, address, city: e.target.value, state, zip, signed }) }} />
+                        </div>
+                        <div className="space-y-2 col-span-1">
+                          <Label htmlFor="offerState">State <span className="text-red-500">*</span></Label>
+                          <Input id="offerState" placeholder="NC" maxLength={2} value={state}
+                            onChange={(e) => { setState(e.target.value); onChange({ signature, address, city, state: e.target.value, zip, signed }) }} />
+                        </div>
+                        <div className="space-y-2 col-span-1">
+                          <Label htmlFor="offerZip">Zip <span className="text-red-500">*</span></Label>
+                          <Input id="offerZip" placeholder="28201" maxLength={5} value={zip}
+                            onChange={(e) => { setZip(e.target.value); onChange({ signature, address, city, state, zip: e.target.value, signed }) }} />
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  <p className="text-xs text-muted-foreground">Date: {today}</p>
+                  <Button onClick={handleSign} disabled={!canSign}
+                    className="bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed">
+                    {isNurse ? 'Sign & Accept Agreement' : 'Sign & Accept Offer'}
+                  </Button>
+                </div>
               )}
-
-              <p className="text-xs text-muted-foreground">Date: {today}</p>
-
-              <Button
-                onClick={handleSign}
-                disabled={!canSign}
-                className="bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isNurse ? 'Sign & Accept Agreement' : 'Sign & Accept Offer'}
-              </Button>
             </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
 
       <Button

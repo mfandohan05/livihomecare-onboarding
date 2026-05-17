@@ -12,7 +12,17 @@ const completedSteps = {
         'Tax forms',
         'Offer letter',
     ],
-    'nurse': [
+    'nurse_prn': [
+        'Document uploads',
+        'Personal information & emergency contact information',
+        'eRSP enrollment',
+        'New hire orientation',
+        'Guide to eRSP',
+        'Forms & agreements',
+        'Tax forms (W-9)',
+        'Offer letter',
+    ],
+    'nurse_director': [
         'Document uploads',
         'Personal information & emergency contact information',
         'eRSP enrollment',
@@ -55,7 +65,29 @@ const nextSteps = {
             text: "Once everything is verified, you'll be scheduled for your first shift. Your orientation payment will be issued after completing 10 shifts."
         }
     ],
-    'nurse': [
+    'nurse_prn': [
+        {
+            id: 1,
+            text: 'Livi Home Care will review your submitted documents and forms. This typically takes 1–2 business days.'
+        },
+        {
+            id: 2,
+            text: "Your eRSP caregiver account will be activated. You'll receive an email with your login credentials."
+        },
+        {
+            id: 3,
+            text: "A Livi Home Care team member will reach out to complete your Form I-9 Section 2 and discuss your first assignment."
+        },
+        {
+            id: 4,
+            text: "Your employee badge will be mailed to you or available for pickup at the office."
+        },
+        {
+            id: 5,
+            text: "Once everything is verified, you'll be scheduled for your first shift. Your orientation payment will be issued after completing 10 shifts."
+        }
+    ],
+    'nurse_director': [
         {
             id: 1,
             text: 'Livi Home Care will review your submitted documents and forms. This typically takes 1–2 business days.'

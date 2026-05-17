@@ -347,7 +347,7 @@ export default function AdminCaregiverMap() {
                                         </p>
                                     )}
                                     <button
-                                        onClick={() => navigate(`/admin/caregivers/${selectedCaregiver.id}`)}
+                                        onClick={() => navigate(`/admin/employees/${selectedCaregiver.id}`)}
                                         className="flex items-center gap-1.5 text-xs text-[#577C09] hover:underline"
                                     >
                                         <ExternalLink className="w-3 h-3" />

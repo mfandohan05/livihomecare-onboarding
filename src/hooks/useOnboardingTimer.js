@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-const IDLE_LIMIT = 5000;
+const IDLE_LIMIT = 120000;
 const TAB_KEY = "livi_active_tab";
 const TAB_ID = crypto.randomUUID();
 

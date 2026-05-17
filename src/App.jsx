@@ -6,6 +6,7 @@ import AdminCaregivers from './pages/admin/AdminCaregivers';
 import AdminCaregiverDetail from './pages/admin/AdminCaregiverDetail';
 import AdminCaregiverMap from './pages/admin/AdminCaregiverMap';
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { Toaster } from './components/ui/sonner';
 
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
 
   return (
     <BrowserRouter>
+    <Toaster position="bottom-center" />
       <Routes>
         <Route path='/onboard/:token' element={<OnboardingPortal />} />
         <Route path='/admin/login' element={<AdminLogin />} />

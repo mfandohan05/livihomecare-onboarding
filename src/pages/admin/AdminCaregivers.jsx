@@ -12,6 +12,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog'
+import { Upload } from 'lucide-react'
 
 const Field = ({ label, id, children, required }) => (
     <div className="space-y-1.5">
@@ -26,6 +27,7 @@ const Field = ({ label, id, children, required }) => (
 function NewCaregiverDialog({ open, onClose, onCreated }) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
+    const [offerLetterFile, setOfferLetterFile] = useState(null)
     const [form, setForm] = useState({
         name: '',
         email: '',
@@ -36,12 +38,13 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
         start_date: '',
         pay_rate: '',
         companion_pay_rate: '',
+        job_description: '',
     })
 
     const set = (key) => (e) => setForm(prev => ({ ...prev, [key]: e.target.value }))
 
     const canSave = form.name && form.email && form.role &&
-        form.position_title && form.employment_type && form.pay_rate
+        form.position_title && form.employment_type && form.pay_rate && (form.role !== 'other' || offerLetterFile) && form.job_description
 
     const handleSubmit = async () => {
         setLoading(true)
@@ -59,7 +62,8 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
                 start_date: form.start_date || null,
                 pay_rate: parseFloat(form.pay_rate),
                 companion_pay_rate: form.companion_pay_rate ? parseFloat(form.companion_pay_rate) : null,
-                status: 'pending'
+                status: 'pending',
+                job_description: form.job_description,
             })
             .select()
             .single()
@@ -69,6 +73,27 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
             setLoading(false)
             return
         }
+        if (form.role === 'other' && offerLetterFile) {
+            const fileExt = offerLetterFile.name.split('.').pop()
+            const sanitizedName = form.name.replace(/[^a-zA-Z0-9]/g, '_')
+            const filePath = `${data.id}/${sanitizedName}_offer_letter_other.${fileExt}`
+
+            await supabase.storage
+                .from('documents')
+                .upload(filePath, offerLetterFile, { upsert: true })
+
+            await supabase
+                .from('caregiver_documents')
+                .upsert({
+                    caregiver_id: data.id,
+                    document_type: 'offer_letter_other',
+                    file_name: offerLetterFile.name,
+                    file_path: filePath,
+                    file_size: offerLetterFile.size,
+                    mime_type: offerLetterFile.type,
+                }, { onConflict: 'caregiver_id, document_type' })
+        }
+
 
         setForm({
             name: '', email: '', phone: '', role: 'caregiver',
@@ -77,13 +102,26 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
         })
         setLoading(false)
         onCreated(data)
+
+        if (data) {
+            const inviteResult = await supabase.functions.invoke('send-invite-email', {
+                body: { caregiverId: data.id }
+            })
+            onCreated(data)
+
+            if (inviteResult.error) {
+                const errorText = await inviteResult.error.context.text();
+                console.log('send-invite-email error: ', errorText);
+            }
+        }
+
     }
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto scrollbar-hide">
                 <DialogHeader>
-                    <DialogTitle>New Caregiver</DialogTitle>
+                    <DialogTitle>New Employee</DialogTitle>
                 </DialogHeader>
 
                 <div className="space-y-6 pt-2">
@@ -115,12 +153,23 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
                                     className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white"
                                 >
                                     <option value="caregiver">Caregiver</option>
-                                    <option value="nurse">Nurse</option>
+                                    <option value="nurse_prn">Nurse (PRN)</option>
+                                    <option value="nurse_director">Nurse (Director)</option>
                                     <option value="other">Other</option>
                                 </select>
                             </Field>
                             <Field label="Position title" id="position_title" required>
                                 <Input id="position_title" value={form.position_title} onChange={set('position_title')} placeholder="PCA-Caregiver" />
+                            </Field>
+                            <Field label="Job description" id="job_description" required>
+                                <input
+                                    id="job_description"
+                                    value={form.job_description}
+                                    onChange={set('job_description')}
+                                    placeholder="In-Home Aide"
+                                    rows={4}
+                                    className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#577C09]/20 focus:border-[#577C09] resize-none"
+                                />
                             </Field>
                             <Field label="Employment type" id="employment_type" required>
                                 <select
@@ -153,6 +202,28 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
                         </div>
                     </div>
 
+                    {form.role === 'other' && (
+                        <div>
+                            <h3 className="text-sm font-medium mb-4 pb-2 border-b">Offer Letter</h3>
+                            <Field label="Upload offer letter (PDF)" id="offer_letter" required>
+                                <label className="flex items-center gap-3 border border-dashed border-border rounded-lg px-4 py-3 cursor-pointer hover:bg-muted/30 transition-colors">
+                                    <input
+                                        type="file"
+                                        accept=".pdf"
+                                        className="hidden"
+                                        onChange={(e) => setOfferLetterFile(e.target.files[0] || null)}
+                                    />
+                                    <Upload className="w-4 h-4 text-muted-foreground shrink-0" />
+                                    {offerLetterFile ? (
+                                        <span className="text-sm text-[#577C09] font-medium truncate">{offerLetterFile.name}</span>
+                                    ) : (
+                                        <span className="text-sm text-muted-foreground">Choose PDF file...</span>
+                                    )}
+                                </label>
+                            </Field>
+                        </div>
+                    )}
+
                     {error && <p className="text-sm text-red-500">{error}</p>}
 
                     <div className="flex gap-3 pt-2">
@@ -161,9 +232,17 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
                             disabled={!canSave || loading}
                             className="bg-[#577C09] hover:bg-[#3D5906] text-white disabled:opacity-50"
                         >
-                            {loading ? 'Creating...' : 'Create Caregiver'}
+                            {loading ? 'Creating...' : 'Create Employee'}
                         </Button>
-                        <Button variant="outline" onClick={onClose}>
+                        <Button variant="outline" onClick={() => {
+                            setOfferLetterFile(null)
+                            setForm({
+                                name: 'email', email: '', phone: '', role: 'caregiver',
+                                position_title: '', employment_type: '', start_date: '',
+                                pay_rate: '', companion_pay_rate: '', job_description: ''
+                            })
+                            onClose();
+                        }}>
                             Cancel
                         </Button>
                     </div>
@@ -236,6 +315,16 @@ export default function AdminCaregivers() {
         return 'Pending'
     }
 
+    const roleLabel = (role) => {
+        const labels = {
+            caregiver: 'Caregiver',
+            nurse_prn: 'Nurse (PRN)',
+            nurse_director: 'Nurse (Director)',
+            other: 'Other'
+        }
+        return labels[role] || role;
+    }
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -264,7 +353,7 @@ export default function AdminCaregivers() {
                     onClick={() => setShowNewDialog(true)}
                     className="bg-[#577C09] hover:bg-[#3D5906] text-white"
                 >
-                    + New Caregiver
+                    + New Employee
                 </Button>
             </div>
 
@@ -347,7 +436,7 @@ export default function AdminCaregivers() {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-sm capitalize">{caregiver.role}</td>
+                                        <td className="px-6 py-4 text-sm capitalize">{roleLabel(caregiver.role)}</td>
                                         <td className="px-6 py-4 text-sm text-muted-foreground">{caregiver.employment_type || '—'}</td>
                                         <td className="px-6 py-4 text-sm text-muted-foreground">{caregiver.phone || '—'}</td>
                                         <td className="px-6 py-4 text-sm text-muted-foreground">

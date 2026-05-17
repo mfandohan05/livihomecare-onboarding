@@ -26,6 +26,17 @@ const statusLabel = (status) => {
     return 'Pending'
 }
 
+const roleLabel = (role) => {
+    const labels = {
+        caregiver: 'Caregiver',
+        nurse_prn: 'Nurse (PRN)',
+        nurse_director: 'Nurse (Director)',
+        other: 'Other'
+    }
+
+    return labels[role] || role;
+}
+
 const docLabel = (type) => {
     const labels = {
         driversLicense: "Driver's License",
@@ -39,6 +50,7 @@ const docLabel = (type) => {
         w4_completed: 'Form W-4 (Completed)',
         w9_completed: 'Form W-9 (Completed)',
         nc4ez_completed: 'NC-4EZ (Completed)',
+        offer_letter_other: 'Offer Letter (Custom)'
     }
     return labels[type] || type
 }
@@ -118,18 +130,18 @@ export default function AdminCaregiverDetail() {
     }
 
     const handleDownload = async (doc) => {
-    const bucket = ['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'].includes(doc.document_type)
-        ? 'generated-pdfs'
-        : 'documents'
+        const bucket = ['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'].includes(doc.document_type)
+            ? 'generated-pdfs'
+            : 'documents'
 
-    const { data } = await supabase.storage
-        .from(bucket)
-        .createSignedUrl(doc.file_path, 3600)
+        const { data } = await supabase.storage
+            .from(bucket)
+            .createSignedUrl(doc.file_path, 3600)
 
-    if (data?.signedUrl) {
-        window.open(data.signedUrl, '_blank')
+        if (data?.signedUrl) {
+            window.open(data.signedUrl, '_blank')
+        }
     }
-}
 
     const handleUpload = async (documentType, file) => {
         setUploadingDoc(documentType)
@@ -374,18 +386,18 @@ export default function AdminCaregiverDetail() {
             </AdminLayout>
         )
     }
-
-    const uploadableDocs = caregiver.role === 'nurse'
+    const isNurse = caregiver.role === 'nurse_prn' || caregiver.role === 'nurse_director'
+    const uploadableDocs = isNurse
         ? ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'nursingLicense', 'certifications']
         : ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'certifications']
     const groupedSkills = Object.entries(competency?.checked || {})
-    .filter(([_, checked]) => checked)
-    .reduce((acc, [key]) => {
-        const [category, skill] = key.split('__')
-        if (!acc[category]) acc[category] = []
-        acc[category].push(skill)
-        return acc
-    }, {})
+        .filter(([_, checked]) => checked)
+        .reduce((acc, [key]) => {
+            const [category, skill] = key.split('__')
+            if (!acc[category]) acc[category] = []
+            acc[category].push(skill)
+            return acc
+        }, {})
     return (
         <AdminLayout>
             {/* Reauth Dialog */}
@@ -494,17 +506,17 @@ export default function AdminCaregiverDetail() {
                     </div>
                     <div>
                         <h1 className="text-2xl font-bold">{caregiver.name}</h1>
-                        <p className="text-muted-foreground capitalize">{caregiver.role} · {caregiver.position_title}</p>
+                        <p className="text-muted-foreground">{roleLabel(caregiver.role)} · {caregiver.position_title}</p>
                     </div>
                 </div>
                 <div className='flex flex-row gap-'>
                     <span className={`text-sm font-medium px-3 py-1.5 rounded-full ${statusColor(caregiver.status)}`}>
-                    {statusLabel(caregiver.status)}
-                </span>
-                    
+                        {statusLabel(caregiver.status)}
+                    </span>
+
                 </div>
-                
-                
+
+
             </div>
 
             <div className="grid grid-cols-3 gap-6">
@@ -652,40 +664,40 @@ export default function AdminCaregiverDetail() {
                             )}
                         </div>
                     )}
-{/* Competency Checklist */}
-{competency && Object.keys(competency.checked || {}).length > 0 && (
-    <div className="bg-white rounded-xl border border-border p-6">
-        <h2 className="font-semibold mb-4">Competency Checklist</h2>
+                    {/* Competency Checklist */}
+                    {competency && Object.keys(competency.checked || {}).length > 0 && (
+                        <div className="bg-white rounded-xl border border-border p-6">
+                            <h2 className="font-semibold mb-4">Competency Checklist</h2>
 
-        {Object.entries(groupedSkills).map(([category, skills]) => (
-            <div key={category} className="mb-4">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 capitalize">
-                    {category.replace(/_/g, ' ')}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                    {skills.map(skill => (
-                        <span key={skill} className="text-xs font-medium px-2.5 py-1 rounded-full bg-[#E8F0D0] text-[#577C09]">
-                            {skill}
-                        </span>
-                    ))}
-                </div>
-            </div>
-        ))}
+                            {Object.entries(groupedSkills).map(([category, skills]) => (
+                                <div key={category} className="mb-4">
+                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 capitalize">
+                                        {category.replace(/_/g, ' ')}
+                                    </p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {skills.map(skill => (
+                                            <span key={skill} className="text-xs font-medium px-2.5 py-1 rounded-full bg-[#E8F0D0] text-[#577C09]">
+                                                {skill}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
 
-        {competency.lunch && (
-            <div className="mt-4 mb-4">
-                <p className="text-xs text-muted-foreground mb-1">Nutritious lunch they would prepare</p>
-                <p className="text-sm bg-muted/30 rounded-lg px-4 py-3">{competency.lunch}</p>
-            </div>
-        )}
-        {competency.dinner && (
-            <div>
-                <p className="text-xs text-muted-foreground mb-1">Nutritious dinner they would prepare</p>
-                <p className="text-sm bg-muted/30 rounded-lg px-4 py-3">{competency.dinner}</p>
-            </div>
-        )}
-    </div>
-)}
+                            {competency.lunch && (
+                                <div className="mt-4 mb-4">
+                                    <p className="text-xs text-muted-foreground mb-1">Nutritious lunch they would prepare</p>
+                                    <p className="text-sm bg-muted/30 rounded-lg px-4 py-3">{competency.lunch}</p>
+                                </div>
+                            )}
+                            {competency.dinner && (
+                                <div>
+                                    <p className="text-xs text-muted-foreground mb-1">Nutritious dinner they would prepare</p>
+                                    <p className="text-sm bg-muted/30 rounded-lg px-4 py-3">{competency.dinner}</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
                     {/* Documents */}
                     <div className="bg-white rounded-xl border border-border p-6">
                         <h2 className="font-semibold mb-4">Documents</h2>
@@ -745,6 +757,40 @@ export default function AdminCaregiverDetail() {
                                         </div>
                                     )
                                 })}
+                                {/* Custom offer letter upload for other role */}
+                                {caregiver.role === 'other' && (
+                                    <div className="mt-4 pt-4 border-t">
+                                        <p className="text-sm font-medium mb-1">Custom Offer Letter</p>
+                                        <p className="text-xs text-muted-foreground mb-3">
+                                            Upload a custom offer letter for this employee. They will see it in their portal and sign it digitally.
+                                        </p>
+                                        <div className="flex items-center justify-between py-2 px-3 rounded-lg border border-dashed border-border">
+                                            <p className="text-sm text-muted-foreground">Offer Letter (PDF)</p>
+                                            <label className="cursor-pointer">
+                                                <input
+                                                    type="file"
+                                                    accept=".pdf"
+                                                    className="hidden"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files[0]
+                                                        if (file) handleUpload('offer_letter_other', file)
+                                                    }}
+                                                />
+                                                {uploadingDoc === 'offer_letter_other' ? (
+                                                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                        Uploading...
+                                                    </span>
+                                                ) : (
+                                                    <span className="flex items-center gap-1.5 text-xs text-[#577C09] hover:underline">
+                                                        <Upload className="w-3.5 h-3.5" />
+                                                        {documents.find(d => d.document_type === 'offer_letter_other') ? 'Replace' : 'Upload'}
+                                                    </span>
+                                                )}
+                                            </label>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -814,15 +860,15 @@ export default function AdminCaregiverDetail() {
                                     )}
                                 </button>
                             </div>
-                            
+
                         </div>
                     </div>
                     <button
-                    onClick={() => setShowDeleteConfirm(true)}
-                    className="text-sm text-red-500 hover:text-red-600 hover:underline transition-colors"
-                >
-                    Delete employee profile
-                </button>
+                        onClick={() => setShowDeleteConfirm(true)}
+                        className="text-sm text-red-500 hover:text-red-600 hover:underline transition-colors"
+                    >
+                        Delete employee profile
+                    </button>
                 </div>
 
                 {/* Right column */}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import { stepsByRole } from '@/data/steps'
 import { welcomeSteps } from '@/data/steps'
@@ -21,6 +21,8 @@ import { useSaveProgress, loadProgress as loadLocalProgress } from '@/hooks/useO
 
 import { getCaregiverByToken, updateCaregiverStatus, saveProgress, loadProgress, saveTimeLog } from '@/lib/caregiver'
 import { supabase } from '@/lib/supabase'
+
+import { toast } from 'sonner'
 
 
 export default function OnboardingPortal() {
@@ -117,7 +119,7 @@ export default function OnboardingPortal() {
         }
     }, [caregiver?.id])
 
-
+    const isNurse = caregiver?.role === 'nurse_prn' || caregiver?.role === "nurse_director";
     // mark last step completed
     useEffect(() => {
         if (!steps.length) {
@@ -141,12 +143,38 @@ export default function OnboardingPortal() {
                 if (!data) {
                     const actualStart = localStorage.getItem(`livi_session_start_${token}`)
                     saveTimeLog(caregiver.id, getHoursWorked(), actualStart);
+
+                    supabase.functions.invoke('send-completion-email', {
+                        body: { caregiverId: caregiver.id }
+                    })
                 }
             }
 
             saveLog();
         }
     }, [activeStep])
+    const prevIsIdle = useRef(isIdle);
+    useEffect(() => {
+        if (prevIsIdle.current === isIdle) {
+            return;
+        }
+        prevIsIdle.current = isIdle;
+
+        if (isIdle) {
+            toast('Recording activity paused: no activity detected.', {
+                description: 'No activity detected',
+                icon: '⏸',
+                duration: 3000,
+            })
+        }
+        else {
+            toast('Recording resumed', {
+                description: 'Welcome back!',
+                icon: '⏺',
+                duration: 3000,
+            })
+        }
+    }, [isIdle])
 
     if (loading) {
         return (
@@ -229,7 +257,14 @@ export default function OnboardingPortal() {
             case 'Welcome':
                 return <WelcomePage caregiver={caregiver} onNext={handleNext} welcomeSteps={welcomeSteps[role]} />
             case 'Upload Documents':
-                return <UploadDocumentsPage stepLabel={stepLabel} onNext={handleNext} role={caregiver.role} caregiver={caregiver} />
+                return <UploadDocumentsPage stepLabel={stepLabel} onNext={
+                    async() => {
+                        await supabase.functions.invoke('send-documents-email', {
+                            body: { caregiverId: caregiver.id }
+                        })
+                        handleNext();
+                    }
+                } role={caregiver.role} caregiver={caregiver} />
             case 'Personal Information':
                 return <PersonalInformationPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.personalInfo} onChange={(data) => updateFormData('personalInfo', data)} />
             case 'Enrollment Profile / Enrollment':
@@ -264,7 +299,7 @@ export default function OnboardingPortal() {
                 }} onHepBChange={(status) => updateFormData('hepBStatus', status)} />
             case 'Tax Forms':
             case 'Tax Forms (W-9)':
-                return <TaxFormsPage stepLabel={stepLabel} onNext={handleNext} role={role} caregiver={caregiver} />
+                return <TaxFormsPage stepLabel={stepLabel} onNext={handleNext} role={isNurse ? 'nurse' : role} caregiver={caregiver} />
             case 'Offer Letter':
                 return <OfferLetterPage stepLabel={stepLabel} caregiver={caregiver} onNext={handleNext} initialData={formData.offerLetter} onChange={async (data) => {
                     updateFormData('offerLetter', data)
