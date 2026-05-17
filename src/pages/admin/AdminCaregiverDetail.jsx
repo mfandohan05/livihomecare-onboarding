@@ -50,7 +50,8 @@ const docLabel = (type) => {
         w4_completed: 'Form W-4 (Completed)',
         w9_completed: 'Form W-9 (Completed)',
         nc4ez_completed: 'NC-4EZ (Completed)',
-        offer_letter_other: 'Offer Letter (Custom)'
+        offer_letter_other: 'Offer Letter (Custom)',
+        bloodborne_certificate: 'Bloodborne Pathogens Certificate'
     }
     return labels[type] || type
 }

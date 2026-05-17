@@ -64,6 +64,7 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
                 companion_pay_rate: form.companion_pay_rate ? parseFloat(form.companion_pay_rate) : null,
                 status: 'pending',
                 job_description: form.job_description,
+                link_expires_at: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString()
             })
             .select()
             .single()

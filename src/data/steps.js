@@ -10,6 +10,7 @@ import {
   FileText,
   FileSignature,
   PartyPopper,
+  HeartPulse
 } from "lucide-react";
 
 const makeSteps = (stepList) =>
@@ -24,11 +25,12 @@ const nurseSteps = [
   { id: 3, stepName: "Personal Information", logo: UserRound },
   { id: 4, stepName: "Enrollment Profile / Enrollment", logo: ClipboardList },
   { id: 5, stepName: "New Hire Orientation", logo: GraduationCap },
-  { id: 6, stepName: "How to Use eRSP", logo: MonitorPlay },
-  { id: 7, stepName: "Forms & Agreements", logo: ScrollText },
-  { id: 8, stepName: "Tax Forms (W-9)", logo: FileText },
-  { id: 9, stepName: "Offer Letter", logo: FileSignature },
-  { id: 10, stepName: "Completed!", logo: PartyPopper },
+  { id: 6, stepName: "Bloodborne Pathogens", logo: HeartPulse},
+  { id: 7, stepName: "How to Use eRSP", logo: MonitorPlay },
+  { id: 8, stepName: "Forms & Agreements", logo: ScrollText },
+  { id: 9, stepName: "Tax Forms (W-9)", logo: FileText },
+  { id: 10, stepName: "Offer Letter", logo: FileSignature },
+  { id: 11, stepName: "Completed!", logo: PartyPopper },
 ]
 
 const nurseWelcomeSteps = [
@@ -49,12 +51,13 @@ export const stepsByRole = {
     { id: 3, stepName: "Personal Information", logo: UserRound },
     { id: 4, stepName: "Enrollment Profile / Enrollment", logo: ClipboardList },
     { id: 5, stepName: "New Hire Orientation", logo: GraduationCap },
-    { id: 6, stepName: "Competency Checklist", logo: ClipboardCheck },
-    { id: 7, stepName: "How to Use eRSP", logo: MonitorPlay },
-    { id: 8, stepName: "Forms & Agreements", logo: ScrollText },
-    { id: 9, stepName: "Tax Forms", logo: FileText },
-    { id: 10, stepName: "Offer Letter", logo: FileSignature },
-    { id: 11, stepName: "Completed!", logo: PartyPopper },
+    { id: 6, stepName: "Bloodborne Pathogens", logo: HeartPulse },
+    { id: 7, stepName: "Competency Checklist", logo: ClipboardCheck },
+    { id: 8, stepName: "How to Use eRSP", logo: MonitorPlay },
+    { id: 9, stepName: "Forms & Agreements", logo: ScrollText },
+    { id: 10, stepName: "Tax Forms", logo: FileText },
+    { id: 11, stepName: "Offer Letter", logo: FileSignature },
+    { id: 12, stepName: "Completed!", logo: PartyPopper },
   ]),
 
   nurse_prn: makeSteps(nurseSteps),
@@ -65,10 +68,11 @@ export const stepsByRole = {
     { id: 2, stepName: "Upload Documents", logo: FolderUp },
     { id: 3, stepName: "Personal Information", logo: UserRound },
     { id: 4, stepName: "New Hire Orientation", logo: GraduationCap },
-    { id: 5, stepName: "Forms & Agreements", logo: ScrollText },
-    { id: 6, stepName: "Tax Forms", logo: FileText },
-    { id: 7, stepName: "Offer Letter", logo: FileSignature },
-    { id: 8, stepName: "Completed!", logo: PartyPopper },
+    { id: 5, stepName: "Bloodborne Pathogens", logo: HeartPulse},
+    { id: 6, stepName: "Forms & Agreements", logo: ScrollText },
+    { id: 7, stepName: "Tax Forms", logo: FileText },
+    { id: 8, stepName: "Offer Letter", logo: FileSignature },
+    { id: 9, stepName: "Completed!", logo: PartyPopper },
   ]),
 };
 

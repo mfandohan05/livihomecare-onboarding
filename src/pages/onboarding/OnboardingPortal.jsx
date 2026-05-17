@@ -15,6 +15,7 @@ import FormsApplicationsPage from './onboarding-pages/FormsApplicationsPage'
 import TaxFormsPage from './onboarding-pages/TaxFormsPage'
 import OfferLetterPage from './onboarding-pages/OfferLetterPage'
 import CompletedPage from './onboarding-pages/CompletedPage'
+import BloodbornePathogensTraining from './onboarding-pages/BloodbornePathogensTraining'
 import { useOnboardingTimer } from '@/hooks/useOnboardingTimer'
 
 import { useSaveProgress, loadProgress as loadLocalProgress } from '@/hooks/useOnboardingProgress'
@@ -274,6 +275,23 @@ export default function OnboardingPortal() {
                     updateFormData('orientationQuiz', data)
                     await saveProgress(caregiver.id, activeStep, steps.filter(s => s.status === 'completed').map(s => s.id), { ...formData, orientationQuiz: data })
                 }} />
+            case 'Bloodborne Pathogens':
+                return <BloodbornePathogensTraining
+                    stepLabel={stepLabel}
+                    onNext={handleNext}
+                    initialData={formData.bloodborne}
+                    caregiver={caregiver}
+                    setPopupOpen={setPopupOpen}
+                    onChange={async (data) => {
+                        updateFormData('bloodborne', data)
+                        await saveProgress(
+                            caregiver.id,
+                            activeStep,
+                            steps.filter(s => s.status === 'completed').map(s => s.id),
+                            {...formData, bloodborne: data}
+                        )
+                    }}
+                />
             case 'Competency Checklist':
                 return <SkillsCompetencyPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.competency} onChange={async (data) => {
                     updateFormData('compentency', data)
