@@ -385,7 +385,7 @@ export default function AdminCaregiverDetail() {
         await supabase.from('caregiver_banking').delete().eq('caregiver_id', id)
         await supabase.from('caregivers').delete().eq('id', id)
 
-        navigate('/admin/caregivers')
+        navigate('/admin/employees')
     }
     const activeTime = timeLog
         ? `${Math.floor(timeLog.active_seconds / 3600)}h ${Math.floor((timeLog.active_seconds % 3600) / 60)}m`
