@@ -126,7 +126,6 @@ export default function OnboardingPortal() {
             return;
         }
         updateCaregiverStatus(caregiver.id, 'in_progress')
-        console.log(`${caregiver.name} is now in progress.`)
     }, [caregiver?.id])
 
     useEffect(() => {
