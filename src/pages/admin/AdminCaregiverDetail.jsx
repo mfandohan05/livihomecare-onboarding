@@ -366,21 +366,26 @@ export default function AdminCaregiverDetail() {
         const docFiles = documents
             .filter(d => !['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'].includes(d.document_type))
             .map(d => d.file_path)
+
         const pdfFiles = documents
             .filter(d => ['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'].includes(d.document_type))
             .map(d => d.file_path)
 
         if (docFiles.length > 0) await supabase.storage.from('documents').remove(docFiles)
-        if (pdfFiles.length > 0) await supabase.storage.from('generated-pdfs').remove(pdfFiles)
 
-        await supabase.from('caregiver_documents').delete().eq('caregiver_id', id)
+        await supabase
+            .from('caregiver_documents')
+            .delete()
+            .eq('caregiver_id', id)
+            .not('document_type', 'in', '("i9_completed","w4_completed","w9_completed","nc4ez_completed")')
+
         await supabase.from('caregiver_progress').delete().eq('caregiver_id', id)
         await supabase.from('caregiver_time_logs').delete().eq('caregiver_id', id)
         await supabase.from('caregiver_tax_forms').delete().eq('caregiver_id', id)
         await supabase.from('caregiver_banking').delete().eq('caregiver_id', id)
         await supabase.from('caregivers').delete().eq('id', id)
 
-        navigate('/admin/employees')
+        navigate('/admin/caregivers')
     }
     const activeTime = timeLog
         ? `${Math.floor(timeLog.active_seconds / 3600)}h ${Math.floor((timeLog.active_seconds % 3600) / 60)}m`
