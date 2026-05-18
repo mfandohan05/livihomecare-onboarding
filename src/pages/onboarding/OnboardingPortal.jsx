@@ -25,7 +25,7 @@ import { supabase } from '@/lib/supabase'
 
 import { toast } from 'sonner'
 
-const [saving, setSaving] = useState(false)
+
 
 
 export default function OnboardingPortal() {
@@ -57,7 +57,7 @@ export default function OnboardingPortal() {
         erspGuide: { confirmed: false }
     })
     const [timeLogSaved, setTimeLogSaved] = useState(false);
-
+    const [saving, setSaving] = useState(false)
     useSaveProgress(token, activeStep, steps, formData)
 
     useEffect(() => {
@@ -250,6 +250,7 @@ export default function OnboardingPortal() {
     }
 
     const handleNext = async () => {
+        setSaving(true);
         const updatedSteps = steps.map(step => {
             if (step.id === activeStep) return { ...step, status: 'completed' }
             if (step.id === activeStep + 1) return { ...step, status: 'active' }
@@ -265,6 +266,7 @@ export default function OnboardingPortal() {
         window.scrollTo({ top: 0, behavior: 'smooth' })
 
         await saveProgress(caregiver.id, activeStep + 1, completedStepIds, formData)
+        setSaving(false)
     }
 
     const renderStep = () => {
@@ -322,7 +324,8 @@ export default function OnboardingPortal() {
             case 'How to Use eRSP':
                 return <ERSPGuidePage stepLabel={stepLabel} onNext={handleNext} initialData={formData.erspGuide} onChange={(data) => updateFormData('erspGuide', data)} />
             case 'Forms & Agreements':
-                return <FormsApplicationsPage stepLabel={stepLabel} caregiver={caregiver} onNext={async () => {
+                return <FormsApplicationsPage stepLabel={stepLabel} caregiver={caregiver} setSaving={setSaving} onNext={async () => {
+                    setSaving(true)
                     const signature = formData.signatures?.form_0 || caregiver.name
 
                     const forms = ['drug_test', 'criminal', 'new_hire', 'orientation', 'non_compete']
@@ -336,12 +339,7 @@ export default function OnboardingPortal() {
                             forms,
                         }
                     })
-
-                    console.log('generate-signed-forms result:', result)
-                    if (result.error) {
-                        const errorText = await result.error.context?.text?.()
-                        console.log('generate-signed-forms error:', errorText)
-                    }
+                    setSaving(false)
                     handleNext()
                 }} initialData={{ signatures: formData.signatures, hepBStatus: formData.hepBStatus, completed: formData.formsCompleted }} onChange={async (data) => {
                     updateFormData('signatures', data.signatures)
@@ -355,7 +353,7 @@ export default function OnboardingPortal() {
                 }} onHepBChange={(status) => updateFormData('hepBStatus', status)} />
             case 'Tax Forms':
             case 'Tax Forms (W-9)':
-                return <TaxFormsPage stepLabel={stepLabel} onNext={handleNext} role={isNurse ? 'nurse' : role} caregiver={caregiver} />
+                return <TaxFormsPage stepLabel={stepLabel} onNext={handleNext} role={isNurse ? 'nurse' : role} caregiver={caregiver} setSaving={setSaving} />
             case 'Offer Letter':
                 return <OfferLetterPage stepLabel={stepLabel} caregiver={caregiver} onNext={handleNext} initialData={formData.offerLetter} onChange={async (data) => {
                     updateFormData('offerLetter', data)
@@ -376,6 +374,13 @@ export default function OnboardingPortal() {
         steps.every(s => s.status === 'completed')
     return (
         <SidebarProvider>
+            {saving && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm">
+                    <div className="bg-white rounded-full p-4 shadow-lg">
+                        <div className="w-8 h-8 border-4 border-[#577C09] border-t-transparent rounded-full animate-spin" />
+                    </div>
+                </div>
+            )}
             <SidebarComponent
                 steps={steps}
                 activeStep={activeStep}

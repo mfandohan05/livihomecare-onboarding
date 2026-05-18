@@ -95,7 +95,7 @@ const FormButton = ({ formId, disabled, completed, markComplete }) => (
     </Button>
 )
 
-export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, initialData, onChange, onHepBChange }) {
+export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, initialData, onChange, onHepBChange, setSaving }) {
     const [expanded, setExpanded] = useState({ form_0: true })
     const [completed, setCompleted] = useState(initialData?.completed || {})
     const [signatures, setSignatures] = useState(initialData?.signatures || {})
@@ -140,23 +140,25 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
         </div>
     )
     const handleDirectDepositComplete = async (formId) => {
-    const { error } = await supabase.functions.invoke('save-banking-info', {
-        body: {
-            caregiverId: caregiver.id,
-            bankName: directDeposit.bankName,
-            routingNumber: directDeposit.routingNumber,
-            accountNumber: directDeposit.accountNumber,
-            accountType: directDeposit.accountType,
+        setSaving(true);
+        const { error } = await supabase.functions.invoke('save-banking-info', {
+            body: {
+                caregiverId: caregiver.id,
+                bankName: directDeposit.bankName,
+                routingNumber: directDeposit.routingNumber,
+                accountNumber: directDeposit.accountNumber,
+                accountType: directDeposit.accountType,
+            }
+        })
+
+        if (error) {
+            console.error('Error saving banking info:', error)
+            return
         }
-    })
 
-    if (error) {
-        console.error('Error saving banking info:', error)
-        return
+        markComplete(formId)
+        setSaving(false);
     }
-
-    markComplete(formId)
-}
     const forms = [
         {
             id: 'form_0',

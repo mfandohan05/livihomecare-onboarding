@@ -637,7 +637,7 @@ function NC4EZForm({ data, onChange, onSave, saved }) {
     )
 }
 
-export default function TaxFormsPage({ stepLabel, role, onNext, caregiver }) {
+export default function TaxFormsPage({ stepLabel, role, onNext, caregiver, setSaving }) {
 
     const isContractor = role === 'nurse'
 
@@ -685,8 +685,7 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver }) {
                 nc4ez: !!data.nc4ez_file_path,
             }
 
-            setSaved(restoredSaved)
-
+        
             const firstUnsaved = steps.findIndex(s => !restoredSaved[s.id])
             if (firstUnsaved !== -1) {
                 setCurrentStep(firstUnsaved)
@@ -701,6 +700,7 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver }) {
     const allDone = Object.values(saved).every(Boolean)
 
     const handleSave = async (formId) => {
+        setSaving(true)
         if (formId === 'i9') {
             await supabase.functions.invoke('save-ssn', {
                 body: {
@@ -783,9 +783,6 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver }) {
                 const errorText = await nc4ezResult.error.context.text();
                 console.log("error: ", errorText)
             }
-
-            // save to caregiver_documents via the edge function
-            // also save record directly for restore tracking
             await supabase
                 .from('caregiver_documents')
                 .upsert({
@@ -802,6 +799,7 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver }) {
         if (currentStep < steps.length - 1) {
             setCurrentStep(prev => prev + 1)
         }
+        setSaving(false)
     }
 
     const step = steps[currentStep]
@@ -814,7 +812,7 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver }) {
             </div>
             <h1 className="text-3xl font-bold mb-2">Tax Forms</h1>
             <p className="text-muted-foreground mb-6">
-                Please complete all {steps.length} tax forms below. These are required for payroll setup.
+                Please complete all {steps.length} tax forms below. These are required for payroll setup. Please note that for security reasons, this page WILL NOT automatically save your data. Please make sure you click "Save & Continue" at the bottom of the page to ensure your tax data is saved.
             </p>
 
             <div className="flex gap-2 mb-8 flex-wrap">
