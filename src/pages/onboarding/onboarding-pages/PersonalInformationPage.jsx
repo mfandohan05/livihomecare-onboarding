@@ -74,7 +74,7 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                 <div>
                     <h2 className="text-lg font-medium mb-4 pb-2 border-b">Employee Information</h2>
                     <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="firstName">First name</Label>
                                 <Input
@@ -111,7 +111,7 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                             />
                         </div>
 
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="space-y-2 col-span-1">
                                 <Label htmlFor="city">City</Label>
                                 <Input
@@ -149,7 +149,7 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="primaryPhone">Primary phone</Label>
                                 <Input
@@ -193,7 +193,7 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                 <div>
                     <h2 className="text-lg font-medium mb-4 pb-2 border-b">Primary Emergency Contact</h2>
                     <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="primaryEmergencyFirstName">First name</Label>
                                 <Input
@@ -229,7 +229,7 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                             />
                         </div>
 
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="space-y-2 col-span-1">
                                 <Label htmlFor="primaryEmergencyCity">City</Label>
                                 <Input
@@ -264,7 +264,7 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="primaryEmergencyPrimaryPhone">Primary phone</Label>
                                 <Input
@@ -290,7 +290,7 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="primaryEmergencyEmail">Email</Label>
                                 <Input
@@ -321,7 +321,7 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                     <h2 className="text-lg font-medium mb-4 pb-2 border-b">Secondary Emergency Contact</h2>
                     <p className="text-sm text-muted-foreground mb-4">Optional but recommended.</p>
                     <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="secondaryEmergencyFirstName">First name</Label>
                                 <Input
@@ -355,7 +355,7 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                             />
                         </div>
 
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="space-y-2 col-span-1">
                                 <Label htmlFor="secondaryEmergencyCity">City</Label>
                                 <Input
@@ -390,7 +390,7 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="secondaryEmergencyPrimaryPhone">Primary phone</Label>
                                 <Input
@@ -415,7 +415,7 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="secondaryEmergencyEmail">Email</Label>
                                 <Input

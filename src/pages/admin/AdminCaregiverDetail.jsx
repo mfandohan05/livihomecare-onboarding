@@ -51,7 +51,13 @@ const docLabel = (type) => {
         w9_completed: 'Form W-9 (Completed)',
         nc4ez_completed: 'NC-4EZ (Completed)',
         offer_letter_other: 'Offer Letter (Custom)',
-        bloodborne_certificate: 'Bloodborne Pathogens Certificate'
+        bloodborne_certificate: 'Bloodborne Pathogens Certificate',
+        drug_test_policy_signed: 'Drug Test Policy (Signed)',
+        criminal_background_check_signed: 'Criminal Background Check (Signed)',
+        new_hire_notification_signed: 'New Hire Notification (Signed)',
+        orientation_checklist_signed: 'Orientation Checklist (Signed)',
+        non_compete_signed: 'Non-Compete Agreement (Signed)',
+        hep_b_declination_signed: 'Hep B Declination (Signed)',
     }
     return labels[type] || type
 }
@@ -131,7 +137,14 @@ export default function AdminCaregiverDetail() {
     }
 
     const handleDownload = async (doc) => {
-        const bucket = ['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'].includes(doc.document_type)
+        const generatedPdfTypes = [
+            'i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed',
+            'drug_test_policy_signed', 'criminal_background_check_signed',
+            'new_hire_notification_signed', 'orientation_checklist_signed',
+            'non_compete_signed', 'hep_b_declination_signed'
+        ]
+
+        const bucket = generatedPdfTypes.includes(doc.document_type)
             ? 'generated-pdfs'
             : 'documents'
 
@@ -399,6 +412,25 @@ export default function AdminCaregiverDetail() {
             acc[category].push(skill)
             return acc
         }, {})
+    const handleRegenerateLink = async () => {
+        const newToken = crypto.randomUUID()
+        const newExpiry = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString()
+
+        await supabase
+            .from('caregivers')
+            .update({
+                token: newToken,
+                link_expires_at: newExpiry,
+                status: 'pending'
+            })
+            .eq('id', id)
+
+        await supabase.functions.invoke('send-invite-email', {
+            body: { caregiverId: id }
+        })
+
+        await fetchAll()
+    }
     return (
         <AdminLayout>
             {/* Reauth Dialog */}
@@ -883,16 +915,34 @@ export default function AdminCaregiverDetail() {
                                 <p className="text-xs text-muted-foreground mb-3 break-all">
                                     {window.location.origin}/onboard/{caregiver.token}
                                 </p>
-                                <button
-                                    onClick={copyOnboardingLink}
-                                    className="flex items-center gap-2 text-sm text-[#577C09] hover:underline"
-                                >
-                                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                                    {copied ? 'Copied!' : 'Copy link'}
-                                </button>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={copyOnboardingLink}
+                                        className="flex items-center gap-2 text-sm text-[#577C09] hover:underline"
+                                    >
+                                        {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                                        {copied ? 'Copied!' : 'Copy link'}
+                                    </button>
+                                </div>
+                                {caregiver.link_expires_at && (
+                                    <p className="text-xs text-muted-foreground mt-2">
+                                        Expires {new Date(caregiver.link_expires_at).toLocaleDateString('en-US', {
+                                            month: 'short', day: 'numeric', year: 'numeric',
+                                            hour: '2-digit', minute: '2-digit'
+                                        })}
+                                    </p>
+                                )}
                             </>
                         ) : (
-                            <p className="text-sm text-muted-foreground">Link expired</p>
+                            <div>
+                                <p className="text-sm text-muted-foreground mb-3">Link expired</p>
+                                <button
+                                    onClick={handleRegenerateLink}
+                                    className="flex items-center gap-2 text-sm text-[#577C09] hover:underline"
+                                >
+                                    Regenerate link
+                                </button>
+                            </div>
                         )}
                     </div>
 

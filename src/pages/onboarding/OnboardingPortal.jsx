@@ -60,7 +60,22 @@ export default function OnboardingPortal() {
 
     useEffect(() => {
         const fetchCaregiver = async () => {
-            const data = await getCaregiverByToken(token)
+            const data = await getCaregiverByToken(token);
+            if (data && data.link_expires_at && data.status === 'pending') {
+                const expiry = new Date(data.link_expires_at);
+
+                if (new Date() > expiry) {
+                    await supabase
+                        .from('caregivers')
+                        .update({ token: null })
+                        .eq('id', data.id)
+
+                    setCaregiver(null)
+                    setLoading(false)
+                    return;
+                }
+            }
+
             setCaregiver(data)
 
             if (data) {
@@ -259,7 +274,7 @@ export default function OnboardingPortal() {
                 return <WelcomePage caregiver={caregiver} onNext={handleNext} welcomeSteps={welcomeSteps[role]} />
             case 'Upload Documents':
                 return <UploadDocumentsPage stepLabel={stepLabel} onNext={
-                    async() => {
+                    async () => {
                         await supabase.functions.invoke('send-documents-email', {
                             body: { caregiverId: caregiver.id }
                         })
@@ -288,7 +303,7 @@ export default function OnboardingPortal() {
                             caregiver.id,
                             activeStep,
                             steps.filter(s => s.status === 'completed').map(s => s.id),
-                            {...formData, bloodborne: data}
+                            { ...formData, bloodborne: data }
                         )
                     }}
                 />
@@ -305,7 +320,28 @@ export default function OnboardingPortal() {
             case 'How to Use eRSP':
                 return <ERSPGuidePage stepLabel={stepLabel} onNext={handleNext} initialData={formData.erspGuide} onChange={(data) => updateFormData('erspGuide', data)} />
             case 'Forms & Agreements':
-                return <FormsApplicationsPage stepLabel={stepLabel} caregiver={caregiver} onNext={handleNext} initialData={{ signatures: formData.signatures, hepBStatus: formData.hepBStatus, completed: formData.formsCompleted }} onChange={async (data) => {
+                return <FormsApplicationsPage stepLabel={stepLabel} caregiver={caregiver} onNext={async () => {
+                    const signature = formData.signatures?.form_0 || caregiver.name
+
+                    const forms = ['drug_test', 'criminal', 'new_hire', 'orientation', 'non_compete']
+                    if (formData.hepBStatus) forms.push('hep_b')
+
+                    const result = await supabase.functions.invoke('generate-signed-forms', {
+                        body: {
+                            caregiverId: caregiver.id,
+                            signature,
+                            hepBStatus: formData.hepBStatus,
+                            forms,
+                        }
+                    })
+
+                    console.log('generate-signed-forms result:', result)
+if (result.error) {
+    const errorText = await result.error.context?.text?.()
+    console.log('generate-signed-forms error:', errorText)
+}
+                    handleNext()
+                }} initialData={{ signatures: formData.signatures, hepBStatus: formData.hepBStatus, completed: formData.formsCompleted }} onChange={async (data) => {
                     updateFormData('signatures', data.signatures)
                     updateFormData('formsCompleted', data.completed)
                     await saveProgress(
