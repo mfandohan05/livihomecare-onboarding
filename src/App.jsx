@@ -7,6 +7,7 @@ import AdminCaregiverDetail from './pages/admin/AdminCaregiverDetail';
 import AdminCaregiverMap from './pages/admin/AdminCaregiverMap';
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from './components/ui/sonner';
+import { Navigate } from 'react-router-dom';
 
 
 function App() {
@@ -14,8 +15,9 @@ function App() {
 
   return (
     <BrowserRouter>
-    <Toaster position="bottom-center" />
+      <Toaster position="bottom-center" />
       <Routes>
+        <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
         <Route path='/onboard/:token' element={<OnboardingPortal />} />
         <Route path='/admin/login' element={<AdminLogin />} />
         <Route path='/admin/dashboard' element={
@@ -34,10 +36,10 @@ function App() {
           </AdminRoute>
         } />
         <Route path="/admin/map" element={
-    <AdminRoute>
-        <AdminCaregiverMap />
-    </AdminRoute>
-} />
+          <AdminRoute>
+            <AdminCaregiverMap />
+          </AdminRoute>
+        } />
 
       </Routes>
     </BrowserRouter>
