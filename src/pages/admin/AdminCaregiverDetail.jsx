@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
+import { stepsByRole } from '@/data/steps'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Download, Upload, Eye, EyeOff, Copy, Check, Loader2, CheckCircle, Clock } from 'lucide-react'
@@ -63,17 +64,19 @@ const docLabel = (type) => {
 }
 
 const stepFormDataKey = {
-    1: null,
-    2: 'uploads',
-    3: 'personalInfo',
-    4: 'erspApplication',
-    5: 'orientationQuiz',
-    6: 'competency',
-    7: 'erspGuide',
-    8: 'signatures',
-    9: null,
-    10: 'offerLetter',
-    11: null,
+    'Welcome': null,
+    'Upload Documents': 'uploads',
+    'Personal Information': 'personalInfo',
+    'Enrollment Profile / Enrollment': 'erspApplication',
+    'New Hire Orientation': 'orientationQuiz',
+    'Bloodborne Pathogens': 'bloodborne',
+    'Competency Checklist': 'competency',
+    'How to Use eRSP': 'erspGuide',
+    'Forms & Agreements': 'signatures',
+    'Tax Forms': null,
+    'Tax Forms (W-9)': null,
+    'Offer Letter': 'offerLetter',
+    'Completed!': null,
 }
 
 export default function AdminCaregiverDetail() {
@@ -263,12 +266,15 @@ export default function AdminCaregiverDetail() {
     const handleDeleteStepProgress = async (stepId) => {
         setDeletingStep(stepId)
 
+        const roleSteps = stepsByRole[caregiver.role] || stepsByRole.caregiver
+        const stepName = roleSteps.find(s => s.id === stepId)?.stepName
+        const formDataKey = stepName ? stepFormDataKey[stepName] : null
+
         const updatedCompletedSteps = progress.completed_steps.filter(s => s !== stepId)
         const newActiveStep = updatedCompletedSteps.length > 0
             ? Math.min(stepId, Math.min(...updatedCompletedSteps) + 1)
             : 1
 
-        const formDataKey = stepFormDataKey[stepId]
         let updatedFormData = { ...progress.form_data }
         if (formDataKey) updatedFormData[formDataKey] = {}
 
@@ -281,8 +287,11 @@ export default function AdminCaregiverDetail() {
                 last_saved: new Date().toISOString()
             })
             .eq('caregiver_id', id)
-
-        if (stepId === 9) {
+        await supabase
+            .from('caregivers')
+            .update({ status: 'in_progress' })
+            .eq('id', id)
+        if (stepName === 'Tax Forms' || stepName === 'Tax Forms (W-9)') {
             await supabase.from('caregiver_tax_forms').delete().eq('caregiver_id', id)
             await supabase
                 .from('caregiver_documents')
@@ -296,7 +305,7 @@ export default function AdminCaregiverDetail() {
             if (taxFiles.length > 0) await supabase.storage.from('generated-pdfs').remove(taxFiles)
         }
 
-        if (stepId === 2) {
+        if (stepName === 'Upload Documents') {
             const uploadedDocs = documents.filter(d =>
                 !['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'].includes(d.document_type)
             )
@@ -955,10 +964,17 @@ export default function AdminCaregiverDetail() {
                                     <p className="text-xs text-muted-foreground">Steps completed</p>
                                     <p className="text-2xl font-bold">{progress.completed_steps?.length || 0}</p>
                                 </div>
-                                <div>
-                                    <p className="text-xs text-muted-foreground">Currently on step</p>
-                                    <p className="text-sm font-medium">{progress.active_step}</p>
-                                </div>
+                                {caregiver.status === 'completed' ? (
+                                    <div className="flex items-center gap-2 text-[#577C09]">
+                                        <CheckCircle className="w-4 h-4" />
+                                        <p className="text-sm font-medium">Onboarding complete</p>
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">Currently on step</p>
+                                        <p className="text-sm font-medium">{progress.active_step}</p>
+                                    </div>
+                                )}
                                 <div>
                                     <p className="text-xs text-muted-foreground">Last saved</p>
                                     <p className="text-sm font-medium">
@@ -988,41 +1004,39 @@ export default function AdminCaregiverDetail() {
 
                             <div className="space-y-2">
                                 {progress.completed_steps?.length > 0 ? (
-                                    progress.completed_steps.map((stepId) => (
-                                        <div
-                                            key={stepId}
-                                            className="flex items-center justify-between py-2 px-3 rounded-lg bg-[#E8F0D0]"
-                                        >
-                                            <div className="flex items-center gap-2">
-                                                <CheckCircle className="w-4 h-4 text-[#577C09]" />
-                                                <span className="text-sm text-[#577C09] font-medium">Step {stepId}</span>
+                                    [...progress.completed_steps].sort((a, b) => a - b).map((stepId, index, arr) => {
+                                        const isLatest = index === arr.length - 1
+                                        return (
+                                            <div
+                                                key={stepId}
+                                                className={`flex items-center justify-between py-2 px-3 rounded-lg ${isLatest && caregiver.status !== 'completed' ? 'bg-[#577C09] text-white' : 'bg-[#E8F0D0]'}`}
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <CheckCircle className={`w-4 h-4 ${isLatest && caregiver.status !== 'completed' ? 'text-white' : 'text-[#577C09]'}`} />
+                                                    <span className={`text-sm font-medium ${isLatest && caregiver.status !== 'completed' ? 'text-white' : 'text-[#577C09]'}`}>
+                                                        Step {stepId}
+                                                    </span>
+                                                    {isLatest && caregiver.status !== 'completed' && (
+                                                        <span className="text-xs text-white/80">current</span>
+                                                    )}
+                                                </div>
+                                                {managingProgress && (
+                                                    <button
+                                                        onClick={() => handleDeleteStepProgress(stepId)}
+                                                        disabled={deletingStep === stepId}
+                                                        className={`text-xs hover:underline disabled:opacity-50 ${isLatest && caregiver.status !== 'completed' ? 'text-white/80' : 'text-red-500'}`}
+                                                    >
+                                                        {deletingStep === stepId ? 'Removing...' : 'Remove'}
+                                                    </button>
+                                                )}
                                             </div>
-                                            {managingProgress && (
-                                                <button
-                                                    onClick={() => handleDeleteStepProgress(stepId)}
-                                                    disabled={deletingStep === stepId}
-                                                    className="text-xs text-red-500 hover:underline disabled:opacity-50"
-                                                >
-                                                    {deletingStep === stepId ? 'Removing...' : 'Remove'}
-                                                </button>
-                                            )}
-                                        </div>
-                                    ))
+                                        )
+                                    })
                                 ) : (
                                     <p className="text-sm text-muted-foreground">No steps completed yet</p>
                                 )}
                             </div>
 
-                            {progress.active_step && (
-                                <div className="mt-3 py-2 px-3 rounded-lg bg-amber-50 border border-amber-200">
-                                    <div className="flex items-center gap-2">
-                                        <Clock className="w-4 h-4 text-amber-600" />
-                                        <span className="text-sm text-amber-700 font-medium">
-                                            Currently on Step {progress.active_step}
-                                        </span>
-                                    </div>
-                                </div>
-                            )}
 
                             {managingProgress && (
                                 <div className="mt-4 pt-4 border-t">

@@ -5,6 +5,8 @@ import { Label } from '@/components/ui/label'
 import { FileText, ChevronLeft, ChevronRight, CheckCircle, Upload, Download, AlertCircle, AlertTriangle } from 'lucide-react'
 import { saveTaxFormData } from '@/lib/caregiver'
 import { supabase } from '@/lib/supabase'
+import { formatPhone, formatDOB } from '@/lib/formUtils'
+import StateSelect from '@/components/global/StateSelect'
 
 const today = new Date().toLocaleDateString('en-US', {
     month: '2-digit', day: '2-digit', year: 'numeric'
@@ -91,7 +93,7 @@ function I9Form({ data, onChange, onSave, saved }) {
 
             <div>
                 <h3 className="text-sm font-medium mb-4 pb-2 border-b">Personal Information</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Field label="Last name" id="i9_lastName" required>
                         <Input id="i9_lastName" value={data.lastName || ''} onChange={set('lastName')} placeholder="Santos" />
                     </Field>
@@ -116,15 +118,17 @@ function I9Form({ data, onChange, onSave, saved }) {
                     <Field label="Address Line 2" id="i9_apt">
                         <Input id="i9_apt" value={data.apt || ''} onChange={set('apt')} placeholder="Apt 4B (if applicable)" />
                     </Field>
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <Field label="City" id="i9_city" required>
                             <Input id="i9_city" value={data.city || ''} onChange={set('city')} placeholder="Charlotte" />
                         </Field>
                         <Field label="State" id="i9_state" required>
-                            <Input id="i9_state" value={data.state || ''} onChange={set('state')} placeholder="NC" maxLength={2} />
+                            <StateSelect id="i9_state" value={data.state || ''}
+                                onChange={(e) => onChange({ ...data, state: e.target.value })} required />
                         </Field>
                         <Field label="ZIP code" id="i9_zip" required>
-                            <Input id="i9_zip" value={data.zip || ''} onChange={set('zip')} placeholder="28201" maxLength={5} />
+                            <Input id="i9_zip" value={data.zip || ''} inputMode="numeric" placeholder="28201" maxLength={5}
+                                onChange={(e) => onChange({ ...data, zip: e.target.value.replace(/\D/g, '').slice(0, 5) })} />
                         </Field>
                     </div>
                 </div>
@@ -132,9 +136,11 @@ function I9Form({ data, onChange, onSave, saved }) {
 
             <div>
                 <h3 className="text-sm font-medium mb-4 pb-2 border-b">Additional Information</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Field label="Date of birth (MM/DD/YYYY)" id="i9_dob" required>
-                        <Input id="i9_dob" value={data.dob || ''} onChange={set('dob')} placeholder="01/15/1990" />
+                        <Input id="i9_dob" value={data.dob || ''} inputMode="numeric"
+                            onChange={(e) => onChange({ ...data, dob: formatDOB(e.target.value) })}
+                            placeholder="01/15/1990" />
                     </Field>
                     <Field label="U.S. Social Security Number" id="i9_ssn" required={data.citizenshipStatus === '1' || data.citizenshipStatus === '2'}>
                         <Input id="i9_ssn" value={data.ssn || ''} onChange={(e) => {
@@ -152,7 +158,10 @@ function I9Form({ data, onChange, onSave, saved }) {
                         <Input id="i9_email" type="email" value={data.email || ''} onChange={set('email')} placeholder="maria@email.com" />
                     </Field>
                     <Field label="Telephone number" id="i9_phone" required>
-                        <Input id="i9_phone" type="tel" value={data.phone || ''} onChange={set('phone')} placeholder="(704) 555-0123" />
+                        <Input id="i9_phone" type="tel" inputMode="tel" value={data.phone || ''}
+                            onChange={(e) => onChange({ ...data, phone: formatPhone(e.target.value) })}
+                            placeholder="(704) 555-0123" />
+
                     </Field>
                 </div>
             </div>
@@ -174,7 +183,10 @@ function I9Form({ data, onChange, onSave, saved }) {
                 {data.citizenshipStatus === '4' && (
                     <div className="mt-4 space-y-4">
                         <Field label="Expiration date (MM/DD/YYYY)" id="i9_expDate" required>
-                            <Input id="i9_expDate" value={data.expDate || ''} onChange={set('expDate')} placeholder="01/01/2027" />
+                            <Input id="i9_expDate" value={data.expDate || ''} inputMode="numeric"
+                                onChange={(e) => onChange({ ...data, expDate: formatDOB(e.target.value) })}
+                                placeholder="01/01/2027" />
+
                         </Field>
 
                         <div>
@@ -270,7 +282,7 @@ function W4Form({ data, onChange, onSave, saved }) {
             <div>
                 <h3 className="text-sm font-medium mb-4 pb-2 border-b">Step 1 — Personal Information <span className="text-red-500">*</span></h3>
                 <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Field label="First name and middle initial" id="w4_firstName" required>
                             <Input id="w4_firstName" value={data.firstName || ''} onChange={set('firstName')} placeholder="Maria A." />
                         </Field>
@@ -285,7 +297,14 @@ function W4Form({ data, onChange, onSave, saved }) {
                         <Input id="w4_cityStateZip" value={data.cityStateZip || ''} onChange={set('cityStateZip')} placeholder="Charlotte, NC 28201" />
                     </Field>
                     <Field label="Social Security Number" id="w4_ssn" required>
-                        <Input id="w4_ssn" value={data.ssn || ''} onChange={set('ssn')} placeholder="XXX-XX-XXXX" />
+                        <Input id="w4_ssn" value={data.ssn || ''} placeholder="XXX-XX-XXXX" inputMode="numeric"
+                            onChange={(e) => {
+                                const digits = e.target.value.replace(/\D/g, '').slice(0, 9)
+                                let formatted = digits
+                                if (digits.length > 5) formatted = `${digits.slice(0, 3)}-${digits.slice(3, 5)}-${digits.slice(5)}`
+                                else if (digits.length > 3) formatted = `${digits.slice(0, 3)}-${digits.slice(3)}`
+                                onChange({ ...data, ssn: formatted })
+                            }} />
                     </Field>
                     <div>
                         <Label>Filing status <span className="text-red-500">*</span></Label>
@@ -307,7 +326,7 @@ function W4Form({ data, onChange, onSave, saved }) {
             <div>
                 <h3 className="text-sm font-medium mb-1 pb-2 border-b">Step 3 — Claim Dependents <span className="text-xs font-normal text-muted-foreground">(optional)</span></h3>
                 <p className="text-xs text-muted-foreground mb-4">Only if your total income will be $200,000 or less ($400,000 or less if married filing jointly).</p>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Field label="Qualifying children under 17 × $2,200" id="w4_childCredit">
                         <Input id="w4_childCredit" value={data.childCredit || ''} onChange={set('childCredit')} placeholder="$0" />
                     </Field>
@@ -322,7 +341,7 @@ function W4Form({ data, onChange, onSave, saved }) {
 
             <div>
                 <h3 className="text-sm font-medium mb-1 pb-2 border-b">Step 4 — Other Adjustments <span className="text-xs font-normal text-muted-foreground">(optional)</span></h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Field label="4(a) Other income (not from jobs)" id="w4_otherIncome">
                         <Input id="w4_otherIncome" value={data.otherIncome || ''} onChange={set('otherIncome')} placeholder="$0" />
                     </Field>
@@ -430,12 +449,27 @@ function W9Form({ data, onChange, onSave, saved }) {
             <div>
                 <h3 className="text-sm font-medium mb-4 pb-2 border-b">Taxpayer Identification Number <span className="text-red-500">*</span></h3>
                 <p className="text-xs text-muted-foreground mb-4">For individuals enter your SSN. For entities enter your EIN. Enter only one.</p>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Field label="Social Security Number (SSN)" id="w9_ssn">
-                        <Input id="w9_ssn" value={data.ssn || ''} onChange={set('ssn')} placeholder="XXX-XX-XXXX" disabled={!!data.ein} />
+                        <Input id="w9_ssn" value={data.ssn || ''} placeholder="XXX-XX-XXXX" inputMode="numeric"
+                            disabled={!!data.ein}
+                            onChange={(e) => {
+                                const digits = e.target.value.replace(/\D/g, '').slice(0, 9)
+                                let formatted = digits
+                                if (digits.length > 5) formatted = `${digits.slice(0, 3)}-${digits.slice(3, 5)}-${digits.slice(5)}`
+                                else if (digits.length > 3) formatted = `${digits.slice(0, 3)}-${digits.slice(3)}`
+                                onChange({ ...data, ssn: formatted })
+                            }} />
                     </Field>
                     <Field label="Employer Identification Number (EIN)" id="w9_ein">
-                        <Input id="w9_ein" value={data.ein || ''} onChange={set('ein')} placeholder="XX-XXXXXXX" disabled={!!data.ssn} />
+                        <Input id="w9_ein" value={data.ein || ''} placeholder="XX-XXXXXXX" inputMode="numeric"
+                            disabled={!!data.ssn}
+                            onChange={(e) => {
+                                const digits = e.target.value.replace(/\D/g, '').slice(0, 9)
+                                let formatted = digits
+                                if (digits.length > 2) formatted = `${digits.slice(0, 2)}-${digits.slice(2)}`
+                                onChange({ ...data, ein: formatted })
+                            }} />
                     </Field>
                 </div>
                 {data.ssn && data.ein && (
@@ -492,7 +526,7 @@ function NC4EZForm({ data, onChange, onSave, saved }) {
             <div>
                 <h3 className="text-sm font-medium mb-4 pb-2 border-b">Personal Information</h3>
                 <div className="space-y-4">
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="col-span-1">
                             <Field label="First name" id="nc4ez_firstName" required>
                                 <Input id="nc4ez_firstName" value={data.firstName || ''} onChange={set('firstName')} placeholder="Maria" />
@@ -513,8 +547,8 @@ function NC4EZForm({ data, onChange, onSave, saved }) {
                         <Input id="nc4ez_ssn" value={data.ssn || ''} onChange={(e) => {
                             const digits = e.target.value.replace(/\D/g, '').slice(0, 9)
                             let formatted = digits
-                            if (digits.length > 5) formatted = `${digits.slice(0,3)}-${digits.slice(3,5)}-${digits.slice(5)}`
-                            else if (digits.length > 3) formatted = `${digits.slice(0,3)}-${digits.slice(3)}`
+                            if (digits.length > 5) formatted = `${digits.slice(0, 3)}-${digits.slice(3, 5)}-${digits.slice(5)}`
+                            else if (digits.length > 3) formatted = `${digits.slice(0, 3)}-${digits.slice(3)}`
                             onChange({ ...data, ssn: formatted })
                         }} placeholder="XXX-XX-XXXX" />
                     </Field>
@@ -529,12 +563,14 @@ function NC4EZForm({ data, onChange, onSave, saved }) {
                         </div>
                         <div>
                             <Field label="State" id="nc4ez_state" required>
-                                <Input id="nc4ez_state" value={data.state || ''} onChange={set('state')} placeholder="NC" maxLength={2} />
+                                <StateSelect id="nc4ez_state" value={data.state || ''}
+                                    onChange={(e) => onChange({ ...data, state: e.target.value })} required />
                             </Field>
                         </div>
                         <div>
                             <Field label="ZIP" id="nc4ez_zip" required>
-                                <Input id="nc4ez_zip" value={data.zip || ''} onChange={set('zip')} placeholder="28201" maxLength={5} />
+                                <Input id="nc4ez_zip" value={data.zip || ''} inputMode="numeric" placeholder="28201" maxLength={5}
+                                    onChange={(e) => onChange({ ...data, zip: e.target.value.replace(/\D/g, '').slice(0, 5) })} />
                             </Field>
                         </div>
                     </div>
@@ -732,34 +768,34 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver }) {
         }
 
         if (formId === 'nc4ez') {
-     const nc4ezResult = await supabase.functions.invoke('generate-nc4ez', {
-        body: {
-            caregiverId: caregiver.id,
-            caregiverName: caregiver.name,
-            nc4ezData: {
-                ...nc4ezData,
-                ssn: nc4ezData.ssn?.replace(/-/g, '') || ''
+            const nc4ezResult = await supabase.functions.invoke('generate-nc4ez', {
+                body: {
+                    caregiverId: caregiver.id,
+                    caregiverName: caregiver.name,
+                    nc4ezData: {
+                        ...nc4ezData,
+                        ssn: nc4ezData.ssn?.replace(/-/g, '') || ''
+                    }
+                }
+            })
+
+            if (nc4ezResult.error) {
+                const errorText = await nc4ezResult.error.context.text();
+                console.log("error: ", errorText)
             }
+
+            // save to caregiver_documents via the edge function
+            // also save record directly for restore tracking
+            await supabase
+                .from('caregiver_documents')
+                .upsert({
+                    caregiver_id: caregiver.id,
+                    document_type: 'nc4ez_completed',
+                    file_name: `${caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')}_NC4EZ_Completed.pdf`,
+                    file_path: `${caregiver.id}/${caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')}_NC4EZ_Completed.pdf`,
+                    mime_type: 'application/pdf',
+                }, { onConflict: 'caregiver_id, document_type' })
         }
-    })
-
-    if (nc4ezResult.error) {
-        const errorText = await nc4ezResult.error.context.text();
-        console.log("error: ", errorText)
-    }
-
-    // save to caregiver_documents via the edge function
-    // also save record directly for restore tracking
-    await supabase
-        .from('caregiver_documents')
-        .upsert({
-            caregiver_id: caregiver.id,
-            document_type: 'nc4ez_completed',
-            file_name: `${caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')}_NC4EZ_Completed.pdf`,
-            file_path: `${caregiver.id}/${caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')}_NC4EZ_Completed.pdf`,
-            mime_type: 'application/pdf',
-        }, { onConflict: 'caregiver_id, document_type' })
-}
 
         setSaved(prev => ({ ...prev, [formId]: true }))
         setConfirming(null);
@@ -771,7 +807,7 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver }) {
     const step = steps[currentStep]
 
     return (
-        <div className="max-w-2xl mx-auto py-16 px-8">
+        <div className="max-w-2xl mx-auto py-8 md:py-16 px-4 md:px-8">
             <div className="flex items-center gap-2 mb-2">
                 <FileText className="w-5 h-5 text-[#577C09]" />
                 <span className="text-[#577C09] font-medium">{stepLabel}</span>
@@ -798,7 +834,7 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver }) {
                 ))}
             </div>
 
-            <div className="border border-border rounded-xl p-8 mb-6">
+            <div className="border border-border rounded-xl p-4 md:p-8 mb-6">
                 <div className="mb-6">
                     <h2 className="text-xl font-semibold">{step.title}</h2>
                     <p className="text-sm text-muted-foreground">{step.subtitle}</p>
@@ -875,7 +911,7 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver }) {
             <div className="flex items-center justify-between mb-8">
                 <Button variant="outline" onClick={() => setCurrentStep(prev => prev - 1)} disabled={currentStep === 0} className="gap-2 disabled:opacity-50">
                     <ChevronLeft className="w-4 h-4" />
-                    Previous
+                    <span className='hidden sm:inline'>Previous</span>
                 </Button>
                 <div className="flex gap-1.5">
                     {steps.map((_, i) => (
@@ -883,7 +919,7 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver }) {
                     ))}
                 </div>
                 <Button onClick={() => setCurrentStep(prev => prev + 1)} disabled={currentStep === steps.length - 1 || !saved[steps[currentStep].id]} className="gap-2 bg-[#577C09] hover:bg-[#3D5906] text-white disabled:opacity-50">
-                    Next
+                    <span className='hidden sm:inline'>Next</span>
                     <ChevronRight className="w-4 h-4" />
                 </Button>
             </div>

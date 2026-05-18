@@ -179,7 +179,7 @@ export default function ERSPGuidePage({ stepLabel, onNext, initialData, onChange
     }
 
     return (
-        <div className="max-w-2xl mx-auto py-16 px-8">
+        <div className="max-w-2xl mx-auto py-8 md:py-16 px-4 md:px-8">
 
             {/* Header */}
             <div className="flex items-center gap-2 mb-2">
@@ -207,7 +207,7 @@ export default function ERSPGuidePage({ stepLabel, onNext, initialData, onChange
                             {/* Section Header */}
                             <button
                                 onClick={() => toggle(section.id)}
-                                className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/50 transition-colors"
+                                className="w-full flex items-center justify-between px-4 md:px-6 py-4 hover:bg-muted/50 transition-colors"
                             >
                                 <div className="flex items-center gap-3">
                                     <div
@@ -229,7 +229,7 @@ export default function ERSPGuidePage({ stepLabel, onNext, initialData, onChange
 
                             {/* Section Content */}
                             {isOpen && (
-                                <div className="px-6 pb-6 space-y-6 border-t border-border pt-6">
+                                <div className="px-4 md:px-6 pb-6 space-y-6 border-t border-border pt-6">
                                     {section.steps.map((step, i) => (
                                         <div key={i}>
                                             <h3 className="text-sm font-medium mb-3">{step.heading}</h3>
@@ -238,10 +238,10 @@ export default function ERSPGuidePage({ stepLabel, onNext, initialData, onChange
                                                     <li
                                                         key={j}
                                                         className={`text-sm leading-relaxed flex items-start gap-2 ${typeof item === 'string' && item.startsWith('Important:')
-                                                                ? 'text-[#577C09] font-medium'
-                                                                : typeof item === 'string' && (item.startsWith('Apple') || item.startsWith('Android'))
-                                                                    ? 'text-muted-foreground'
-                                                                    : 'text-foreground'
+                                                            ? 'text-[#577C09] font-medium'
+                                                            : typeof item === 'string' && (item.startsWith('Apple') || item.startsWith('Android'))
+                                                                ? 'text-muted-foreground'
+                                                                : 'text-foreground'
                                                             }`}
                                                     >
                                                         <span className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0"
@@ -252,13 +252,13 @@ export default function ERSPGuidePage({ stepLabel, onNext, initialData, onChange
                                                 ))}
                                             </ul>
                                             {step.images && step.images.length > 0 && (
-                                                <div className="space-y-3 mt-4 flex flex-row max-w-[300px]">
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
                                                     {step.images.map((img, idx) => (
                                                         <img
                                                             key={idx}
                                                             src={img}
                                                             alt={`${step.heading} screenshot ${idx + 1}`}
-                                                            className="rounded-lg border border-border object-cover h-[300px]"
+                                                            className="rounded-lg border border-border object-contain md:object-cover h-[250px] md:h-[300px] w-full"
                                                         />
                                                     ))}
                                                 </div>
@@ -271,16 +271,16 @@ export default function ERSPGuidePage({ stepLabel, onNext, initialData, onChange
                     )
                 })}
             </div>
-                <span className='mb-8 inline-block'>You can view a general training video about using eRSP here: <a href="https://www.youtube.com/watch?si=vn8rXl9q9tBR97f1&v=9BaQsRNkL00&feature=youtu.be" target="_blank" className="underline text-blue-700">eRSP Mobile Application</a></span>
+            <span className='mb-8 inline-block'>You can view a general training video about using eRSP here: <a href="https://www.youtube.com/watch?si=vn8rXl9q9tBR97f1&v=9BaQsRNkL00&feature=youtu.be" target="_blank" className="underline text-blue-700">eRSP Mobile Application</a></span>
             {/* Confirmation */}
-            <div className="border border-border rounded-xl p-6 mb-8">
+            <div className="border border-border rounded-xl p-4 md:p-6 mb-8">
                 <button
                     onClick={handleConfirm}
                     className="flex items-start gap-3 w-full text-left"
                 >
                     <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${confirmed
-                            ? 'bg-[#577C09] border-[#577C09]'
-                            : 'border-muted-foreground'
+                        ? 'bg-[#577C09] border-[#577C09]'
+                        : 'border-muted-foreground'
                         }`}>
                         {confirmed && (
                             <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">

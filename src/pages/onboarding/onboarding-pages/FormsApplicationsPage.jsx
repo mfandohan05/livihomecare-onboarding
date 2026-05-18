@@ -405,7 +405,7 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
                                 onChange={(e) => setDirectDeposit(prev => ({ ...prev, bankName: e.target.value }))}
                             />
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="routingNumber">Routing Number</Label>
                                 <Input
@@ -527,7 +527,7 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
     ]
 
     return (
-        <div className="max-w-2xl mx-auto py-16 px-8">
+        <div className="max-w-2xl mx-auto py-8 md:py-16 px-4 md:px-8">
 
             <div className="flex items-center gap-2 mb-2">
                 <ScrollText className="w-5 h-5 text-[#577C09]" />
@@ -555,9 +555,9 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
                         >
                             <button
                                 onClick={() => toggle(form.id)}
-                                className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/50 transition-colors"
+                                className="w-full flex items-center justify-between px-4 md:px-6 py-4 hover:bg-muted/50 transition-colors"
                             >
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-3 min-w-0">
                                     <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 text-xs font-medium ${isDone
                                         ? 'border-[#577C09] bg-[#577C09] text-white'
                                         : 'border-muted-foreground text-muted-foreground'
@@ -581,7 +581,7 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
 
                             {/* Form Content */}
                             {isOpen && (
-                                <div className="px-6 pb-6 border-t border-border pt-6">
+                                <div className="px-4 md:px-6 pb-6 border-t border-border pt-6">
                                     {form.render()}
                                 </div>
                             )}

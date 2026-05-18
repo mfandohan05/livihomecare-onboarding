@@ -876,7 +876,7 @@ export default function NewHireOrientationPage({ stepLabel, onNext, initialData,
                 setShowQuiz(true)
                 saveProgress({ showQuiz: true })
             }
-            
+
         }
         else {
             setCurrentSlide(prev => prev + 1)
@@ -957,7 +957,7 @@ export default function NewHireOrientationPage({ stepLabel, onNext, initialData,
     }
 
     return (
-        <div className="max-w-3xl mx-auto py-16 px-8">
+        <div className="max-w-3xl mx-auto py-8 md:py-16 px-4 md:px-8">
 
             {/* Header */}
             <div className="flex items-center gap-2 mb-2">
@@ -988,13 +988,13 @@ export default function NewHireOrientationPage({ stepLabel, onNext, initialData,
                                 switchSection(i);
                             }
                         }}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${i === currentSection
-                                ? 'bg-[#577C09] text-white border-[#577C09]'
-                                : completedSections.includes(i)
-                                    ? 'bg-[#E8F0D0] text-[#577C09] border-[#577C09]'
-                                    : visitedSections.includes(i)
-                                        ? 'bg-muted text-[#577C09] border-[#577C09] opacity-75'
-                                        : 'bg-muted text-muted-foreground border-border opacity-50 cursor-not-allowed'
+                        className={`px-2 py-1 md:px-3 md:py-1.5 rounded-full text-xs font-medium transition-colors border ${i === currentSection
+                            ? 'bg-[#577C09] text-white border-[#577C09]'
+                            : completedSections.includes(i)
+                                ? 'bg-[#E8F0D0] text-[#577C09] border-[#577C09]'
+                                : visitedSections.includes(i)
+                                    ? 'bg-muted text-[#577C09] border-[#577C09] opacity-75'
+                                    : 'bg-muted text-muted-foreground border-border opacity-50 cursor-not-allowed'
                             }`}
                     >
                         {completedSections.includes(i) ? '✓ ' : ''}{s.title}
@@ -1004,9 +1004,9 @@ export default function NewHireOrientationPage({ stepLabel, onNext, initialData,
 
             {/* Slide View */}
             {!showQuiz && (
-                <div className="border border-border rounded-xl p-8 mb-6 min-h-[320px]">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-xl font-semibold">{slide.title}</h2>
+                <div className="border border-border rounded-xl p-4 md:p-8 mb-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-1">
+                        <h2 className="text-lg md:text-xl font-semibold">{slide.title}</h2>
                         <span className="text-xs text-muted-foreground">
                             Slide {currentSlide + 1} of {section.slides.length}
                         </span>
@@ -1034,8 +1034,8 @@ export default function NewHireOrientationPage({ stepLabel, onNext, initialData,
             {/* Quiz View */}
             {showQuiz && (
                 <div className="border border-border rounded-xl p-8 mb-6">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-xl font-semibold">Section Quiz — {section.title}</h2>
+                    <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-1">
+                        <h2 className="text-lg md:text-xl font-semibold">Section Quiz — {section.title}</h2>
                         <span className="text-xs text-muted-foreground">{section.quiz.length} questions</span>
                     </div>
 
@@ -1150,7 +1150,7 @@ export default function NewHireOrientationPage({ stepLabel, onNext, initialData,
                         variant="outline"
                         onClick={handlePrevSlide}
                         disabled={currentSlide === 0}
-                        className="gap-2 disabled:opacity-50"
+                        className="gap-1 md:gap-2 disabled:opacity-50 text-sm"
                     >
                         <ChevronLeft className="w-4 h-4" />
                         Previous
@@ -1168,7 +1168,7 @@ export default function NewHireOrientationPage({ stepLabel, onNext, initialData,
 
                     <Button
                         onClick={handleNextSlide}
-                        className="gap-2 bg-[#577C09] hover:bg-[#3D5906] text-white"
+                        className="gap-1 md:gap-2 bg-[#577C09] hover:bg-[#3D5906] text-white text-sm"
                     >
                         {isLastSlide ? (currentSection === 0 ? 'Complete Section' : 'Take Quiz') : 'Next'}
                         <ChevronRight className="w-4 h-4" />

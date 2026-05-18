@@ -8,20 +8,35 @@ export default function BloodbornePathogensPage({ stepLabel, onNext, initialData
     const [uploading, setUploading] = useState(false)
     const [uploaded, setUploaded] = useState(initialData?.uploaded || false)
 
+    const isMobile = !window.matchMedia('(hover: hover)').matches || window.matchMedia('(max-width: 768px)').matches
+
     const handleOpenTraining = () => {
         setPopupOpen(true)
-        const popup = window.open(
-            'https://www.cpr.io/courses/bloodborne-pathogens/',
-            'BloodborneTraining',
-            'width=1100,height=700,scrollbars=yes,resizable=yes'
-        )
 
-        const interval = setInterval(() => {
-            if (popup?.closed) {
-                setPopupOpen(false)
-                clearInterval(interval)
+        if (isMobile) {
+            window.open('https://www.cpr.io/courses/bloodborne-pathogens/', '_blank')
+
+            const handleVisibility = () => {
+                if (document.visibilityState === 'visible') {
+                    setPopupOpen(false)
+                    document.removeEventListener('visibilitychange', handleVisibility)
+                }
             }
-        }, 500)
+            document.addEventListener('visibilitychange', handleVisibility)
+        } else {
+            const popup = window.open(
+                'https://www.cpr.io/courses/bloodborne-pathogens/',
+                'BloodborneTraining',
+                'width=1100,height=700,scrollbars=yes,resizable=yes'
+            )
+
+            const interval = setInterval(() => {
+                if (popup?.closed) {
+                    setPopupOpen(false)
+                    clearInterval(interval)
+                }
+            }, 500)
+        }
     }
 
     const handleUpload = async (file) => {
@@ -54,7 +69,7 @@ export default function BloodbornePathogensPage({ stepLabel, onNext, initialData
     }
 
     return (
-        <div className="max-w-2xl mx-auto py-16 px-8">
+        <div className="max-w-2xl mx-auto py-8 md:py-16 px-4 md:px-8">
             <div className="flex items-center gap-2 mb-2">
                 <Shield className="w-5 h-5 text-[#577C09]" />
                 <span className="text-[#577C09] font-medium">{stepLabel}</span>
@@ -66,7 +81,7 @@ export default function BloodbornePathogensPage({ stepLabel, onNext, initialData
             </p>
 
             {/* Training link card */}
-            <div className="bg-[#F4F7EC] border border-[#577C09]/20 rounded-xl p-6 mb-6">
+            <div className="bg-[#F4F7EC] border border-[#577C09]/20 rounded-xl p-4 md:p-6 mb-6">
                 <div className="flex items-start gap-4">
                     <div className="w-10 h-10 rounded-full bg-[#577C09] flex items-center justify-center shrink-0">
                         <Shield className="w-5 h-5 text-white" />
@@ -77,7 +92,7 @@ export default function BloodbornePathogensPage({ stepLabel, onNext, initialData
                             Complete the free online training at cpr.io. The course takes approximately 30-60 minutes. Upon completion, download your certificate and upload it below.
                         </p>
                         <ol className="text-sm text-muted-foreground space-y-1 mb-4 list-decimal pl-4">
-                            <li>Click the button below to open the training in a new tab</li>
+                            <li>Click the button below to open the training {isMobile ? 'in a new tab' : 'in a popup'}</li>
                             <li>Complete the course and pass the assessment</li>
                             <li>Download your certificate of completion</li>
                             <li>Upload the certificate below</li>
@@ -94,7 +109,7 @@ export default function BloodbornePathogensPage({ stepLabel, onNext, initialData
             </div>
 
             {/* Upload section */}
-            <div className="bg-white border border-border rounded-xl p-6">
+            <div className="bg-white border border-border rounded-xl p-4 md:p-6">
                 <p className="font-medium mb-1">Upload Certificate</p>
                 <p className="text-sm text-muted-foreground mb-4">
                     Already have a valid certificate? Upload it here. Accepted formats: PDF, JPG, PNG.
@@ -103,11 +118,11 @@ export default function BloodbornePathogensPage({ stepLabel, onNext, initialData
                 {uploaded ? (
                     <div className="flex items-center gap-3 py-3 px-4 rounded-lg bg-[#E8F0D0]">
                         <CheckCircle className="w-5 h-5 text-[#577C09] shrink-0" />
-                        <div>
+                        <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-[#577C09]">Certificate uploaded</p>
-                            <p className="text-xs text-[#577C09]/70">{certificate}</p>
+                            <p className="text-xs text-[#577C09]/70 truncate">{certificate}</p>
                         </div>
-                        <label className="ml-auto cursor-pointer text-xs text-[#577C09] hover:underline">
+                        <label className="cursor-pointer text-xs text-[#577C09] hover:underline shrink-0">
                             <input
                                 type="file"
                                 accept="image/*,.pdf"

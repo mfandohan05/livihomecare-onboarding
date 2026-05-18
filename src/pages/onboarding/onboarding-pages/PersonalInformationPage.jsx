@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { UserRound } from 'lucide-react'
+import { formatPhone, formatZip, formatDOB } from '@/lib/formUtils'
+import StateSelect from '@/components/global/StateSelect'
 
 export default function PersonalInformationPage({ stepLabel, onNext, initialData, onChange }) {
     const [formData, setFormData] = useState(initialData || {
@@ -46,7 +48,15 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
 }, [initialData])
 
     const handleChange = (e) => {
-        const updated = { ...formData, [e.target.name]: e.target.value }
+        let value = e.target.value;
+        const name = e.target.name;
+
+        if (name.toLowerCase().includes('phone')) {
+            value = formatPhone(value);
+        }
+
+
+        const updated = { ...formData, [name]: value }
         setFormData(updated)
         onChange(updated)
     }
@@ -125,7 +135,7 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                             </div>
                             <div className="space-y-2 col-span-1">
                                 <Label htmlFor="state">State</Label>
-                                <Input
+                                <StateSelect
                                     id="state"
                                     name="state"
                                     placeholder="NC"
@@ -143,7 +153,10 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                                     placeholder="28201"
                                     maxLength={5}
                                     value={formData.zip}
-                                    onChange={handleChange}
+                                    onChange={(e) => {
+                                        const digits = e.target.value.replace(/\D/g, '').slice(0, 5);
+                                        handleChange({ target: { name: 'zip', value: digits }})
+                                    }}
                                     required
                                 />
                             </div>
@@ -156,6 +169,7 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                                     id="primaryPhone"
                                     name="primaryPhone"
                                     type="tel"
+                                    inputMode="tel"
                                     placeholder="(704) 555-0123"
                                     value={formData.primaryPhone}
                                     onChange={handleChange}
@@ -168,6 +182,7 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                                     id="secondaryPhone"
                                     name="secondaryPhone"
                                     type="tel"
+                                    inputMode="tel"
                                     placeholder="(704) 555-0456"
                                     value={formData.secondaryPhone}
                                     onChange={handleChange}
@@ -242,7 +257,7 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                             </div>
                             <div className="space-y-2 col-span-1">
                                 <Label htmlFor="primaryEmergencyState">State</Label>
-                                <Input
+                                <StateSelect
                                     id="primaryEmergencyState"
                                     name="primaryEmergencyState"
                                     placeholder="NC"
@@ -258,8 +273,12 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                                     name="primaryEmergencyZip"
                                     placeholder="28201"
                                     maxLength={5}
+                                    inputMode="numeric"
                                     value={formData.primaryEmergencyZip}
-                                    onChange={handleChange}
+                                    onChange={(e) => {
+                                        const digits = e.target.value.replace(/\D/g, '').slice(0, 5);
+                                        handleChange({ target: { name: 'primaryEmergencyZip', value: digits }})
+                                    }}
                                 />
                             </div>
                         </div>
@@ -271,6 +290,7 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                                     id="primaryEmergencyPrimaryPhone"
                                     name="primaryEmergencyPrimaryPhone"
                                     type="tel"
+                                    inputMode="tel"
                                     placeholder="(704) 555-0123"
                                     value={formData.primaryEmergencyPrimaryPhone}
                                     onChange={handleChange}
@@ -283,6 +303,7 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                                     id="primaryEmergencySecondaryPhone"
                                     name="primaryEmergencySecondaryPhone"
                                     type="tel"
+                                    inputMode="tel"
                                     placeholder="(704) 555-0456"
                                     value={formData.primaryEmergencySecondaryPhone}
                                     onChange={handleChange}
@@ -368,7 +389,7 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                             </div>
                             <div className="space-y-2 col-span-1">
                                 <Label htmlFor="secondaryEmergencyState">State</Label>
-                                <Input
+                                <StateSelect
                                     id="secondaryEmergencyState"
                                     name="secondaryEmergencyState"
                                     placeholder="NC"
@@ -385,7 +406,11 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                                     placeholder="28201"
                                     maxLength={5}
                                     value={formData.secondaryEmergencyZip}
-                                    onChange={handleChange}
+                                    inputMode="numeric"
+                                    onChange={(e) => {
+                                        const digits = e.target.value.replace(/\D/g, '').slice(0, 5);
+                                        handleChange({ target: { name: 'secondaryEmergencyZip', value: digits }})
+                                    }}
                                 />
                             </div>
                         </div>
@@ -397,6 +422,7 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                                     id="secondaryEmergencyPrimaryPhone"
                                     name="secondaryEmergencyPrimaryPhone"
                                     type="tel"
+                                    inputMode="tel"
                                     placeholder="(704) 555-0123"
                                     value={formData.secondaryEmergencyPrimaryPhone}
                                     onChange={handleChange}
@@ -408,6 +434,7 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                                     id="secondaryEmergencySecondaryPhone"
                                     name="secondaryEmergencySecondaryPhone"
                                     type="tel"
+                                    inputMode="tel"
                                     placeholder="(704) 555-0456"
                                     value={formData.secondaryEmergencySecondaryPhone}
                                     onChange={handleChange}

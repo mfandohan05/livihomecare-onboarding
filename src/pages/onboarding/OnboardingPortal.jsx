@@ -25,6 +25,8 @@ import { supabase } from '@/lib/supabase'
 
 import { toast } from 'sonner'
 
+const [saving, setSaving] = useState(false)
+
 
 export default function OnboardingPortal() {
     const { token } = useParams()
@@ -336,10 +338,10 @@ export default function OnboardingPortal() {
                     })
 
                     console.log('generate-signed-forms result:', result)
-if (result.error) {
-    const errorText = await result.error.context?.text?.()
-    console.log('generate-signed-forms error:', errorText)
-}
+                    if (result.error) {
+                        const errorText = await result.error.context?.text?.()
+                        console.log('generate-signed-forms error:', errorText)
+                    }
                     handleNext()
                 }} initialData={{ signatures: formData.signatures, hepBStatus: formData.hepBStatus, completed: formData.formsCompleted }} onChange={async (data) => {
                     updateFormData('signatures', data.signatures)
