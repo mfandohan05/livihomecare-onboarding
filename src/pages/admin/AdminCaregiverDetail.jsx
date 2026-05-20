@@ -263,6 +263,11 @@ export default function AdminCaregiverDetail() {
         setTimeout(() => setCopied(false), 2000)
     }
 
+    const openCaregiverView = () => {
+        const link = `${window.location.origin}/onboard/${caregiver.token}?preview=true`
+        window.open(link, "popupWindow", "width=1024,height=768")
+    }
+
     const handleDeleteStepProgress = async (stepId) => {
         setDeletingStep(stepId)
 
@@ -929,13 +934,18 @@ export default function AdminCaregiverDetail() {
                                 <p className="text-xs text-muted-foreground mb-3 break-all">
                                     {window.location.origin}/onboard/{caregiver.token}
                                 </p>
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-3 flex-col">
                                     <button
                                         onClick={copyOnboardingLink}
                                         className="flex items-center gap-2 text-sm text-[#577C09] hover:underline"
                                     >
                                         {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                                         {copied ? 'Copied!' : 'Copy link'}
+                                    </button>
+                                    <button
+                                    onClick={openCaregiverView}
+                                    className='flex items-center gap-2 text-sm text-[#577C09] hover:underline'>
+                                        Open Caregiver View
                                     </button>
                                 </div>
                                 {caregiver.link_expires_at && (

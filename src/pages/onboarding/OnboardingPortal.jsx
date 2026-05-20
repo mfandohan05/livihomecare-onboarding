@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { stepsByRole } from '@/data/steps'
 import { welcomeSteps } from '@/data/steps'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
@@ -30,6 +30,8 @@ import { toast } from 'sonner'
 
 export default function OnboardingPortal() {
     const { token } = useParams()
+    const [searchParams] = useSearchParams();
+    const isPreview = searchParams.get('preview') === 'true'
     const { isIdle, getHoursWorked, isActiveTab, setPopupOpen } = useOnboardingTimer(token)
 
     const [caregiver, setCaregiver] = useState(null)
@@ -350,10 +352,11 @@ export default function OnboardingPortal() {
                         steps.filter(s => s.status === 'completed').map(s => s.id),
                         { ...formData, signatures: data.signatures, formsCompleted: data.completed }
                     )
-                }} onHepBChange={(status) => updateFormData('hepBStatus', status)} />
+                }} onHepBChange={(status) => updateFormData('hepBStatus', status)}
+                isPreview={isPreview} />
             case 'Tax Forms':
             case 'Tax Forms (W-9)':
-                return <TaxFormsPage stepLabel={stepLabel} onNext={handleNext} role={isNurse ? 'nurse' : role} caregiver={caregiver} setSaving={setSaving} />
+                return <TaxFormsPage stepLabel={stepLabel} onNext={handleNext} role={isNurse ? 'nurse' : role} caregiver={caregiver} setSaving={setSaving} isPreview={isPreview} />
             case 'Offer Letter':
                 return <OfferLetterPage stepLabel={stepLabel} caregiver={caregiver} onNext={handleNext} initialData={formData.offerLetter} onChange={async (data) => {
                     updateFormData('offerLetter', data)
@@ -393,7 +396,15 @@ export default function OnboardingPortal() {
                 isCompleted={isCompleted}
             />
             <SidebarInset className="overflow-y-auto">
-                {renderStep()}
+                {isPreview && (
+                    <div className="bg-amber-500 text-white text-center text-xs py-2 font-medium">
+                        Preview Mode — changes cannot be made.
+                    </div>
+                )}
+                <fieldset disabled={isPreview} className='contents'>
+                    {renderStep()}
+                </fieldset>
+
             </SidebarInset>
         </SidebarProvider>
     )
