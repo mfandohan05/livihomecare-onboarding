@@ -111,6 +111,17 @@ export default function AdminCaregiverDetail() {
     const [deleteLoading, setDeleteLoading] = useState(false)
     const competency = progress?.form_data?.compentency;
 
+    const logAction = async (action, metadata = {}) => {
+        const { data: { session } } = await supabase.auth.getSession()
+        await supabase.from('audit_logs').insert({
+            admin_id: session.user.id,
+            admin_email: session.user.email,
+            action,
+            caregiver_id: id,
+            caregiver_name: caregiver.name,
+            metadata
+        })
+    }
 
 
     useEffect(() => {
@@ -140,6 +151,7 @@ export default function AdminCaregiverDetail() {
     }
 
     const handleDownload = async (doc) => {
+        await logAction('downloaded_document', { document_type: doc.document_type })
         const generatedPdfTypes = [
             'i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed',
             'drug_test_policy_signed', 'criminal_background_check_signed',
@@ -216,6 +228,7 @@ export default function AdminCaregiverDetail() {
         }
     }
     const fetchSsn = async () => {
+        await logAction('viewed_ssn')
         setLoadingSsn(true)
         const { data: { session } } = await supabase.auth.getSession()
         const result = await supabase.functions.invoke('get-ssn', {
@@ -227,6 +240,7 @@ export default function AdminCaregiverDetail() {
         setLoadingSsn(false)
     }
     const fetchBanking = async () => {
+        await logAction('viewed_banking')
         setLoadingBanking(true)
         const { data: { session } } = await supabase.auth.getSession()
         const result = await supabase.functions.invoke('get-banking-info', {
@@ -263,9 +277,10 @@ export default function AdminCaregiverDetail() {
         setTimeout(() => setCopied(false), 2000)
     }
 
-    const openCaregiverView = () => {
+    const openCaregiverView = async () => {
         const link = `${window.location.origin}/onboard/${caregiver.token}?preview=true`
         window.open(link, "popupWindow", "width=1024,height=768")
+        await logAction('opened_caregiver_view');
     }
 
     const handleDeleteStepProgress = async (stepId) => {
@@ -338,18 +353,19 @@ export default function AdminCaregiverDetail() {
         const docFiles = documents
             .filter(d => !['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'].includes(d.document_type))
             .map(d => d.file_path)
-        const pdfFiles = documents
-            .filter(d => ['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'].includes(d.document_type))
-            .map(d => d.file_path)
 
         if (docFiles.length > 0) await supabase.storage.from('documents').remove(docFiles)
-        if (pdfFiles.length > 0) await supabase.storage.from('generated-pdfs').remove(pdfFiles)
 
-        await supabase.from('caregiver_documents').delete().eq('caregiver_id', id)
+        await supabase
+            .from('caregiver_documents')
+            .delete()
+            .eq('caregiver_id', id)
+            .not('document_type', 'in', '("i9_completed","w4_completed","w9_completed","nc4ez_completed")')
 
         await fetchAll()
         setResetting(false)
         setManagingProgress(false)
+        await logAction('deleting_employee_progress')
     }
 
     const handleDelete = async () => {
@@ -367,6 +383,7 @@ export default function AdminCaregiverDetail() {
             setDeleteLoading(false)
             return
         }
+
 
         const docFiles = documents
             .filter(d => !['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'].includes(d.document_type))
@@ -389,6 +406,8 @@ export default function AdminCaregiverDetail() {
         await supabase.from('caregiver_tax_forms').delete().eq('caregiver_id', id)
         await supabase.from('caregiver_banking').delete().eq('caregiver_id', id)
         await supabase.from('caregivers').delete().eq('id', id)
+
+        await logAction('deleted_employee')
 
         navigate('/admin/employees')
     }
@@ -450,6 +469,8 @@ export default function AdminCaregiverDetail() {
 
         await fetchAll()
     }
+
+
     return (
         <div>
             {/* Reauth Dialog */}
@@ -942,11 +963,11 @@ export default function AdminCaregiverDetail() {
                                         {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                                         {copied ? 'Copied!' : 'Copy link'}
                                     </button>
-                                    <button
-                                    onClick={openCaregiverView}
-                                    className='flex items-center gap-2 text-sm text-[#577C09] hover:underline'>
+                                    {caregiver.token && <button
+                                        onClick={openCaregiverView}
+                                        className='flex items-center gap-2 text-sm text-[#577C09] hover:underline'>
                                         Open Caregiver View
-                                    </button>
+                                    </button>}
                                 </div>
                                 {caregiver.link_expires_at && (
                                     <p className="text-xs text-muted-foreground mt-2">

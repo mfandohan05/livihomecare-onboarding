@@ -127,8 +127,11 @@ export default function OnboardingPortal() {
         if (caregiver.status === "completed") {
             return;
         }
-        updateCaregiverStatus(caregiver.id, 'in_progress')
-        console.log(`${caregiver.name} is now in progress.`)
+        if (!isPreview) {
+            updateCaregiverStatus(caregiver.id, 'in_progress')
+            console.log(`${caregiver.name} is now in progress.`)
+        }
+
     }, [caregiver?.id])
 
     useEffect(() => {
@@ -288,7 +291,7 @@ export default function OnboardingPortal() {
                     }
                 } role={caregiver.role} caregiver={caregiver} />
             case 'Personal Information':
-                return <PersonalInformationPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.personalInfo} onChange={(data) => updateFormData('personalInfo', data)} />
+                return <PersonalInformationPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.personalInfo} onChange={(data) => updateFormData('personalInfo', data)} isPreview={isPreview} />
             case 'Enrollment Profile / Enrollment':
                 return <ERSPApplicationPage stepLabel={stepLabel} onNext={handleNext} setPopupOpen={setPopupOpen} initialData={formData.erspApplication} onChange={(data) => updateFormData('erspApplication', data)} />
             case 'New Hire Orientation':
@@ -353,7 +356,7 @@ export default function OnboardingPortal() {
                         { ...formData, signatures: data.signatures, formsCompleted: data.completed }
                     )
                 }} onHepBChange={(status) => updateFormData('hepBStatus', status)}
-                isPreview={isPreview} />
+                    isPreview={isPreview} />
             case 'Tax Forms':
             case 'Tax Forms (W-9)':
                 return <TaxFormsPage stepLabel={stepLabel} onNext={handleNext} role={isNurse ? 'nurse' : role} caregiver={caregiver} setSaving={setSaving} isPreview={isPreview} />

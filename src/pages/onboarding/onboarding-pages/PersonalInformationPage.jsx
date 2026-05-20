@@ -6,7 +6,7 @@ import { UserRound } from 'lucide-react'
 import { formatPhone, formatZip, formatDOB } from '@/lib/formUtils'
 import StateSelect from '@/components/global/StateSelect'
 
-export default function PersonalInformationPage({ stepLabel, onNext, initialData, onChange }) {
+export default function PersonalInformationPage({ stepLabel, onNext, initialData, onChange, isPreview }) {
     const [formData, setFormData] = useState(initialData || {
         lastName: '',
         firstName: '',
@@ -65,6 +65,21 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
         e.preventDefault()
         console.log(formData)
         onNext()
+    }
+    
+    if (isPreview) {
+        return (
+            <div className="max-w-2xl mx-auto py-8 md:py-16 px-4 md:px-8">
+                <div className="flex items-center gap-2 mb-2">
+                    <UserRound className="w-5 h-5 text-[#577C09]" />
+                    <span className="text-[#577C09] font-medium">{stepLabel}</span>
+                </div>
+                <h1 className="text-3xl font-bold mb-2">Personal Information</h1>
+                <div className="border border-border rounded-xl p-8 mt-6 flex items-center justify-center min-h-[200px]">
+                    <p className="text-sm text-muted-foreground">Personal information data is hidden in preview mode.</p>
+                </div>
+            </div>
+        )
     }
 
     return (
