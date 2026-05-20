@@ -9,6 +9,7 @@ import AdminLayout from './components/admin/AdminLayout';
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from './components/ui/sonner';
 import { Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
 
 import { Outlet } from 'react-router-dom'
 
@@ -23,6 +24,10 @@ function AdminLayoutWrapper() {
 }
 
 function App() {
+  useEffect(() => {
+  console.log("PROD:", import.meta.env.PROD)
+  console.log("MODE:", import.meta.env.MODE)
+}, [])
     return (
         <BrowserRouter>
             <Toaster position="bottom-center" />
