@@ -49,6 +49,8 @@ export default function AdminCaregiverMap() {
         latitude: 35.2271,
         zoom: 9
     })
+    const [page, setPage] = useState(1);
+    const PER_PAGE = 10;
 
     useEffect(() => {
         fetchCaregivers()
@@ -122,6 +124,7 @@ export default function AdminCaregiverMap() {
 
         setSortedCaregivers(sorted)
         setViewState(prev => ({ ...prev, longitude: lng, latitude: lat, zoom: 10 }))
+        setPage(1);
     }
 
     const handleSearch = async () => {
@@ -151,6 +154,7 @@ export default function AdminCaregiverMap() {
         setShowSuggestions(false)
         setSortedCaregivers(caregivers)
         setViewState({ longitude: -80.8431, latitude: 35.2271, zoom: 9 })
+        setPage(1);
     }
 
     return (
@@ -226,55 +230,79 @@ export default function AdminCaregiverMap() {
             {/* Split view */}
             <div className="flex gap-6 h-[600px]">
                 {/* Left — caregiver list */}
-                <div className="w-80 shrink-0 overflow-y-auto space-y-2">
-                    {loading ? (
-                        <p className="text-sm text-muted-foreground py-4 text-center">Loading caregivers...</p>
-                    ) : sortedCaregivers.length === 0 ? (
-                        <p className="text-sm text-muted-foreground py-4 text-center">No caregivers with addresses found</p>
-                    ) : (
-                        sortedCaregivers.map((caregiver, index) => (
-                            <div
-                                key={caregiver.id}
-                                onClick={() => {
-                                    setSelectedCaregiver(caregiver)
-                                    setViewState(prev => ({
-                                        ...prev,
-                                        longitude: caregiver.lng,
-                                        latitude: caregiver.lat,
-                                        zoom: 13
-                                    }))
-                                }}
-                                className={`bg-white rounded-xl border p-4 cursor-pointer transition-colors hover:border-[#577C09] ${
-                                    selectedCaregiver?.id === caregiver.id
-                                        ? 'border-[#577C09] bg-[#E8F0D0]/50'
-                                        : 'border-border'
-                                }`}
-                            >
-                                <div className="flex items-start gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-[#577C09] flex items-center justify-center text-white text-xs font-medium shrink-0">
-                                        {caregiver.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center justify-between gap-2">
-                                            <p className="font-medium text-sm truncate">{caregiver.name}</p>
-                                            {clientLocation && caregiver.distance !== undefined && (
-                                                <span className="text-xs font-medium text-[#577C09] shrink-0">
-                                                    {caregiver.distance.toFixed(1)} mi
-                                                </span>
-                                            )}
+                <div className="w-80 shrink-0 flex flex-col gap-2">
+                    <div className="overflow-y-auto flex-1 space-y-2">
+                        {loading ? (
+                            <p className="text-sm text-muted-foreground py-4 text-center">Loading caregivers...</p>
+                        ) : sortedCaregivers.length === 0 ? (
+                            <p className="text-sm text-muted-foreground py-4 text-center">No caregivers with addresses found</p>
+                        ) : (
+                            sortedCaregivers.slice((page - 1) * PER_PAGE, page * PER_PAGE).map((caregiver, index) => (
+                                <div
+                                    key={caregiver.id}
+                                    onClick={() => {
+                                        setSelectedCaregiver(caregiver)
+                                        setViewState(prev => ({
+                                            ...prev,
+                                            longitude: caregiver.lng,
+                                            latitude: caregiver.lat,
+                                            zoom: 13
+                                        }))
+                                    }}
+                                    className={`bg-white rounded-xl border p-4 cursor-pointer transition-colors hover:border-[#577C09] ${selectedCaregiver?.id === caregiver.id
+                                            ? 'border-[#577C09] bg-[#E8F0D0]/50'
+                                            : 'border-border'
+                                        }`}
+                                >
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-8 h-8 rounded-full bg-[#577C09] flex items-center justify-center text-white text-xs font-medium shrink-0">
+                                            {caregiver.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                                         </div>
-                                        <p className="text-xs text-muted-foreground capitalize">{caregiver.role}</p>
-                                        <p className="text-xs text-muted-foreground truncate mt-0.5">{caregiver.address}</p>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center justify-between gap-2">
+                                                <p className="font-medium text-sm truncate">{caregiver.name}</p>
+                                                {clientLocation && caregiver.distance !== undefined && (
+                                                    <span className="text-xs font-medium text-[#577C09] shrink-0">
+                                                        {caregiver.distance.toFixed(1)} mi
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-xs text-muted-foreground capitalize">{caregiver.role}</p>
+                                            <p className="text-xs text-muted-foreground truncate mt-0.5">{caregiver.address}</p>
+                                        </div>
                                     </div>
+                                    {clientLocation && index === 0 && page === 1 && (
+                                        <div className="mt-2 text-xs font-medium text-[#577C09] flex items-center gap-1">
+                                            <Navigation className="w-3 h-3" />
+                                            Closest caregiver
+                                        </div>
+                                    )}
                                 </div>
-                                {clientLocation && index === 0 && (
-                                    <div className="mt-2 text-xs font-medium text-[#577C09] flex items-center gap-1">
-                                        <Navigation className="w-3 h-3" />
-                                        Closest caregiver
-                                    </div>
-                                )}
-                            </div>
-                        ))
+                            ))
+                        )}
+                    </div>
+
+                    {/* Pagination */}
+                    {sortedCaregivers.length > PER_PAGE && (
+                        <div className="flex items-center justify-between pt-2 border-t border-border">
+                            <button
+                                onClick={() => setPage(prev => prev - 1)}
+                                disabled={page === 1}
+                                className="text-xs text-[#577C09] hover:underline disabled:opacity-30 disabled:no-underline"
+                            >
+                                ← Previous
+                            </button>
+                            <span className="text-xs text-muted-foreground">
+                                {(page - 1) * PER_PAGE + 1}–{Math.min(page * PER_PAGE, sortedCaregivers.length)} of {sortedCaregivers.length}
+                            </span>
+                            <button
+                                onClick={() => setPage(prev => prev + 1)}
+                                disabled={page * PER_PAGE >= sortedCaregivers.length}
+                                className="text-xs text-[#577C09] hover:underline disabled:opacity-30 disabled:no-underline"
+                            >
+                                Next →
+                            </button>
+                        </div>
                     )}
                 </div>
 
@@ -311,13 +339,12 @@ export default function AdminCaregiverMap() {
                                 onClick={() => setSelectedCaregiver(caregiver)}
                             >
                                 <div className="flex flex-col items-center cursor-pointer">
-                                    <div className={`w-8 h-8 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-white text-xs font-bold transition-transform hover:scale-110 ${
-                                        selectedCaregiver?.id === caregiver.id
+                                    <div className={`w-8 h-8 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-white text-xs font-bold transition-transform hover:scale-110 ${selectedCaregiver?.id === caregiver.id
                                             ? 'bg-[#3D5906] scale-110'
                                             : clientLocation && index === 0
-                                            ? 'bg-[#577C09]'
-                                            : 'bg-[#577C09]/70'
-                                    }`}>
+                                                ? 'bg-[#577C09]'
+                                                : 'bg-[#577C09]/70'
+                                        }`}>
                                         {caregiver.name.split(' ')[0][0]}
                                     </div>
                                 </div>
