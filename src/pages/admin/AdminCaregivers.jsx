@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, use } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import AdminLayout from '@/components/admin/AdminLayout'
@@ -262,46 +262,54 @@ export default function AdminCaregivers() {
     const [statusFilter, setStatusFilter] = useState('all')
     const [roleFilter, setRoleFilter] = useState('all')
     const [loading, setLoading] = useState(true)
+    const [page, setPage] = useState(1);
+    const [totalCount, setTotalCount] = useState(0)
+    const PER_PAGE = 20;
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(search)
+        }, 300)
+        return () => clearTimeout(timer)
+    }, [search])
 
     useEffect(() => {
         fetchCaregivers()
-    }, [])
+    }, [page, debouncedSearch, statusFilter, roleFilter])
 
     const fetchCaregivers = async () => {
-        const { data } = await supabase
+        setLoading(true)
+        const from = (page - 1) * PER_PAGE
+        const to = from + PER_PAGE - 1
+
+        let query = supabase
             .from('caregivers')
             .select(`
             *,
-            caregiver_progress (
-                active_step,
-                completed_steps
-            ),
-            caregiver_time_logs (
-                active_seconds,
-                completed
-            )
-        `)
+            caregiver_progress (active_step, completed_steps),
+            caregiver_time_logs (active_seconds, completed)
+        `, { count: 'exact' })
             .order('created_at', { ascending: false })
+            .range(from, to)
+
+        if (debouncedSearch) query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%`)
+        if (statusFilter !== 'all') query = query.eq('status', statusFilter)
+        if (roleFilter !== 'all') query = query.eq('role', roleFilter)
+
+        const { data, count } = await query
 
         if (data) {
             setCaregivers(data)
             setFiltered(data)
         }
+        setTotalCount(count || 0)
         setLoading(false)
     }
 
     useEffect(() => {
-        let result = caregivers
-        if (search) {
-            result = result.filter(c =>
-                c.name.toLowerCase().includes(search.toLowerCase()) ||
-                c.email.toLowerCase().includes(search.toLowerCase())
-            )
-        }
-        if (statusFilter !== 'all') result = result.filter(c => c.status === statusFilter)
-        if (roleFilter !== 'all') result = result.filter(c => c.role === roleFilter)
-        setFiltered(result)
-    }, [search, statusFilter, roleFilter, caregivers])
+        setPage(1)
+    }, [debouncedSearch, statusFilter, roleFilter])
 
     const statusColor = (status) => {
         if (status === 'completed') return 'text-[#577C09] bg-[#E8F0D0]'
@@ -347,7 +355,7 @@ export default function AdminCaregivers() {
             <div className="flex items-center justify-between mb-8">
                 <div>
                     <h1 className="text-2xl font-bold">Employees</h1>
-                    <p className="text-muted-foreground">{caregivers.length} total employees enrolled</p>
+                    <p className="text-muted-foreground">{totalCount} total employees enrolled</p>
                 </div>
                 <Button
                     onClick={() => setShowNewDialog(true)}
@@ -384,7 +392,8 @@ export default function AdminCaregivers() {
                 >
                     <option value="all">All roles</option>
                     <option value="caregiver">Caregiver</option>
-                    <option value="nurse">Nurse</option>
+                    <option value="nurse_prn">Nurse (PRN)</option>
+                    <option value="nurse_director">Nurse (Director)</option>
                     <option value="other">Other</option>
                 </select>
             </div>
@@ -454,6 +463,29 @@ export default function AdminCaregivers() {
                         )}
                     </tbody>
                 </table>
+                <div className="flex items-center justify-between px-6 py-4 border-t border-border">
+                    <p className="text-sm text-muted-foreground">
+                        Showing {((page - 1) * PER_PAGE) + 1}–{Math.min(page * PER_PAGE, totalCount)} of {totalCount}
+                    </p>
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setPage(prev => prev - 1)}
+                            disabled={page === 1}
+                        >
+                            Previous
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setPage(prev => prev + 1)}
+                            disabled={page * PER_PAGE >= totalCount}
+                        >
+                            Next
+                        </Button>
+                    </div>
+                </div>
             </div>
         </AdminLayout>
     )
