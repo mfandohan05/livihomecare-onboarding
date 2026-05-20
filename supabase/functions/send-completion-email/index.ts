@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
       ? (parseFloat(activeHours) * caregiver.pay_rate).toFixed(2)
       : null
 
-    const adminLink = `https://app.livihomecare.com/admin/caregivers/${caregiverId}`
+    const adminLink = `https://app.livihomecare.com/admin/employees/${caregiverId}`
 
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',

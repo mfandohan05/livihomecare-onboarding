@@ -290,8 +290,8 @@ function NurseDirectorAgreement({ caregiver }) {
       <div>
         <p className="font-medium">Title: Agency Director</p>
         <p className="mt-2">
-          This Agreement is between Livi Home Care ("The Agency") and <strong>{caregiver.name}</strong> ("The Director").
-          Whereas the Agency desires to engage the services of the Director, and the Director desires to
+          This Agreement is between Livi Home Care ("The Agency") and <strong>{caregiver.name}</strong> ("The Contractor").
+          Whereas the Company desires to engage the services of the Contractor, and the Contractor desires to
           provide such services under the terms and conditions set forth herein, the parties agree as follows:
         </p>
       </div>
@@ -299,6 +299,9 @@ function NurseDirectorAgreement({ caregiver }) {
         <div>
           <p className="font-medium">Start Date:</p>
           <p className="text-muted-foreground">{caregiver.start_date || '________________'}</p>
+          <p className='text-muted-foreground'>Effective from {caregiver.start_date || '___________________'} until either party terminates this Agreement in accordance
+            with the terms outlined herein.
+          </p>
         </div>
         <div>
           <p className="font-medium">Pay Rate:</p>
@@ -311,25 +314,104 @@ function NurseDirectorAgreement({ caregiver }) {
           <p className="text-muted-foreground">Weekly</p>
         </div>
       </div>
-      {/* Replace content below with actual director agreement terms */}
       <div>
         <p className="font-medium">Duties and Responsibilities:</p>
-        <p className="text-muted-foreground mt-1">
-          [Director duties and responsibilities to be added here]
-        </p>
+        <div className="text-muted-foreground mt-1">
+          The Contractor agrees to perform services in a professional manner using their skills, experience, and 
+          talents to fulfill the responsibilities required for their role. The Contractor will adhere to all agency policies 
+          and procedures, and any applicable local, state, and federal laws while engaged with the company.
+          <br></br>
+          <span className='text-foreground'>Responsibilities include, but are not limited to:</span>
+          <ol className='list-decimal list-outside pl-5 text-foreground mt-1'>
+            <li><strong>Management:</strong>
+            <br></br>
+            - Provide administrative directions to Livi Home Care<br></br>
+            - Develop or implement effective policies and procedures to ensure efficient operations.<br></br>
+            - Supervise, mentor, and evaluate staff members.<br></br>
+            - Attend all leadership and team management meetings</li>
+            <li><strong>Ensure compliance with all relevant regulations, laws, and accreditation standards:</strong><br></br>
+            - Monitor and maintain high-quality care standards.<br></br>
+            - Conduct regular audits and assessments to identify areas for improvement and ensure client satisfaction.</li>
+            <li><strong>Client Care:</strong><br></br>
+            - Oversee client intake processes, ensuring comprehensive assessments and personalized care plans.<br></br>
+            - Address client concerns promptly and effectively, maintaining excellent relationships with our clients.<br></br>
+            - Work closely with healthcare professionals and families to provide the best possible care for our clients.<br></br>
+            - Performing quarterly and annual assessment of current clients.<br></br>
+            - Conducting assessment for new clients.<br></br>
+            - Managing care plans in accordance with physicians' instructions.</li>
+            <li><strong>Qualifications:</strong><br></br>
+            - A Registered Nurse OR: <br></br>
+            - An individual who holds a bachelor's degree in health, business, or public administration science AND has at 
+            least one year of supervisory or management experience in home care or other licensed health care program; OR<br></br>
+            - An individual who has at least two years of supervisory or management experience in home care or any other provider licensed pursuant to G.S.
+            131 E or G.S. 122C<br></br>
+            - Very good knowledge of healthcare regulations, policies, and best practices.<br></br>
+            - Exceptional interpersonal communication and team-building skills.</li>
+          </ol>
+        </div>
+        <div className='mt-2 text-muted-foreground'>
+          <span className='text-foreground'>Mileage Reimbursement: </span><span className=''>For client assessments and other home visits, Livi Home Care will reimburse mileage at 
+          the federal rate of $0.725 per mile. Mileage reimbursement applies to travel required for client-related purposes only. Mileage will also be paid for coming
+          onto the office for team management meetings, but mileage will not be paid for dropping off paperwork at the contractor's convenience.</span>
+        </div>
+        <div className='mt-2 text-muted-foreground'>
+          <span className='text-foreground'>Assessment and Visit Time: </span>The agency will compensate for the time spent on each client assessment or visit, with the expectation that 
+          each will be completed within a reasonable time not to exceed two hours, unless otherwise pre-approved.
+        </div>
+        <div className='mt-2 text-muted-foreground'>
+          <span className='text-foreground'>Duration and Termination: </span>
+          <ul>
+            <li><strong>Contractor's Termination: </strong>The Contractor may terminate this Agreement by providing at least 14 days' notice.</li>
+            <li><strong>Agency's Termination: </strong>The Company may terminate this Agreement by providing at least 14 days' notice.</li>
+          </ul>
+        </div>
       </div>
       <div>
         <p className="font-medium">Confidentiality:</p>
         <p className="text-muted-foreground mt-1">
-          The Director agrees to maintain confidentiality regarding all Agency and client information,
-          in compliance with HIPAA regulations and any other applicable privacy standards.
+          The Contractor agrees to maintain confidentiality regarding all Company and client information, 
+          in compliance with HIPAA regulations and any other applicable privacy standards. Unauthorized disclosure 
+          of any such confidential information, directly or indirectly, may result in legal action and the Company's 
+          pursuit of all available remedies.
         </p>
+      </div>
+      <div>
+        <p className='font-medium'>Independent Contractor Status:</p>
+        <p className='text-muted-foreground mt-1'>The Contractor is engaged as an independent contractor and 
+          does not have the authority to act on behalf of the Company, including making any agreements with clients.</p>
+      </div>
+      <div>
+        <p className='font-medium'>Attendance:</p>
+        <p className='text-muted-foreground mt-1'>The Contractor is expected to appear at designated work locations as 
+          scheduled. Failure to appear on more than two occasions within a 12-month period without prior notice may 
+          result in immediate termination of this Agreement.</p>
+      </div>
+      <div>
+        <p className='font-medium'>Disability:</p>
+        <p className='text-muted-foreground mt-1'>If the Contractor becomes unable to perform their duties due to physical or 
+          mental disability, the Company may terminate this Agreement by providing 7 days' written notice.</p>
+      </div>
+      <div>
+        <p className='font-medium'>Compliance:</p>
+        <p className='text-muted-foreground mt-1'>The Contractor agrees to follow all rules, regulations, and obligations 
+          specified in this Agreement and the Company's policies. Non-compliance may lead to immediate termination.</p>
+      </div>
+      <div>
+        <p className='font-medium'>Return of Company Property:</p>
+        <p className='text-muted-foreground mt-1'>Upon termination, the Contractor agrees to return all Company's property, including 
+          electronic records, data reports, and any other materials owned by the Company.</p>
       </div>
       <div>
         <p className="font-medium">Governing Law:</p>
         <p className="text-muted-foreground mt-1">
           This Agreement shall be governed under the laws of the State of North Carolina.
         </p>
+      </div>
+      <div>
+        <p className='font-medium'>Entire Agreement:</p>
+        <p className='text-muted-foreground mt-1'>This Agreement constitutes the entire agreement between 
+          the Company and the Contractor, superseding all prior agreements, discussions, or understandings, 
+          whether written or verbal.</p>
       </div>
     </div>
   )
