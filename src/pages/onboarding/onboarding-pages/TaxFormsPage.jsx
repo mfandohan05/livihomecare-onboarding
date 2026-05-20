@@ -87,7 +87,7 @@ function I9Form({ data, onChange, onSave, saved }) {
                 <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                 <div className="text-sm text-amber-800">
                     <p className="font-medium mb-1">You are completing Section 1 only.</p>
-                    <p>Livi Home Care will complete Section 2 with you directly after your first day of employment.</p>
+                    <p>Livi Home Care will complete Section 2 with you directly.</p>
                 </div>
             </div>
 
