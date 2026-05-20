@@ -350,22 +350,21 @@ export default function AdminCaregiverDetail() {
         await supabase.from('caregiver_time_logs').delete().eq('caregiver_id', id)
         await supabase.from('caregiver_tax_forms').delete().eq('caregiver_id', id)
 
-        const docFiles = documents
+        const allDocFiles = documents
             .filter(d => !['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'].includes(d.document_type))
             .map(d => d.file_path)
+        const taxPdfFiles = documents
+            .filter(d => ['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'].includes(d.document_type))
+            .map(d => d.file_path)
 
-        if (docFiles.length > 0) await supabase.storage.from('documents').remove(docFiles)
+        if (allDocFiles.length > 0) await supabase.storage.from('documents').remove(allDocFiles)
+        if (taxPdfFiles.length > 0) await supabase.storage.from('generated-pdfs').remove(taxPdfFiles)
 
-        await supabase
-            .from('caregiver_documents')
-            .delete()
-            .eq('caregiver_id', id)
-            .not('document_type', 'in', '("i9_completed","w4_completed","w9_completed","nc4ez_completed")')
+        await supabase.from('caregiver_documents').delete().eq('caregiver_id', id)
 
         await fetchAll()
         setResetting(false)
         setManagingProgress(false)
-        await logAction('deleting_employee_progress')
     }
 
     const handleDelete = async () => {
