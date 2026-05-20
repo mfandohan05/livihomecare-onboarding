@@ -10,7 +10,6 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from './components/ui/sonner';
 import { Navigate } from 'react-router-dom';
 
-
 import { Outlet } from 'react-router-dom'
 
 function AdminLayoutWrapper() {
