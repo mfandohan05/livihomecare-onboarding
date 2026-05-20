@@ -154,7 +154,7 @@ export default function AdminCaregiverMap() {
     }
 
     return (
-        <AdminLayout>
+        <div>
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h1 className="text-2xl font-bold">Caregiver Map</h1>
@@ -359,6 +359,6 @@ export default function AdminCaregiverMap() {
                     </Map>
                 </div>
             </div>
-        </AdminLayout>
+        </div>
     )
 }

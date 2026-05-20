@@ -446,7 +446,7 @@ export default function AdminCaregiverDetail() {
         await fetchAll()
     }
     return (
-        <AdminLayout>
+        <div>
             {/* Reauth Dialog */}
             <AlertDialog open={showReauth} onOpenChange={setShowReauth}>
                 <AlertDialogContent className="max-w-sm">
@@ -1098,6 +1098,6 @@ export default function AdminCaregiverDetail() {
                     </div>
                 </div>
             </div>
-        </AdminLayout>
+        </div>
     )
 }
