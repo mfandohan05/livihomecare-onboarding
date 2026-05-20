@@ -67,37 +67,49 @@ export default function AdminCaregiverMap() {
     }, [])
 
     const fetchCaregivers = async () => {
-        const { data: caregiverData } = await supabase
-            .from('caregivers')
-            .select('id, name, role, position_title, phone, email')
-            .eq('status', 'completed')
+    const { data: caregiverData } = await supabase
+        .from('caregivers')
+        .select('id, name, role, position_title, phone, email, lat, lng')
+        .eq('status', 'completed')
 
-        if (!caregiverData) { setLoading(false); return }
+    if (!caregiverData) { setLoading(false); return }
 
-        const { data: progressData } = await supabase
-            .from('caregiver_progress')
-            .select('caregiver_id, form_data')
-            .in('caregiver_id', caregiverData.map(c => c.id))
+    const { data: progressData } = await supabase
+        .from('caregiver_progress')
+        .select('caregiver_id, form_data')
+        .in('caregiver_id', caregiverData.map(c => c.id))
 
-        const withCoords = await Promise.all(
-            caregiverData.map(async (caregiver) => {
-                const progress = progressData?.find(p => p.caregiver_id === caregiver.id)
-                const info = progress?.form_data?.personalInfo
-                if (!info?.streetAddress) return null
+    const withCoords = await Promise.all(
+        caregiverData.map(async (caregiver) => {
+            const progress = progressData?.find(p => p.caregiver_id === caregiver.id)
+            const info = progress?.form_data?.personalInfo
+            if (!info?.streetAddress) return null
 
-                const address = `${info.streetAddress}, ${info.city}, ${info.state} ${info.zip}`
-                const coords = await geocodeAddress(address)
-                if (!coords) return null
+            const address = `${info.streetAddress}, ${info.city}, ${info.state} ${info.zip}`
 
-                return { ...caregiver, address, lat: coords.lat, lng: coords.lng }
-            })
-        )
+            // use cached coords
+            if (caregiver.lat && caregiver.lng) {
+                return { ...caregiver, address }
+            }
 
-        const valid = withCoords.filter(Boolean)
-        setCaregivers(valid)
-        setSortedCaregivers(valid)
-        setLoading(false)
-    }
+            // else geocode for next time
+            const coords = await geocodeAddress(address)
+            if (!coords) return null
+
+            await supabase
+                .from('caregivers')
+                .update({ lat: coords.lat, lng: coords.lng })
+                .eq('id', caregiver.id)
+
+            return { ...caregiver, address, lat: coords.lat, lng: coords.lng }
+        })
+    )
+
+    const valid = withCoords.filter(Boolean)
+    setCaregivers(valid)
+    setSortedCaregivers(valid)
+    setLoading(false)
+}
 
     const fetchSuggestions = async (query) => {
         if (!query.trim() || query.length < 3) { setSuggestions([]); return }
