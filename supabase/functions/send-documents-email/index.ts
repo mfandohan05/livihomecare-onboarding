@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
 
     if (!caregiver) throw new Error('Caregiver not found')
 
-    const adminLink = `https://app.livihomecare.com/admin/caregivers/${caregiverId}`
+    const adminLink = `https://app.livihomecare.com/admin/employees/${caregiverId}`
 
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',

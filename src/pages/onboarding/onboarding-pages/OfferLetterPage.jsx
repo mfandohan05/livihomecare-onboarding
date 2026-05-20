@@ -351,7 +351,7 @@ function NurseDirectorAgreement({ caregiver }) {
         </div>
         <div className='mt-2 text-muted-foreground'>
           <span className='text-foreground'>Mileage Reimbursement: </span><span className=''>For client assessments and other home visits, Livi Home Care will reimburse mileage at 
-          the federal rate of $0.67 per mile. Mileage reimbursement applies to travel required for client-related purposes only. Mileage will also be paid for coming
+          the federal rate of $0.725 per mile. Mileage reimbursement applies to travel required for client-related purposes only. Mileage will also be paid for coming
           onto the office for team management meetings, but mileage will not be paid for dropping off paperwork at the contractor's convenience.</span>
         </div>
         <div className='mt-2 text-muted-foreground'>

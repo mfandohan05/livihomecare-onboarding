@@ -49,7 +49,6 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
     const handleSubmit = async () => {
         setLoading(true)
         setError(null)
-
         const { data, error } = await supabase
             .from('caregivers')
             .insert({
