@@ -89,7 +89,7 @@ export default function BloodbornePathogensPage({ stepLabel, onNext, initialData
                     <div className="flex-1">
                         <p className="font-semibold mb-1">Bloodborne Pathogens Course</p>
                         <p className="text-sm text-muted-foreground mb-4">
-                            Complete the free online training at cpr.io. The course takes approximately 30-60 minutes. Upon completion, download your certificate and upload it below.
+                            Complete the online training at cpr.io. The course takes approximately 30-60 minutes. Upon completion, download your certificate and upload it below.
                         </p>
                         <ol className="text-sm text-muted-foreground space-y-1 mb-4 list-decimal pl-4">
                             <li>Click the button below to open the training {isMobile ? 'in a new tab' : 'in a popup'}</li>

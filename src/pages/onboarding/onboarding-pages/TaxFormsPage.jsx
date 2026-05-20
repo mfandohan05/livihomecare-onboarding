@@ -637,7 +637,7 @@ function NC4EZForm({ data, onChange, onSave, saved }) {
     )
 }
 
-export default function TaxFormsPage({ stepLabel, role, onNext, caregiver, setSaving }) {
+export default function TaxFormsPage({ stepLabel, role, onNext, caregiver, setSaving, isPreview }) {
 
     const isContractor = role === 'nurse'
 
@@ -668,24 +668,32 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver, setSa
 
     useEffect(() => {
         const restoreSaved = async () => {
-            const { data, error } = await supabase
-                .from('caregiver_tax_forms')
-                .select('*')
-                .eq('caregiver_id', caregiver.id)
-                .maybeSingle()
+            const [{ data: taxData }, { data: docData }] = await Promise.all([
+                supabase
+                    .from('caregiver_tax_forms')
+                    .select('*')
+                    .eq('caregiver_id', caregiver.id)
+                    .maybeSingle(),
+                supabase
+                    .from('caregiver_documents')
+                    .select('document_type')
+                    .eq('caregiver_id', caregiver.id)
+                    .in('document_type', ['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'])
+            ])
 
-            if (error || !data) return
+            const completedDocs = docData?.map(d => d.document_type) || []
 
             const restoredSaved = isContractor ? {
-                i9: !!data.i9_data && Object.keys(data.i9_data).length > 0,
-                w9: !!data.w9_data && Object.keys(data.w9_data).length > 0,
+                i9: completedDocs.includes('i9_completed'),
+                w9: completedDocs.includes('w9_completed'),
             } : {
-                i9: !!data.i9_data && Object.keys(data.i9_data).length > 0,
-                w4: !!data.w4_data && Object.keys(data.w4_data).length > 0,
-                nc4ez: !!data.nc4ez_file_path,
+                i9: completedDocs.includes('i9_completed'),
+                w4: completedDocs.includes('w4_completed'),
+                nc4ez: completedDocs.includes('nc4ez_completed'),
             }
 
-        
+            setSaved(restoredSaved)
+
             const firstUnsaved = steps.findIndex(s => !restoredSaved[s.id])
             if (firstUnsaved !== -1) {
                 setCurrentStep(firstUnsaved)
@@ -695,7 +703,6 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver, setSa
         }
         restoreSaved()
     }, [caregiver.id])
-
 
     const allDone = Object.values(saved).every(Boolean)
 
@@ -719,6 +726,21 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver, setSa
                     }
                 }
             })
+
+            await saveTaxFormData(caregiver.id, 'i9', {
+                ...i9Data,
+                ssn: ''
+            })
+
+            await supabase
+                .from('caregiver_documents')
+                .upsert({
+                    caregiver_id: caregiver.id,
+                    document_type: 'i9_completed',
+                    file_name: `${caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')}_I9_Completed.pdf`,
+                    file_path: `${caregiver.id}/${caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')}_I9_Section1.pdf`,
+                    mime_type: 'application/pdf',
+                }, { onConflict: 'caregiver_id, document_type' })
         }
 
         if (formId === 'w4') {
@@ -732,6 +754,16 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver, setSa
             })
 
             await saveTaxFormData(caregiver.id, 'w4', w4Data)
+
+            await supabase
+                .from('caregiver_documents')
+                .upsert({
+                    caregiver_id: caregiver.id,
+                    document_type: 'w4_completed',
+                    file_name: `${caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')}_W4_Completed.pdf`,
+                    file_path: `${caregiver.id}/${caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')}_W4_Completed.pdf`,
+                    mime_type: 'application/pdf',
+                }, { onConflict: 'caregiver_id, document_type' })
 
             await supabase.functions.invoke('generate-w4', {
                 body: {
@@ -754,6 +786,16 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver, setSa
                 }
             })
             await saveTaxFormData(caregiver.id, 'w9', w9Data)
+
+            await supabase
+                .from('caregiver_documents')
+                .upsert({
+                    caregiver_id: caregiver.id,
+                    document_type: 'w4_completed',
+                    file_name: `${caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')}_W4_Completed.pdf`,
+                    file_path: `${caregiver.id}/${caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')}_W4_Completed.pdf`,
+                    mime_type: 'application/pdf',
+                }, { onConflict: 'caregiver_id, document_type' })
 
             await supabase.functions.invoke('generate-w9', {
                 body: {
@@ -803,6 +845,21 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver, setSa
     }
 
     const step = steps[currentStep]
+
+    if (isPreview) {
+        return (
+            <div className="max-w-2xl mx-auto py-8 md:py-16 px-4 md:px-8">
+                <div className="flex items-center gap-2 mb-2">
+                    <FileText className="w-5 h-5 text-[#577C09]" />
+                    <span className="text-[#577C09] font-medium">{stepLabel}</span>
+                </div>
+                <h1 className="text-3xl font-bold mb-2">Tax Forms</h1>
+                <div className="border border-border rounded-xl p-8 mt-6 flex items-center justify-center min-h-[200px]">
+                    <p className="text-sm text-muted-foreground">Tax form data is hidden in preview mode.</p>
+                </div>
+            </div>
+        )
+    }
 
     return (
         <div className="max-w-2xl mx-auto py-8 md:py-16 px-4 md:px-8">
