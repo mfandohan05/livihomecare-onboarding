@@ -1070,14 +1070,15 @@ export default function AdminCaregiverDetail() {
                                     <p className="text-2xl font-bold">{activeTime}</p>
                                 </div>
                                 <div>
-                                    <p className="text-xs text-muted-foreground">Orientation pay owed</p>
+                                    <p className="text-xs text-muted-foreground">Suggested orientation pay</p>
                                     <p className="text-2xl font-bold text-[#577C09]">${orientationPay}</p>
                                 </div>
                                 <div>
                                     <p className="text-xs text-muted-foreground">Started</p>
                                     <p className="text-sm font-medium">
                                         {new Date(timeLog.session_start).toLocaleDateString('en-US', {
-                                            month: 'short', day: 'numeric', year: 'numeric'
+                                            month: 'short', day: 'numeric', year: 'numeric',
+                                            hour: '2-digit', minute: '2-digit'
                                         })}
                                     </p>
                                 </div>
@@ -1085,7 +1086,8 @@ export default function AdminCaregiverDetail() {
                                     <p className="text-xs text-muted-foreground">Completed</p>
                                     <p className="text-sm font-medium">
                                         {new Date(timeLog.session_end).toLocaleDateString('en-US', {
-                                            month: 'short', day: 'numeric', year: 'numeric'
+                                            month: 'short', day: 'numeric', year: 'numeric',
+                                            hour: '2-digit', minute: '2-digit'
                                         })}
                                     </p>
                                 </div>
