@@ -1,4 +1,6 @@
 import { PartyPopper, Heart, CheckCircle, Mail, Phone } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { PDFDocument } from 'pdf-lib'
 
 const completedSteps = {
     'caregiver': [
@@ -130,11 +132,44 @@ const nextSteps = {
 }
 
 export default function CompletedPage({ caregiver, getHoursWorked, updateCaregiverStatus }) {
+
+    const [certificateUrl, setCertificateUrl] = useState(null);
+
+    useEffect(() => {
+        generateCertificate();
+        return() => {
+            if (certificateUrl) {
+                URL.revokeObjectURL(certificateUrl)
+            }
+        }
+    }, [])
+
+    const generateCertificate = async() => {
+        const response = await fetch('/certificate.pdf');
+        const pdfBytes = await response.arrayBuffer();
+
+        const pdfDoc = await PDFDocument.load(pdfBytes);
+        const form = pdfDoc.getForm();
+
+        const nameField = form.getTextField('Text1');
+        nameField.setText(caregiver.name);
+        form.flatten();
+
+        const filledPdfBytes = await pdfDoc.save();
+        const blob = new Blob([filledPdfBytes], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        setCertificateUrl(url);
+    }
+
+    const handleDownload = () => {
+        const a = document.createElement('a');
+        a.href = certificateUrl;
+        a.download = `${caregiver.name.replace(/\s+/g, '_')}_Certificate.pdf`;
+        a.click();
+    }
     
     return (
         <div className="max-w-2xl mx-auto py-16 px-8">
-
-
             <div className="text-center mb-10">
                 <div className="flex justify-center mb-4">
                     <div className="w-16 h-16 rounded-full bg-[#E8F0D0] flex items-center justify-center">
@@ -147,6 +182,32 @@ export default function CompletedPage({ caregiver, getHoursWorked, updateCaregiv
                 <p className="text-muted-foreground text-lg">
                     Congratulations on completing your Livi Home Care orientation. We're so excited to have you on the team.
                 </p>
+            </div>
+
+            <div className="mt-8">
+                <h2 className="text-lg font-semibold mb-2">Your Certificate</h2>
+                <p className="text-sm text-muted-foreground mb-4">
+                    Congratulations on completing your onboarding!
+                </p>
+                {certificateUrl ? (
+                    <div className="space-y-3">
+                        <iframe
+                            src={certificateUrl}
+                            className="w-full h-[500px] rounded-xl border border-border"
+                            title="Completion Certificate"
+                        />
+                        <button
+                            onClick={handleDownload}
+                            className="flex items-center gap-2 text-sm text-[#577C09] hover:underline my-4"
+                        >
+                            Download Certificate
+                        </button>
+                    </div>
+                ) : (
+                    <div className="w-full h-[500px] rounded-xl border border-border bg-muted/30 flex items-center justify-center">
+                        <p className="text-sm text-muted-foreground">Generating certificate...</p>
+                    </div>
+                )}
             </div>
 
             {/* What you completed */}

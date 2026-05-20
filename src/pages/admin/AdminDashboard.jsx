@@ -58,7 +58,7 @@ export default function AdminDashboard() {
     }
 
     return (
-        <AdminLayout>
+        <div>
             <div className="flex items-center justify-between mb-8">
                 <div>
                     <h1 className="text-2xl font-bold">Dashboard</h1>
@@ -122,6 +122,6 @@ export default function AdminDashboard() {
                     )}
                 </div>
             </div>
-        </AdminLayout>
+        </div>
     )
 }

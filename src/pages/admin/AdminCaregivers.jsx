@@ -342,7 +342,7 @@ export default function AdminCaregivers() {
     }
 
     return (
-        <AdminLayout>
+        <div>
             <NewCaregiverDialog
                 open={showNewDialog}
                 onClose={() => setShowNewDialog(false)}
@@ -487,6 +487,6 @@ export default function AdminCaregivers() {
                     </div>
                 </div>
             </div>
-        </AdminLayout>
+        </div>
     )
 }
