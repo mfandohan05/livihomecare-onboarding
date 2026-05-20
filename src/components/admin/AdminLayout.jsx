@@ -37,6 +37,30 @@ export default function AdminLayout({ children }) {
         fetchAdmin()
     }, [])
 
+    useEffect(() => {
+        let timeout
+
+        const resetTimer = () => {
+            clearTimeout(timeout)
+            timeout = setTimeout(async () => {
+                await supabase.auth.signOut()
+                navigate('/admin/login')
+            }, 30 * 60 * 1000)
+        }
+
+        window.addEventListener('mousemove', resetTimer)
+        window.addEventListener('keydown', resetTimer)
+        window.addEventListener('click', resetTimer)
+        resetTimer()
+
+        return () => {
+            clearTimeout(timeout)
+            window.removeEventListener('mousemove', resetTimer)
+            window.removeEventListener('keydown', resetTimer)
+            window.removeEventListener('click', resetTimer)
+        }
+    }, [])
+
     const handleSignOut = async () => {
         await supabase.auth.signOut()
         navigate('/admin/login')
@@ -68,11 +92,10 @@ export default function AdminLayout({ children }) {
                                 <NavigationMenuItem key={item.path}>
                                     <NavigationMenuLink
                                         onClick={() => navigate(item.path)}
-                                        className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium cursor-pointer transition-colors ${
-                                            isActive(item.path)
+                                        className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium cursor-pointer transition-colors ${isActive(item.path)
                                                 ? 'bg-[#E8F0D0] text-[#577C09]'
                                                 : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                                        }`}
+                                            }`}
                                     >
                                         <item.icon className="w-4 h-4" />
                                         {item.label}
