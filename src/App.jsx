@@ -24,10 +24,6 @@ function AdminLayoutWrapper() {
 }
 
 function App() {
-  useEffect(() => {
-  console.log("PROD:", import.meta.env.PROD)
-  console.log("MODE:", import.meta.env.MODE)
-}, [])
     return (
         <BrowserRouter>
             <Toaster position="bottom-center" />
