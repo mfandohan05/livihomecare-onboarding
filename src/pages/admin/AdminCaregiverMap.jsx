@@ -51,6 +51,8 @@ export default function AdminCaregiverMap() {
     })
     const [page, setPage] = useState(1);
     const PER_PAGE = 10;
+    const [driveTime, setDriveTime] = useState(null);
+    const [loadingDriveTime, setLoadingDriveTime] = useState(false);
 
     useEffect(() => {
         fetchCaregivers()
@@ -67,49 +69,49 @@ export default function AdminCaregiverMap() {
     }, [])
 
     const fetchCaregivers = async () => {
-    const { data: caregiverData } = await supabase
-        .from('caregivers')
-        .select('id, name, role, position_title, phone, email, lat, lng')
-        .eq('status', 'completed')
+        const { data: caregiverData } = await supabase
+            .from('caregivers')
+            .select('id, name, role, position_title, phone, email, lat, lng')
+            .eq('status', 'completed')
 
-    if (!caregiverData) { setLoading(false); return }
+        if (!caregiverData) { setLoading(false); return }
 
-    const { data: progressData } = await supabase
-        .from('caregiver_progress')
-        .select('caregiver_id, form_data')
-        .in('caregiver_id', caregiverData.map(c => c.id))
+        const { data: progressData } = await supabase
+            .from('caregiver_progress')
+            .select('caregiver_id, form_data')
+            .in('caregiver_id', caregiverData.map(c => c.id))
 
-    const withCoords = await Promise.all(
-        caregiverData.map(async (caregiver) => {
-            const progress = progressData?.find(p => p.caregiver_id === caregiver.id)
-            const info = progress?.form_data?.personalInfo
-            if (!info?.streetAddress) return null
+        const withCoords = await Promise.all(
+            caregiverData.map(async (caregiver) => {
+                const progress = progressData?.find(p => p.caregiver_id === caregiver.id)
+                const info = progress?.form_data?.personalInfo
+                if (!info?.streetAddress) return null
 
-            const address = `${info.streetAddress}, ${info.city}, ${info.state} ${info.zip}`
+                const address = `${info.streetAddress}, ${info.city}, ${info.state} ${info.zip}`
 
-            // use cached coords
-            if (caregiver.lat && caregiver.lng) {
-                return { ...caregiver, address }
-            }
+                // use cached coords
+                if (caregiver.lat && caregiver.lng) {
+                    return { ...caregiver, address }
+                }
 
-            // else geocode for next time
-            const coords = await geocodeAddress(address)
-            if (!coords) return null
+                // else geocode for next time
+                const coords = await geocodeAddress(address)
+                if (!coords) return null
 
-            await supabase
-                .from('caregivers')
-                .update({ lat: coords.lat, lng: coords.lng })
-                .eq('id', caregiver.id)
+                await supabase
+                    .from('caregivers')
+                    .update({ lat: coords.lat, lng: coords.lng })
+                    .eq('id', caregiver.id)
 
-            return { ...caregiver, address, lat: coords.lat, lng: coords.lng }
-        })
-    )
+                return { ...caregiver, address, lat: coords.lat, lng: coords.lng }
+            })
+        )
 
-    const valid = withCoords.filter(Boolean)
-    setCaregivers(valid)
-    setSortedCaregivers(valid)
-    setLoading(false)
-}
+        const valid = withCoords.filter(Boolean)
+        setCaregivers(valid)
+        setSortedCaregivers(valid)
+        setLoading(false)
+    }
 
     const fetchSuggestions = async (query) => {
         if (!query.trim() || query.length < 3) { setSuggestions([]); return }
@@ -167,6 +169,28 @@ export default function AdminCaregiverMap() {
         setSortedCaregivers(caregivers)
         setViewState({ longitude: -80.8431, latitude: 35.2271, zoom: 9 })
         setPage(1);
+        setDriveTime(null)
+    }
+
+    const getDriveTime = async (caregiver) => {
+        if (!clientLocation) {
+            return
+        }
+        setLoadingDriveTime(true);
+        setDriveTime(null);
+
+        const res = await fetch(
+            `https://api.mapbox.com/directions/v5/mapbox/driving/${clientLocation.lng},${clientLocation.lat};${caregiver.lng},${caregiver.lat}?access_token=${MAPBOX_TOKEN}`
+        );
+        const data = await res.json();
+        if (data.routes?.length > 0) {
+            const route = data.routes[0]
+            setDriveTime({
+                miles: (route.distance * 0.000621371).toFixed(1),
+                minutes: Math.round(route.duration / 60)
+            })
+        }
+        setLoadingDriveTime(false)
     }
 
     return (
@@ -254,6 +278,8 @@ export default function AdminCaregiverMap() {
                                     key={caregiver.id}
                                     onClick={() => {
                                         setSelectedCaregiver(caregiver)
+                                        setDriveTime(null)
+                                        getDriveTime(caregiver)
                                         setViewState(prev => ({
                                             ...prev,
                                             longitude: caregiver.lng,
@@ -262,8 +288,8 @@ export default function AdminCaregiverMap() {
                                         }))
                                     }}
                                     className={`bg-white rounded-xl border p-4 cursor-pointer transition-colors hover:border-[#577C09] ${selectedCaregiver?.id === caregiver.id
-                                            ? 'border-[#577C09] bg-[#E8F0D0]/50'
-                                            : 'border-border'
+                                        ? 'border-[#577C09] bg-[#E8F0D0]/50'
+                                        : 'border-border'
                                         }`}
                                 >
                                     <div className="flex items-start gap-3">
@@ -352,10 +378,10 @@ export default function AdminCaregiverMap() {
                             >
                                 <div className="flex flex-col items-center cursor-pointer">
                                     <div className={`w-8 h-8 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-white text-xs font-bold transition-transform hover:scale-110 ${selectedCaregiver?.id === caregiver.id
-                                            ? 'bg-[#3D5906] scale-110'
-                                            : clientLocation && index === 0
-                                                ? 'bg-[#577C09]'
-                                                : 'bg-[#577C09]/70'
+                                        ? 'bg-[#3D5906] scale-110'
+                                        : clientLocation && index === 0
+                                            ? 'bg-[#577C09]'
+                                            : 'bg-[#577C09]/70'
                                         }`}>
                                         {caregiver.name.split(' ')[0][0]}
                                     </div>
@@ -380,9 +406,14 @@ export default function AdminCaregiverMap() {
                                     </div>
                                     <p className="text-xs text-muted-foreground capitalize mb-1">{selectedCaregiver.role}</p>
                                     <p className="text-xs text-muted-foreground mb-1">{selectedCaregiver.phone || '—'}</p>
-                                    {clientLocation && selectedCaregiver.distance !== undefined && (
+                                    {clientLocation && (
                                         <p className="text-xs font-medium text-[#577C09] mb-2">
-                                            {selectedCaregiver.distance.toFixed(1)} miles away
+                                            {loadingDriveTime ? 'Calculating...' : driveTime
+                                                ? `${driveTime.minutes} min · ${driveTime.miles} mi`
+                                                : selectedCaregiver.distance !== undefined
+                                                    ? `${selectedCaregiver.distance.toFixed(1)} mi`
+                                                    : null
+                                            }
                                         </p>
                                     )}
                                     <button
