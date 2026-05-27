@@ -105,6 +105,7 @@ export default function AdminCaregiverDetail() {
     const [deletingStep, setDeletingStep] = useState(null)
     const [resetting, setResetting] = useState(false)
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+    const [showResetConfirm, setShowResetConfirm] = useState(false);
     const [deletePassword, setDeletePassword] = useState('')
     const [deleteError, setDeleteError] = useState(null)
     const [deleteLoading, setDeleteLoading] = useState(false)
@@ -249,6 +250,9 @@ export default function AdminCaregiverDetail() {
             await fetchSsn()
         } else if (reauthTarget === 'banking') {
             await fetchBanking()
+        }
+        else if (reauthTarget === 'reset') {
+            await handleResetProgress();
         }
     }
     const fetchSsn = async () => {
@@ -497,19 +501,19 @@ export default function AdminCaregiverDetail() {
         {
             id: 'non_compete_signed',
             label: 'Non-Compete Agreement',
-            description: 'Sign as LHC Representative to complete the non-compete agreement.',
+            description: 'Sign as an LHC Representative to complete the non-compete agreement.',
             requiresSection2: false,
         },
         {
             id: 'orientation_checklist_signed',
             label: 'Pre-Employment Orientation Checklist',
-            description: 'Sign as LHC Representative to complete the orientation checklist.',
+            description: 'Sign as an LHC Representative to complete the orientation checklist.',
             requiresSection2: false,
         },
         {
             id: 'i9_section2',
             label: 'Form I-9 — Section 2',
-            description: 'Complete Section 2 as the employer after verifying identity documents in person.',
+            description: 'Complete Section 2 after verifying identity documents in person.',
             requiresSection2: true,
         },
     ]
@@ -747,9 +751,12 @@ export default function AdminCaregiverDetail() {
             <AlertDialog open={showReauth} onOpenChange={setShowReauth}>
                 <AlertDialogContent className="max-w-sm">
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Confirm your identity</AlertDialogTitle>
+                        <AlertDialogTitle>{reauthTarget === 'reset' ? `Reset ${caregiver?.name}'s progress?` : 'Confirm your identity'}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Enter your password to view sensitive information.
+                            {reauthTarget === 'reset'
+                                ? 'This will clear all completed steps, documents, time logs, and return the caregiver to the beginning of onboarding. Enter your password to confirm.'
+                                : 'Enter your password to view sensitive information.'
+                            }
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <div className="space-y-4 pt-2">
@@ -770,9 +777,9 @@ export default function AdminCaregiverDetail() {
                             <Button
                                 onClick={handleReauth}
                                 disabled={!reauthPassword || reauthLoading}
-                                className="bg-[#577C09] hover:bg-[#3D5906] text-white disabled:opacity-50"
+                                className={`${reauthTarget === 'reset' ? 'bg-red-500 hover:bg-red-600' : 'bg-[#577C09] hover:bg-[#3D5906]'} text-white disabled:opacity-50`}
                             >
-                                {reauthLoading ? 'Verifying...' : 'Confirm'}
+                                {reauthLoading ? 'Verifying...' : 'Reset All Progress'}
                             </Button>
                             <Button
                                 variant="outline"
@@ -1432,7 +1439,10 @@ export default function AdminCaregiverDetail() {
                                         Resetting progress will clear all completed steps, documents, time logs, and return the caregiver to the beginning of onboarding.
                                     </p>
                                     <button
-                                        onClick={handleResetProgress}
+                                        onClick={() => {
+                                            setReauthTarget('reset')
+                                            setShowReauth(true)
+                                        }}
                                         disabled={resetting}
                                         className="w-full py-2 px-4 rounded-lg border border-red-200 text-red-600 text-sm hover:bg-red-50 transition-colors disabled:opacity-50"
                                     >

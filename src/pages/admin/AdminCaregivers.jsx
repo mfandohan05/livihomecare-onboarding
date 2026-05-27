@@ -28,6 +28,7 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
     const [offerLetterFile, setOfferLetterFile] = useState(null)
+    const [jobDutiesDraft, setJobDutiesDraft] = useState('')
     const [form, setForm] = useState({
         name: '',
         email: '',
@@ -64,6 +65,7 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
                 companion_pay_rate: form.companion_pay_rate ? parseFloat(form.companion_pay_rate) : null,
                 status: 'pending',
                 job_description: form.job_description,
+                job_duties: form.role === 'other' ? jobDutiesDraft : null,
                 link_expires_at: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString()
             })
             .select()
@@ -99,8 +101,9 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
         setForm({
             name: '', email: '', phone: '', role: 'caregiver',
             position_title: '', employment_type: '', start_date: '',
-            pay_rate: '', companion_pay_rate: '',
+            pay_rate: '', companion_pay_rate: '', job_description: ''
         })
+        setJobDutiesDraft('')
         setLoading(false)
         onCreated(data)
 
@@ -207,7 +210,7 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
                         <div>
                             <h3 className="text-sm font-medium mb-4 pb-2 border-b">Offer Letter</h3>
                             <Field label="Upload offer letter (PDF)" id="offer_letter" required>
-                                <label className="flex items-center gap-3 border border-dashed border-border rounded-lg px-4 py-3 cursor-pointer hover:bg-muted/30 transition-colors">
+                                <label className="flex items-center gap-3 border border-dashed border-border mb-4 rounded-lg px-4 py-3 cursor-pointer hover:bg-muted/30 transition-colors">
                                     <input
                                         type="file"
                                         accept=".pdf"
@@ -222,7 +225,21 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
                                     )}
                                 </label>
                             </Field>
+                            <Field label="List the job responsibilities for this position." id="job_duties" required>
+                            <textarea
+                                value={jobDutiesDraft}
+                                onChange={(e) => setJobDutiesDraft(e.target.value)}
+                                rows={6}
+                                className="w-full border border-border rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:border-[#577C09]"
+                                placeholder="Enter each duty on a new line, like so:
+Assist with personal care
+Medication reminders
+Light housekeeping"
+                            />
+                            </Field>
+                            <p className="text-xs text-muted-foreground">Each line will appear as a bullet point for the caregiver.</p>
                         </div>
+
                     )}
 
                     {error && <p className="text-sm text-red-500">{error}</p>}
@@ -240,7 +257,7 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
                             setForm({
                                 name: 'email', email: '', phone: '', role: 'caregiver',
                                 position_title: '', employment_type: '', start_date: '',
-                                pay_rate: '', companion_pay_rate: '', job_description: ''
+                                pay_rate: '', companion_pay_rate: '', job_description: '', job_duties: ''
                             })
                             onClose();
                         }}>
