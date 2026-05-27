@@ -737,8 +737,8 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver, setSa
                 .upsert({
                     caregiver_id: caregiver.id,
                     document_type: 'i9_completed',
-                    file_name: `${caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')}_I9_Completed.pdf`,
-                    file_path: `${caregiver.id}/${caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')}_I9_Section1.pdf`,
+                    file_name: `i9_completed.pdf`,
+                    file_path: `${caregiver.id}/i9_completed.pdf`,
                     mime_type: 'application/pdf',
                 }, { onConflict: 'caregiver_id, document_type' });
             await supabase.from('audit_logs').insert({

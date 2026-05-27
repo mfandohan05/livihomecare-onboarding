@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
     if (!caregiver) throw new Error("Caregiver not found");
 
     const sanitized = caregiver.name.replace(/[^a-zA-Z0-9]/g, "_");
-    const filePath = `${caregiverId}/${sanitized}_i9_completed.pdf`;
+    const filePath = `${caregiverId}/i9_completed.pdf`;
     const { error: uploadError } = await supabase.storage
       .from("generated-pdfs")
       .upload(filePath, filledPdfBytes, {
@@ -125,7 +125,7 @@ Deno.serve(async (req) => {
       {
         caregiver_id: caregiverId,
         document_type: "i9_completed",
-        file_name: `${sanitized}_i9_completed.pdf`,
+        file_name: `i9_completed.pdf`,
         file_path: filePath,
         mime_type: "application/pdf",
       },

@@ -20,6 +20,17 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    const { data: caregiver } = await supabase
+      .from("caregivers")
+      .select("name")
+      .eq("id", caregiverId)
+      .single();
+
+    if (!caregiver) throw new Error("Caregiver not found");
+
+    const sanitized = caregiver.name.replace(/[^a-zA-Z0-9]/g, "_");
+    const outputPath = `${caregiverId}/i9_completed.pdf`;
+
     const { data: templateFile, error: templateError } = await supabase.storage
       .from("generated-pdfs")
       .download("templates/i-9form.pdf");
@@ -64,40 +75,34 @@ Deno.serve(async (req) => {
       year: "numeric",
     });
 
-    // Personal information
     setText("Last Name (Family Name)", i9Data.lastName);
     setText("First Name Given Name", i9Data.firstName);
     setText("Employee Middle Initial (if any)", i9Data.middleInitial);
     setText("Employee Other Last Names Used (if any)", i9Data.otherLastNames);
 
-    // Address
     setText("Address Street Number and Name", i9Data.address);
     setText("Apt Number (if any)", i9Data.apt);
     setText("City or Town", i9Data.city);
     setDropdown("State", i9Data.state);
     setText("ZIP Code", i9Data.zip);
 
-    // Contact & identity
     setText("Date of Birth mmddyyyy", i9Data.dob);
     setText("US Social Security Number", i9Data.ssn);
     setText("US Social Security Number 1", i9Data.ssn);
     setText("Employees E-mail Address", i9Data.email);
     setText("Telephone Number", i9Data.phone);
 
-    // Signature
     setText(
       "Signature of Employee",
       `${i9Data.firstName || ""} ${i9Data.lastName || ""}`,
     );
     setText("Today's Date mmddyyy", today);
 
-    // Citizenship checkboxes
     setCheckbox("CB_1", i9Data.citizenshipStatus === "1");
     setCheckbox("CB_2", i9Data.citizenshipStatus === "2");
     setCheckbox("CB_3", i9Data.citizenshipStatus === "3");
     setCheckbox("CB_4", i9Data.citizenshipStatus === "4");
 
-    // Box 3 — LPR
     if (i9Data.citizenshipStatus === "3" && i9Data.uscisNumber) {
       setText(
         "3 A lawful permanent resident Enter USCIS or ANumber",
@@ -105,7 +110,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Box 4 — Alien authorized to work
     if (i9Data.citizenshipStatus === "4") {
       setText("Exp Date mmddyyyy", i9Data.expDate);
 
@@ -120,10 +124,43 @@ Deno.serve(async (req) => {
         );
       }
     }
+    // flatten only Section 1 fields, leave Section 2 fields editable
+    const section1Fields = [
+      "Last Name (Family Name)",
+      "First Name Given Name",
+      "Employee Middle Initial (if any)",
+      "Employee Other Last Names Used (if any)",
+      "Address Street Number and Name",
+      "Apt Number (if any)",
+      "City or Town",
+      "State",
+      "ZIP Code",
+      "Date of Birth mmddyyyy",
+      "US Social Security Number",
+      "US Social Security Number 1",
+      "Employees E-mail Address",
+      "Telephone Number",
+      "Signature of Employee",
+      "Today's Date mmddyyy",
+      "CB_1",
+      "CB_2",
+      "CB_3",
+      "CB_4",
+      "3 A lawful permanent resident Enter USCIS or ANumber",
+      "Exp Date mmddyyyy",
+      "USCIS ANumber",
+      "Form I94 Admission Number",
+      "Foreign Passport Number and Country of IssuanceRow1",
+    ];
 
-    // form.flatten();
+    for (const fieldName of section1Fields) {
+      try {
+        const field = form.getField(fieldName);
+        field.enableReadOnly();
+      } catch {
+      }
+    }
     const filledPdfBytes = await pdfDoc.save();
-    const outputPath = `${caregiverId}/i9_completed.pdf`;
 
     const { error: uploadError } = await supabase.storage
       .from("generated-pdfs")
@@ -139,7 +176,7 @@ Deno.serve(async (req) => {
       {
         caregiver_id: caregiverId,
         document_type: "i9_completed",
-        file_name: "I-9_Section1_Completed.pdf",
+        file_name: `i9_completed.pdf`,
         file_path: outputPath,
         mime_type: "application/pdf",
       },
