@@ -783,8 +783,8 @@ export default function AdminCaregiverDetail() {
                                             onClick={() => handleDownload(doc)}
                                             className="flex items-center gap-1.5 text-xs text-[#577C09] hover:underline"
                                         >
-                                            <Download className="w-3.5 h-3.5" />
-                                            Download
+                                            <Eye className="w-3.5 h-3.5" />
+                                            View Document
                                         </button>
                                     </div>
                                 ))}
