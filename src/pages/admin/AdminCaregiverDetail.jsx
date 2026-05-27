@@ -315,9 +315,7 @@ export default function AdminCaregiverDetail() {
         const formDataKey = stepName ? stepFormDataKey[stepName] : null
 
         const updatedCompletedSteps = progress.completed_steps.filter(s => s !== stepId)
-        const newActiveStep = updatedCompletedSteps.length > 0
-            ? Math.min(stepId, Math.min(...updatedCompletedSteps) + 1)
-            : 1
+        const newActiveStep = stepId;
 
         let updatedFormData = { ...progress.form_data }
         if (formDataKey) updatedFormData[formDataKey] = {}
@@ -1064,6 +1062,26 @@ export default function AdminCaregiverDetail() {
                                         <div>
                                             <p className="text-sm font-medium">{docLabel(doc.document_type)}</p>
                                             <p className="text-xs text-muted-foreground">{doc.file_name}</p>
+                                            {['drug_test_policy_signed', 'non_compete_signed', 'orientation_checklist_signed'].includes(doc.document_type) && !doc.admin_signed_at && (
+                                                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
+                                                    Notice: Admin signature required
+                                                </span>
+                                            )}
+                                            {['drug_test_policy_signed', 'non_compete_signed', 'orientation_checklist_signed'].includes(doc.document_type) && doc.admin_signed_at && (
+                                                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#E8F0D0] text-[#577C09] shrink-0">
+                                                    Admin signed
+                                                </span>
+                                            )}
+                                            {doc.document_type === 'i9_completed' && !i9Section2Completed && (
+                                                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
+                                                    Notice: Section 2 required
+                                                </span>
+                                            )}
+                                            {doc.document_type === 'i9_completed' && i9Section2Completed && (
+                                                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#E8F0D0] text-[#577C09] shrink-0">
+                                                    Section 2 complete
+                                                </span>
+                                            )}
                                         </div>
                                         <button
                                             onClick={() => handleDownload(doc)}
@@ -1172,7 +1190,7 @@ export default function AdminCaregiverDetail() {
                                                 </p>
                                                 {isCompleted && doc.id !== 'i9_section2' && (
                                                     <p className="text-xs text-muted-foreground">
-                                                        Signed by {adminName} · {new Date(documents.find(d => d.document_type === doc.id)?.admin_signed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                        Signed by {documents.find(d => d.document_type === doc.id)?.admin_signed_by} · {new Date(documents.find(d => d.document_type === doc.id)?.admin_signed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                                     </p>
                                                 )}
                                                 {isCompleted && doc.id === 'i9_section2' && i9Section2CompletedBy && (
@@ -1187,7 +1205,7 @@ export default function AdminCaregiverDetail() {
                                                 onClick={() => { setSignDocumentId(doc.id); setSignDialogOpen(true) }}
                                                 className="text-xs text-[#577C09] hover:underline shrink-0 ml-2"
                                             >
-                                                Complete →
+                                                Sign →
                                             </button>
                                         )}
                                         {!caregiverDocExists && (

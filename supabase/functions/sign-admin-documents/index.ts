@@ -84,15 +84,15 @@ Deno.serve(async (req) => {
       const h = page.getHeight();
       // LHC Representative Name
       page.drawText(adminName, {
-        x: 220,
-        y: h - 725,
+        x: 210,
+        y: h - 720,
         size: 11,
         font: regular,
         color: rgb(0, 0, 0),
       });
       // LHC Signature
       page.drawText(adminName, {
-        x: 120,
+        x: 132,
         y: h - 746,
         size: 11,
         font: italic,
@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
       });
       // LHC Date
       page.drawText(todayStr(), {
-        x: 360,
+        x: 372,
         y: h - 746,
         size: 11,
         font: regular,
@@ -139,18 +139,19 @@ Deno.serve(async (req) => {
 
     const saved = await pdf.save();
 
-    await supabase.storage
-      .from("generated-pdfs")
-      .upload(filePath, saved, {
-        contentType: "application/pdf",
-        upsert: true,
-      });
-
+    await supabase.storage.from("generated-pdfs").upload(filePath, saved, {
+      contentType: "application/pdf",
+      upsert: true,
+    });
     await supabase
       .from("caregiver_documents")
-      .update({ admin_signed_at: new Date().toISOString() })
+      .update({
+        admin_signed_at: new Date().toISOString(),
+        admin_signed_by: adminName,
+      })
       .eq("caregiver_id", caregiverId)
       .eq("document_type", documentType);
+      
 
     await supabase.from("audit_logs").insert({
       admin_email: adminName,
