@@ -6,6 +6,7 @@ import AdminCaregivers from './pages/admin/AdminCaregivers';
 import AdminCaregiverDetail from './pages/admin/AdminCaregiverDetail';
 import AdminCaregiverMap from './pages/admin/AdminCaregiverMap';
 import AdminLayout from './components/admin/AdminLayout';
+import AdminLogs from './pages/admin/AdminLogs';
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from './components/ui/sonner';
 import { Navigate } from 'react-router-dom';
@@ -35,6 +36,7 @@ function App() {
                     <Route path="employees" element={<AdminCaregivers />} />
                     <Route path="employees/:id" element={<AdminCaregiverDetail />} />
                     <Route path="map" element={<AdminCaregiverMap />} />
+                    <Route path="logs" element={<AdminLogs />} />
                 </Route>
             </Routes>
         </BrowserRouter>

@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { Users, Clock, CheckCircle, AlertCircle } from 'lucide-react'
-import AdminLayout from '@/components/admin/AdminLayout'
 
 export default function AdminDashboard() {
     const navigate = useNavigate()

@@ -13,13 +13,14 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { LayoutDashboard, Users, LogOut, ChevronDown, Map } from 'lucide-react'
+import { LayoutDashboard, Users, LogOut, ChevronDown, Map, Logs } from 'lucide-react'
 import companyLogo from '@/assets/logo.png'
 
 export default function AdminLayout({ children }) {
     const navigate = useNavigate()
     const location = useLocation()
-    const [adminName, setAdminName] = useState('')
+    const [adminName, setAdminName] = useState('');
+    const [adminRole, setAdminRole] = useState('');
 
     useEffect(() => {
         const fetchAdmin = async () => {
@@ -28,11 +29,14 @@ export default function AdminLayout({ children }) {
 
             const { data } = await supabase
                 .from('admin_users')
-                .select('name')
+                .select('name, role')
                 .eq('id', session.user.id)
                 .single()
 
-            if (data) setAdminName(data.name)
+            if (data) {
+                setAdminName(data.name);
+                setAdminRole(data.role);
+            }
         }
         fetchAdmin()
     }, [])
@@ -69,7 +73,8 @@ export default function AdminLayout({ children }) {
     const navItems = [
         { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
         { label: 'Employees', path: '/admin/employees', icon: Users },
-        { label: 'Caregiver Map', path: '/admin/map', icon: Map }
+        { label: 'Caregiver Map', path: '/admin/map', icon: Map },
+        ...(adminRole === 'superadmin' ? [{ label: 'Logs', path: '/admin/logs', icon: Logs }] : [])
     ]
 
     const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/')
