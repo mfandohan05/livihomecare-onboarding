@@ -139,7 +139,7 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
                                 <Field label="Email" id="email" required>
                                     <Input id="email" type="email" value={form.email} onChange={set('email')} placeholder="maria@email.com" />
                                 </Field>
-                                <Field label="Phone" id="phone">
+                                <Field label="Phone" id="phone" required>
                                     <Input id="phone" value={form.phone} onChange={(e) => setForm(prev => ({ ...prev, phone: formatPhone(e.target.value) }))} placeholder="(704) 555-0123" />
                                 </Field>
                             </div>
@@ -188,8 +188,8 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
                                     <option value="Independent Contractor">Independent Contractor</option>
                                 </select>
                             </Field>
-                            <Field label="Start date" id="start_date">
-                                <Input id="start_date" type="date" value={form.start_date} onChange={set('start_date')} />
+                            <Field label="Start date" id="start_date" required>
+                                <Input id="start_date" type="date" value={form.start_date} onChange={set('start_date')}  />
                             </Field>
                         </div>
                     </div>
@@ -200,7 +200,7 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
                             <Field label="Pay rate ($/hr)" id="pay_rate" required>
                                 <Input id="pay_rate" type="number" value={form.pay_rate} onChange={set('pay_rate')} placeholder="16.00" />
                             </Field>
-                            <Field label="Companion pay rate ($/hr)" id="companion_pay_rate">
+                            <Field label="Companion pay rate ($/hr)" id="companion_pay_rate" required>
                                 <Input id="companion_pay_rate" type="number" value={form.companion_pay_rate} onChange={set('companion_pay_rate')} placeholder="14.00" />
                             </Field>
                         </div>
