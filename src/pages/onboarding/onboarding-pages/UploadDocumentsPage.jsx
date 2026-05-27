@@ -59,7 +59,7 @@ export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver
     description: "Your current RN license issued by the NC Board of Nursing"
   }
 
-  const requiredDocs = role === 'nurse'
+  const requiredDocs = role === 'nurse_prn' || role === 'nurse_director'
     ? [...baseDocs, nursingLicenseDocument, optionalDocs]
     : [...baseDocs, optionalDocs]
 
