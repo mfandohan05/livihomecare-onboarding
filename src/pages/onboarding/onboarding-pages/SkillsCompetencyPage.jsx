@@ -179,7 +179,6 @@ export default function SkillsCompetencyPage({ stepLabel, onNext, initialData, o
   return (
     <div className="max-w-2xl mx-auto py-16 px-8">
 
-      {/* Header */}
       <div className="flex items-center gap-2 mb-2">
         <ClipboardCheck className="w-5 h-5 text-[#577C09]" />
         <span className="text-[#577C09] font-medium">{stepLabel}</span>
@@ -227,7 +226,6 @@ export default function SkillsCompetencyPage({ stepLabel, onNext, initialData, o
           </div>
         ))}
 
-        {/* Open Ended Questions */}
         <div>
           <h2 className="text-lg font-medium mb-1">Meal Preparation</h2>
           <p className="text-sm text-muted-foreground mb-6">
@@ -271,7 +269,6 @@ export default function SkillsCompetencyPage({ stepLabel, onNext, initialData, o
           </div>
         </div>
 
-        {/* Note */}
         <div className="bg-[#E8F0D0] rounded-lg p-4">
           <p className="text-sm text-[#3D5906]">
             <span className="font-medium">Note: </span>
