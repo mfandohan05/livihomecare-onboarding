@@ -109,6 +109,7 @@ export default function AdminCaregiverDetail() {
     const [deleteError, setDeleteError] = useState(null)
     const [deleteLoading, setDeleteLoading] = useState(false)
     const competency = progress?.form_data?.compentency;
+    const [regenerating, setRegenerating] = useState(false);
 
     const logAction = async (action, metadata = {}) => {
         const { data: { session } } = await supabase.auth.getSession()
@@ -214,7 +215,6 @@ export default function AdminCaregiverDetail() {
             return
         }
 
-        // password correct — reveal the requested data
         setShowReauth(false)
         setReauthPassword('')
         setReauthError(null)
@@ -445,6 +445,7 @@ export default function AdminCaregiverDetail() {
             return acc
         }, {})
     const handleRegenerateLink = async () => {
+        setRegenerating(true);
         const newToken = crypto.randomUUID()
         const newExpiry = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString()
 
@@ -453,7 +454,6 @@ export default function AdminCaregiverDetail() {
             .update({
                 token: newToken,
                 link_expires_at: newExpiry,
-                status: 'pending'
             })
             .eq('id', id)
 
@@ -462,6 +462,7 @@ export default function AdminCaregiverDetail() {
         })
 
         await fetchAll()
+        setRegenerating(false);
     }
 
 
@@ -986,8 +987,16 @@ export default function AdminCaregiverDetail() {
                                 <button
                                     onClick={handleRegenerateLink}
                                     className="flex items-center gap-2 text-sm text-[#577C09] hover:underline"
+                                    disabled={regenerating}
                                 >
-                                    Regenerate link
+                                    {regenerating ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            Regenerating...
+                                        </>
+                                    ) : (
+                                        'Regenerate link'
+                                    )}
                                 </button>
                             </div>
                         )}
