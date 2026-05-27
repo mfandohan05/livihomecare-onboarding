@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { stepsByRole } from '@/data/steps'
-import AdminLayout from '@/components/admin/AdminLayout'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Download, Upload, Eye, EyeOff, Copy, Check, Loader2, CheckCircle, Clock } from 'lucide-react'
 import {
@@ -420,21 +419,17 @@ export default function AdminCaregiverDetail() {
 
     if (loading) {
         return (
-            <AdminLayout>
                 <div className="flex items-center justify-center py-20">
                     <p className="text-muted-foreground">Loading...</p>
                 </div>
-            </AdminLayout>
         )
     }
 
     if (!caregiver) {
         return (
-            <AdminLayout>
                 <div className="flex items-center justify-center py-20">
                     <p className="text-muted-foreground">Caregiver not found.</p>
                 </div>
-            </AdminLayout>
         )
     }
     const isNurse = caregiver.role === 'nurse_prn' || caregiver.role === 'nurse_director'
