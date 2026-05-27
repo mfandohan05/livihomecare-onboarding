@@ -123,6 +123,11 @@ export default function AdminCaregiverDetail() {
         })
     }
 
+    const [i9Section2Completed, setI9Section2Completed] = useState(false);
+    const [i9Section2CompletedBy, setI9Section2CompletedBy] = useState(null);
+    const [i9Section2CompletedAt, setI9Section2CompletedAt] = useState(null);
+    const [adminName, setAdminName] = useState('');
+
 
     useEffect(() => {
         fetchAll()
@@ -140,6 +145,24 @@ export default function AdminCaregiverDetail() {
             supabase.from('caregiver_progress').select('*').eq('caregiver_id', id).maybeSingle(),
             supabase.from('caregiver_time_logs').select('*').eq('caregiver_id', id).eq('completed', true).maybeSingle(),
         ])
+        const { data: taxData } = await supabase
+            .from('caregiver_tax_forms')
+            .select('i9_section2_completed_at, i9_section2_completed_by')
+            .eq('caregiver_id', id)
+            .maybeSingle();
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+            const { data: adminData } = await supabase
+                .from('admin_users')
+                .select('name')
+                .eq('id', session.user.id)
+                .single()
+            // if (adminData) setAdminName(adminData.name)
+        }
+
+        setI9Section2Completed(!!taxData?.i9_section2_completed_at)
+        setI9Section2CompletedBy(taxData?.i9_section2_completed_by || null)
+        setI9Section2CompletedAt(taxData?.i9_section2_completed_at || null)
 
         setCaregiver(caregiverData)
         setDocuments(docsData || [])
@@ -464,7 +487,186 @@ export default function AdminCaregiverDetail() {
         await fetchAll()
         setRegenerating(false);
     }
+    function I9Section2Form({ caregiverId, adminName, onComplete, logAction }) {
+        const [submitting, setSubmitting] = useState(false)
+        const [error, setError] = useState(null)
+        const [docType, setDocType] = useState('listA')
+        const [form, setForm] = useState({
+            firstDayOfEmployment: '',
+            alternativeProcedure: false,
+            additionalInfo: '',
+            listADocTitle: '',
+            listAIssuingAuthority: '',
+            listADocNumber: '',
+            listAExpDate: '',
+            listBDocTitle: '',
+            listBIssuingAuthority: '',
+            listBDocNumber: '',
+            listBExpDate: '',
+            listCDocTitle: '',
+            listCIssuingAuthority: '',
+            listCDocNumber: '',
+            listCExpDate: '',
+        })
 
+        const set = (key) => (e) => setForm(prev => ({ ...prev, [key]: e.target.value }))
+
+        const canSubmit = form.firstDayOfEmployment && (
+            docType === 'listA'
+                ? form.listADocTitle && form.listAIssuingAuthority
+                : form.listBDocTitle && form.listCDocTitle
+        )
+
+        const handleSubmit = async () => {
+            setSubmitting(true)
+            setError(null)
+            try {
+                const result = await supabase.functions.invoke('complete-i9-section2', {
+                    body: { caregiverId, section2Data: { ...form, docType }, adminName }
+                })
+                if (result.error) throw new Error(result.error.message)
+                await logAction('completed_i9_section2', { firstDayOfEmployment: form.firstDayOfEmployment })
+                onComplete()
+            } catch (err) {
+                setError(err.message)
+            }
+            setSubmitting(false)
+        }
+
+        return (
+            <div className="space-y-6">
+                <div>
+                    <p className="text-sm font-medium mb-2">Document type presented</p>
+                    <div className="flex gap-3">
+                        {[
+                            { value: 'listA', label: 'List A (single document)' },
+                            { value: 'listBC', label: 'List B + List C' },
+                        ].map(opt => (
+                            <button
+                                key={opt.value}
+                                onClick={() => setDocType(opt.value)}
+                                className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${docType === opt.value
+                                    ? 'bg-[#577C09] text-white border-[#577C09]'
+                                    : 'border-border hover:bg-muted'
+                                    }`}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {docType === 'listA' ? (
+                    <div className="space-y-3">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">List A Document</p>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <Label>Document Title <span className="text-red-500">*</span></Label>
+                                <Input value={form.listADocTitle} onChange={set('listADocTitle')} placeholder="e.g. U.S. Passport" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label>Issuing Authority <span className="text-red-500">*</span></Label>
+                                <Input value={form.listAIssuingAuthority} onChange={set('listAIssuingAuthority')} placeholder="e.g. U.S. Department of State" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label>Document Number</Label>
+                                <Input value={form.listADocNumber} onChange={set('listADocNumber')} placeholder="Document number" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label>Expiration Date</Label>
+                                <Input value={form.listAExpDate} onChange={set('listAExpDate')} placeholder="MM/DD/YYYY" />
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        <div className="space-y-3">
+                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">List B Document</p>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1.5">
+                                    <Label>Document Title <span className="text-red-500">*</span></Label>
+                                    <Input value={form.listBDocTitle} onChange={set('listBDocTitle')} placeholder="e.g. Driver's License" />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label>Issuing Authority</Label>
+                                    <Input value={form.listBIssuingAuthority} onChange={set('listBIssuingAuthority')} placeholder="e.g. NC DMV" />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label>Document Number</Label>
+                                    <Input value={form.listBDocNumber} onChange={set('listBDocNumber')} placeholder="Document number" />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label>Expiration Date</Label>
+                                    <Input value={form.listBExpDate} onChange={set('listBExpDate')} placeholder="MM/DD/YYYY" />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="space-y-3">
+                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">List C Document</p>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1.5">
+                                    <Label>Document Title <span className="text-red-500">*</span></Label>
+                                    <Input value={form.listCDocTitle} onChange={set('listCDocTitle')} placeholder="e.g. Social Security Card" />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label>Issuing Authority</Label>
+                                    <Input value={form.listCIssuingAuthority} onChange={set('listCIssuingAuthority')} placeholder="e.g. SSA" />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label>Document Number</Label>
+                                    <Input value={form.listCDocNumber} onChange={set('listCDocNumber')} placeholder="Document number" />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label>Expiration Date</Label>
+                                    <Input value={form.listCExpDate} onChange={set('listCExpDate')} placeholder="N/A if none" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                        <Label>First Day of Employment <span className="text-red-500">*</span></Label>
+                        <Input value={form.firstDayOfEmployment} onChange={set('firstDayOfEmployment')} placeholder="MM/DD/YYYY" />
+                    </div>
+                    <div className="space-y-1.5">
+                        <Label>Additional Information</Label>
+                        <Input value={form.additionalInfo} onChange={set('additionalInfo')} placeholder="Optional notes" />
+                    </div>
+                </div>
+
+                {/* Alternative procedure checkbox */}
+                <div className="flex items-center gap-3">
+                    <button
+                        type="button"
+                        onClick={() => setForm(prev => ({ ...prev, alternativeProcedure: !prev.alternativeProcedure }))}
+                        className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${form.alternativeProcedure ? 'bg-[#577C09] border-[#577C09]' : 'border-muted-foreground'}`}
+                    >
+                        {form.alternativeProcedure && (
+                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                        )}
+                    </button>
+                    <label className="text-sm text-muted-foreground">Used an alternative procedure authorized by DHS to examine documents</label>
+                </div>
+
+                <div className="border-t pt-4">
+                    <p className="text-xs text-muted-foreground mb-1">Completing as: <span className="font-medium">{adminName}</span></p>
+                    <p className="text-xs text-muted-foreground mb-4">By submitting, you attest under penalty of perjury that you have examined the documentation presented and it appears genuine.</p>
+                    {error && <p className="text-sm text-red-500 mb-3">{error}</p>}
+                    <Button
+                        onClick={handleSubmit}
+                        disabled={!canSubmit || submitting}
+                        className="bg-[#577C09] hover:bg-[#3D5906] text-white disabled:opacity-50"
+                    >
+                        {submitting ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Completing...</> : 'Complete Section 2'}
+                    </Button>
+                </div>
+            </div>
+        )
+    }
 
     return (
         <div>
@@ -787,6 +989,34 @@ export default function AdminCaregiverDetail() {
                                         </button>
                                     </div>
                                 ))}
+                            </div>
+                        )}
+                        {documents.find(d => d.document_type === 'i9_completed') && (
+                            <div className="bg-white rounded-xl border border-border p-6">
+                                <h2 className="font-semibold mb-1">Form I-9 — Section 2</h2>
+                                {i9Section2Completed ? (
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-2 text-[#577C09] text-sm">
+                                            <CheckCircle className="w-4 h-4" />
+                                            <span className="font-medium">Section 2 completed</span>
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">
+                                            Completed by {i9Section2CompletedBy} on {new Date(i9Section2CompletedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <p className="text-sm text-muted-foreground mb-4">
+                                            Complete Section 2 after verifying the employee's identity documents in person within 3 business days of their first day of employment.
+                                        </p>
+                                        <I9Section2Form
+                                            caregiverId={id}
+                                            adminName={adminName}
+                                            onComplete={fetchAll}
+                                            logAction={logAction}
+                                        />
+                                    </>
+                                )}
                             </div>
                         )}
 

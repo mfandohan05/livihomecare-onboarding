@@ -7,6 +7,11 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+const allowedOrigins = [
+  'https://app.livihomecare.com',
+  'http://localhost:5173',
+]
+
 const today = () => {
   const d = new Date();
   return d.toLocaleDateString("en-US", {
@@ -16,8 +21,6 @@ const today = () => {
   });
 };
 
-// pdf-lib uses bottom-left origin, but our coords are top-left
-// height=841.9 for all pages
 const flipY = (y: number, pageHeight = 841.9) => pageHeight - y;
 
 async function loadTemplate(supabase: any, name: string): Promise<Uint8Array> {
@@ -124,8 +127,6 @@ async function generateOrientationChecklist(
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   const italic = await pdf.embedFont(StandardFonts.HelveticaOblique);
 
-  // Page 1 has no employee fields to fill (it's a checklist)
-  // Page 2 has signatures
   const page2 = pdf.getPages()[1];
   const h = page2.getHeight();
 
@@ -424,7 +425,6 @@ Deno.serve(async (req) => {
 
   try {
     const { caregiverId, signature, hepBStatus, forms } = await req.json();
-    // forms: array of which forms to generate e.g. ['drug_test', 'non_compete', 'hep_b', 'criminal', 'new_hire', 'orientation']
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
