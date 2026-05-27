@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { formatPhone } from '@/lib/formUtils'
 
 const statusColor = (status) => {
     if (status === 'completed') return 'text-[#577C09] bg-[#E8F0D0]'
@@ -596,7 +597,7 @@ export default function AdminCaregiverDetail() {
                             </div>
                             <div>
                                 <p className="text-muted-foreground">Phone</p>
-                                <p className="font-medium">{caregiver.phone || '—'}</p>
+                                <p className="font-medium">{formatPhone(caregiver.phone) || '—'}</p>
                             </div>
                             <div>
                                 <p className="text-muted-foreground">Employment Type</p>
@@ -637,11 +638,11 @@ export default function AdminCaregiverDetail() {
                                 </div>
                                 <div>
                                     <p className="text-muted-foreground">Primary Phone</p>
-                                    <p className="font-medium">{personalInfo.primaryPhone || '—'}</p>
+                                    <p className="font-medium">{formatPhone(personalInfo.primaryPhone) || '—'}</p>
                                 </div>
                                 <div>
                                     <p className="text-muted-foreground">Secondary Phone</p>
-                                    <p className="font-medium">{personalInfo.secondaryPhone || '—'}</p>
+                                    <p className="font-medium">{formatPhone(personalInfo.secondaryPhone || '') || '—'}</p>
                                 </div>
                                 <div className="col-span-2">
                                     <p className="text-muted-foreground">Address</p>
@@ -665,11 +666,11 @@ export default function AdminCaregiverDetail() {
                                         </div>
                                         <div>
                                             <p className="text-muted-foreground">Primary Phone</p>
-                                            <p className="font-medium">{personalInfo.primaryEmergencyPrimaryPhone || '—'}</p>
+                                            <p className="font-medium">{formatPhone(personalInfo.primaryEmergencyPrimaryPhone || '') || '—'}</p>
                                         </div>
                                         <div>
                                             <p className="text-muted-foreground">Secondary Phone</p>
-                                            <p className="font-medium">{personalInfo.primaryEmergencySecondaryPhone || '—'}</p>
+                                            <p className="font-medium">{formatPhone(personalInfo.primaryEmergencySecondaryPhone || '') || '—'}</p>
                                         </div>
                                         <div>
                                             <p className="text-muted-foreground">Email</p>
@@ -701,11 +702,11 @@ export default function AdminCaregiverDetail() {
                                         </div>
                                         <div>
                                             <p className="text-muted-foreground">Primary Phone</p>
-                                            <p className="font-medium">{personalInfo.secondaryEmergencyPrimaryPhone || '—'}</p>
+                                            <p className="font-medium">{formatPhone(personalInfo.secondaryEmergencyPrimaryPhone || '') || '—'}</p>
                                         </div>
                                         <div>
                                             <p className="text-muted-foreground">Secondary Phone</p>
-                                            <p className="font-medium">{personalInfo.secondaryEmergencySecondaryPhone || '—'}</p>
+                                            <p className="font-medium">{formatPhone(personalInfo.secondaryEmergencySecondaryPhone || '') || '—'}</p>
                                         </div>
                                         <div>
                                             <p className="text-muted-foreground">Email</p>
@@ -1035,6 +1036,8 @@ export default function AdminCaregiverDetail() {
                                 {progress.completed_steps?.length > 0 ? (
                                     [...progress.completed_steps].sort((a, b) => a - b).map((stepId, index, arr) => {
                                         const isLatest = index === arr.length - 1
+                                        const roleSteps = stepsByRole[caregiver.role] || stepsByRole.caregiver
+                                        const stepName = roleSteps.find(s => s.id === stepId)?.stepName || `Step ${stepId}`
                                         return (
                                             <div
                                                 key={stepId}
@@ -1043,7 +1046,7 @@ export default function AdminCaregiverDetail() {
                                                 <div className="flex items-center gap-2">
                                                     <CheckCircle className={`w-4 h-4 ${isLatest && caregiver.status !== 'completed' ? 'text-white' : 'text-[#577C09]'}`} />
                                                     <span className={`text-sm font-medium ${isLatest && caregiver.status !== 'completed' ? 'text-white' : 'text-[#577C09]'}`}>
-                                                        Step {stepId}
+                                                        Step {stepId} - {stepName}
                                                     </span>
                                                     {isLatest && caregiver.status !== 'completed' && (
                                                         <span className="text-xs text-white/80">current</span>

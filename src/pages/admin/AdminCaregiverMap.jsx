@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Map, { Marker, Popup, NavigationControl } from 'react-map-gl/mapbox'
 import { supabase } from '@/lib/supabase'
-import AdminLayout from '@/components/admin/AdminLayout'
 import { Search, MapPin, Navigation, X, ExternalLink } from 'lucide-react'
+import { formatPhone } from '@/lib/formUtils'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN
@@ -405,7 +405,7 @@ export default function AdminCaregiverMap() {
                                         </button>
                                     </div>
                                     <p className="text-xs text-muted-foreground capitalize mb-1">{selectedCaregiver.role}</p>
-                                    <p className="text-xs text-muted-foreground mb-1">{selectedCaregiver.phone || '—'}</p>
+                                    <p className="text-xs text-muted-foreground mb-1">{formatPhone(selectedCaregiver.phone) || '—'}</p>
                                     {clientLocation && (
                                         <p className="text-xs font-medium text-[#577C09] mb-2">
                                             {loadingDriveTime ? 'Calculating...' : driveTime
