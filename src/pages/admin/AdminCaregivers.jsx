@@ -200,7 +200,7 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
                             <Field label="Pay rate ($/hr)" id="pay_rate" required>
                                 <Input id="pay_rate" type="number" value={form.pay_rate} onChange={set('pay_rate')} placeholder="16.00" />
                             </Field>
-                            <Field label="Companion pay rate ($/hr)" id="companion_pay_rate" required>
+                            <Field label="Companion pay rate ($/hr)" id="companion_pay_rate">
                                 <Input id="companion_pay_rate" type="number" value={form.companion_pay_rate} onChange={set('companion_pay_rate')} placeholder="14.00" />
                             </Field>
                         </div>
