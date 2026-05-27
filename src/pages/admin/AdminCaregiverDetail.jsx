@@ -419,17 +419,17 @@ export default function AdminCaregiverDetail() {
 
     if (loading) {
         return (
-                <div className="flex items-center justify-center py-20">
-                    <p className="text-muted-foreground">Loading...</p>
-                </div>
+            <div className="flex items-center justify-center py-20">
+                <p className="text-muted-foreground">Loading...</p>
+            </div>
         )
     }
 
     if (!caregiver) {
         return (
-                <div className="flex items-center justify-center py-20">
-                    <p className="text-muted-foreground">Caregiver not found.</p>
-                </div>
+            <div className="flex items-center justify-center py-20">
+                <p className="text-muted-foreground">Caregiver not found.</p>
+            </div>
         )
     }
     const isNurse = caregiver.role === 'nurse_prn' || caregiver.role === 'nurse_director'
@@ -765,8 +765,16 @@ export default function AdminCaregiverDetail() {
                             )}
                         </div>
                     )}
-                    {/* Documents */}
-                    <div className="bg-white rounded-xl border border-border p-6">
+
+                    <div className="bg-white rounded-xl border border-border p-6 relative">
+                        {uploadingDoc && (
+                            <div className="absolute inset-0 bg-white/70 rounded-xl flex items-center justify-center z-10">
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    Uploading document...
+                                </div>
+                            </div>
+                        )}
                         <h2 className="font-semibold mb-4">Documents</h2>
 
                         {/* Uploaded documents */}
