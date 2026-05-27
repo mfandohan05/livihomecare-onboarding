@@ -110,6 +110,12 @@ export default function AdminCaregiverDetail() {
     const [deleteLoading, setDeleteLoading] = useState(false)
     const competency = progress?.form_data?.compentency;
     const [regenerating, setRegenerating] = useState(false);
+    const [adminName, setAdminName] = useState('')
+    const [signDialogOpen, setSignDialogOpen] = useState(false)
+    const [signDocumentId, setSignDocumentId] = useState(null)
+    const [i9Section2Completed, setI9Section2Completed] = useState(false)
+    const [i9Section2CompletedBy, setI9Section2CompletedBy] = useState(null)
+    const [i9Section2CompletedAt, setI9Section2CompletedAt] = useState(null)
 
     const logAction = async (action, metadata = {}) => {
         const { data: { session } } = await supabase.auth.getSession()
@@ -122,11 +128,6 @@ export default function AdminCaregiverDetail() {
             metadata
         })
     }
-
-    const [i9Section2Completed, setI9Section2Completed] = useState(false);
-    const [i9Section2CompletedBy, setI9Section2CompletedBy] = useState(null);
-    const [i9Section2CompletedAt, setI9Section2CompletedAt] = useState(null);
-    const [adminName, setAdminName] = useState('');
 
 
     useEffect(() => {
@@ -157,13 +158,14 @@ export default function AdminCaregiverDetail() {
                 .select('name')
                 .eq('id', session.user.id)
                 .single()
-            // if (adminData) setAdminName(adminData.name)
+            if (adminData) {
+                setAdminName(adminData.name)
+            }
         }
 
         setI9Section2Completed(!!taxData?.i9_section2_completed_at)
         setI9Section2CompletedBy(taxData?.i9_section2_completed_by || null)
         setI9Section2CompletedAt(taxData?.i9_section2_completed_at || null)
-
         setCaregiver(caregiverData)
         setDocuments(docsData || [])
         setProgress(progressData)
@@ -487,184 +489,258 @@ export default function AdminCaregiverDetail() {
         await fetchAll()
         setRegenerating(false);
     }
-    function I9Section2Form({ caregiverId, adminName, onComplete, logAction }) {
+    const ADMIN_SIGNABLE_DOCUMENTS = [
+        {
+            id: 'drug_test_policy_signed',
+            label: 'Drug Test Policy & Acknowledgement',
+            description: 'Sign as LHC Representative to complete the drug test policy acknowledgement.',
+            requiresSection2: false,
+        },
+        {
+            id: 'non_compete_signed',
+            label: 'Non-Compete Agreement',
+            description: 'Sign as LHC Representative to complete the non-compete agreement.',
+            requiresSection2: false,
+        },
+        {
+            id: 'orientation_checklist_signed',
+            label: 'Pre-Employment Orientation Checklist',
+            description: 'Sign as LHC Representative to complete the orientation checklist.',
+            requiresSection2: false,
+        },
+        {
+            id: 'i9_section2',
+            label: 'Form I-9 — Section 2',
+            description: 'Complete Section 2 as the employer after verifying identity documents in person.',
+            requiresSection2: true,
+        },
+    ]
+
+    function AdminSignDialog({ open, onClose, documentId, caregiver, adminName, onComplete, logAction }) {
+        const doc = ADMIN_SIGNABLE_DOCUMENTS.find(d => d.id === documentId)
         const [submitting, setSubmitting] = useState(false)
         const [error, setError] = useState(null)
+
         const [docType, setDocType] = useState('listA')
-        const [form, setForm] = useState({
+        const [i9Form, setI9Form] = useState({
             firstDayOfEmployment: '',
             alternativeProcedure: false,
             additionalInfo: '',
-            listADocTitle: '',
-            listAIssuingAuthority: '',
-            listADocNumber: '',
-            listAExpDate: '',
-            listBDocTitle: '',
-            listBIssuingAuthority: '',
-            listBDocNumber: '',
-            listBExpDate: '',
-            listCDocTitle: '',
-            listCIssuingAuthority: '',
-            listCDocNumber: '',
-            listCExpDate: '',
+            listADocTitle: '', listAIssuingAuthority: '', listADocNumber: '', listAExpDate: '',
+            listADoc2Title: '', listADoc2IssuingAuthority: '', listADoc2Number: '',
+            listBDocTitle: '', listBIssuingAuthority: '', listBDocNumber: '', listBExpDate: '',
+            listCDocTitle: '', listCIssuingAuthority: '', listCDocNumber: '', listCExpDate: '',
         })
 
-        const set = (key) => (e) => setForm(prev => ({ ...prev, [key]: e.target.value }))
+        const setI9 = (key) => (e) => setI9Form(prev => ({ ...prev, [key]: e.target.value }))
 
-        const canSubmit = form.firstDayOfEmployment && (
-            docType === 'listA'
-                ? form.listADocTitle && form.listAIssuingAuthority
-                : form.listBDocTitle && form.listCDocTitle
-        )
+        const canSubmit = documentId === 'i9_section2'
+            ? i9Form.firstDayOfEmployment && (
+                docType === 'listA'
+                    ? i9Form.listADocTitle && i9Form.listAIssuingAuthority
+                    : i9Form.listBDocTitle && i9Form.listCDocTitle
+            )
+            : true
 
         const handleSubmit = async () => {
             setSubmitting(true)
             setError(null)
             try {
-                const result = await supabase.functions.invoke('complete-i9-section2', {
-                    body: { caregiverId, section2Data: { ...form, docType }, adminName }
-                })
-                if (result.error) throw new Error(result.error.message)
-                await logAction('completed_i9_section2', { firstDayOfEmployment: form.firstDayOfEmployment })
+                if (documentId === 'i9_section2') {
+                    const result = await supabase.functions.invoke('complete-i9-section2', {
+                        body: {
+                            caregiverId: caregiver.id,
+                            section2Data: { ...i9Form, docType },
+                            adminName
+                        }
+                    })
+                    if (result.error) throw new Error(result.error.message)
+                    await logAction('completed_i9_section2', { firstDayOfEmployment: i9Form.firstDayOfEmployment })
+                } else {
+                    const result = await supabase.functions.invoke('sign-admin-documents', {
+                        body: {
+                            caregiverId: caregiver.id,
+                            documentType: documentId,
+                            adminName
+                        }
+                    })
+                    if (result.error) throw new Error(result.error.message)
+                }
                 onComplete()
+                onClose()
             } catch (err) {
                 setError(err.message)
             }
             setSubmitting(false)
         }
 
+        if (!doc) return null
+
         return (
-            <div className="space-y-6">
-                <div>
-                    <p className="text-sm font-medium mb-2">Document type presented</p>
-                    <div className="flex gap-3">
-                        {[
-                            { value: 'listA', label: 'List A (single document)' },
-                            { value: 'listBC', label: 'List B + List C' },
-                        ].map(opt => (
-                            <button
-                                key={opt.value}
-                                onClick={() => setDocType(opt.value)}
-                                className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${docType === opt.value
-                                    ? 'bg-[#577C09] text-white border-[#577C09]'
-                                    : 'border-border hover:bg-muted'
-                                    }`}
-                            >
-                                {opt.label}
-                            </button>
-                        ))}
-                    </div>
-                </div>
+            <AlertDialog open={open} onOpenChange={onClose}>
+                <AlertDialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>{doc.label}</AlertDialogTitle>
+                        <AlertDialogDescription>{doc.description}</AlertDialogDescription>
+                    </AlertDialogHeader>
 
-                {docType === 'listA' ? (
-                    <div className="space-y-3">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">List A Document</p>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1.5">
-                                <Label>Document Title <span className="text-red-500">*</span></Label>
-                                <Input value={form.listADocTitle} onChange={set('listADocTitle')} placeholder="e.g. U.S. Passport" />
+                    <div className="space-y-6 pt-2">
+                        {!doc.requiresSection2 && (
+                            <div className="bg-muted/30 rounded-lg p-4">
+                                <p className="text-sm text-muted-foreground">Signing as:</p>
+                                <p className="font-medium">{adminName}</p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    By clicking Sign & Complete, you confirm that you have reviewed this document
+                                    and are signing as the LHC Representative.
+                                </p>
                             </div>
-                            <div className="space-y-1.5">
-                                <Label>Issuing Authority <span className="text-red-500">*</span></Label>
-                                <Input value={form.listAIssuingAuthority} onChange={set('listAIssuingAuthority')} placeholder="e.g. U.S. Department of State" />
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label>Document Number</Label>
-                                <Input value={form.listADocNumber} onChange={set('listADocNumber')} placeholder="Document number" />
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label>Expiration Date</Label>
-                                <Input value={form.listAExpDate} onChange={set('listAExpDate')} placeholder="MM/DD/YYYY" />
-                            </div>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="space-y-4">
-                        <div className="space-y-3">
-                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">List B Document</p>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1.5">
-                                    <Label>Document Title <span className="text-red-500">*</span></Label>
-                                    <Input value={form.listBDocTitle} onChange={set('listBDocTitle')} placeholder="e.g. Driver's License" />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label>Issuing Authority</Label>
-                                    <Input value={form.listBIssuingAuthority} onChange={set('listBIssuingAuthority')} placeholder="e.g. NC DMV" />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label>Document Number</Label>
-                                    <Input value={form.listBDocNumber} onChange={set('listBDocNumber')} placeholder="Document number" />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label>Expiration Date</Label>
-                                    <Input value={form.listBExpDate} onChange={set('listBExpDate')} placeholder="MM/DD/YYYY" />
-                                </div>
-                            </div>
-                        </div>
-                        <div className="space-y-3">
-                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">List C Document</p>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1.5">
-                                    <Label>Document Title <span className="text-red-500">*</span></Label>
-                                    <Input value={form.listCDocTitle} onChange={set('listCDocTitle')} placeholder="e.g. Social Security Card" />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label>Issuing Authority</Label>
-                                    <Input value={form.listCIssuingAuthority} onChange={set('listCIssuingAuthority')} placeholder="e.g. SSA" />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label>Document Number</Label>
-                                    <Input value={form.listCDocNumber} onChange={set('listCDocNumber')} placeholder="Document number" />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label>Expiration Date</Label>
-                                    <Input value={form.listCExpDate} onChange={set('listCExpDate')} placeholder="N/A if none" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                        <Label>First Day of Employment <span className="text-red-500">*</span></Label>
-                        <Input value={form.firstDayOfEmployment} onChange={set('firstDayOfEmployment')} placeholder="MM/DD/YYYY" />
-                    </div>
-                    <div className="space-y-1.5">
-                        <Label>Additional Information</Label>
-                        <Input value={form.additionalInfo} onChange={set('additionalInfo')} placeholder="Optional notes" />
-                    </div>
-                </div>
-
-                {/* Alternative procedure checkbox */}
-                <div className="flex items-center gap-3">
-                    <button
-                        type="button"
-                        onClick={() => setForm(prev => ({ ...prev, alternativeProcedure: !prev.alternativeProcedure }))}
-                        className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${form.alternativeProcedure ? 'bg-[#577C09] border-[#577C09]' : 'border-muted-foreground'}`}
-                    >
-                        {form.alternativeProcedure && (
-                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
                         )}
-                    </button>
-                    <label className="text-sm text-muted-foreground">Used an alternative procedure authorized by DHS to examine documents</label>
-                </div>
 
-                <div className="border-t pt-4">
-                    <p className="text-xs text-muted-foreground mb-1">Completing as: <span className="font-medium">{adminName}</span></p>
-                    <p className="text-xs text-muted-foreground mb-4">By submitting, you attest under penalty of perjury that you have examined the documentation presented and it appears genuine.</p>
-                    {error && <p className="text-sm text-red-500 mb-3">{error}</p>}
-                    <Button
-                        onClick={handleSubmit}
-                        disabled={!canSubmit || submitting}
-                        className="bg-[#577C09] hover:bg-[#3D5906] text-white disabled:opacity-50"
-                    >
-                        {submitting ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Completing...</> : 'Complete Section 2'}
-                    </Button>
-                </div>
-            </div>
+                        {doc.requiresSection2 && (
+                            <div className="space-y-6">
+                                <div>
+                                    <p className="text-sm font-medium mb-2">Document type presented</p>
+                                    <div className="flex gap-3">
+                                        {[
+                                            { value: 'listA', label: 'List A (single document)' },
+                                            { value: 'listBC', label: 'List B + List C' },
+                                        ].map(opt => (
+                                            <button
+                                                key={opt.value}
+                                                onClick={() => setDocType(opt.value)}
+                                                className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${docType === opt.value
+                                                    ? 'bg-[#577C09] text-white border-[#577C09]'
+                                                    : 'border-border hover:bg-muted'
+                                                    }`}
+                                            >
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {docType === 'listA' ? (
+                                    <div className="space-y-3">
+                                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">List A Document</p>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="space-y-1.5">
+                                                <Label>Document Title <span className="text-red-500">*</span></Label>
+                                                <Input value={i9Form.listADocTitle} onChange={setI9('listADocTitle')} placeholder="e.g. U.S. Passport" />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <Label>Issuing Authority <span className="text-red-500">*</span></Label>
+                                                <Input value={i9Form.listAIssuingAuthority} onChange={setI9('listAIssuingAuthority')} placeholder="e.g. U.S. Dept of State" />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <Label>Document Number</Label>
+                                                <Input value={i9Form.listADocNumber} onChange={setI9('listADocNumber')} placeholder="Document number" />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <Label>Expiration Date</Label>
+                                                <Input value={i9Form.listAExpDate} onChange={setI9('listAExpDate')} placeholder="MM/DD/YYYY" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        <div className="space-y-3">
+                                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">List B Document</p>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="space-y-1.5">
+                                                    <Label>Document Title <span className="text-red-500">*</span></Label>
+                                                    <Input value={i9Form.listBDocTitle} onChange={setI9('listBDocTitle')} placeholder="e.g. Driver's License" />
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    <Label>Issuing Authority</Label>
+                                                    <Input value={i9Form.listBIssuingAuthority} onChange={setI9('listBIssuingAuthority')} placeholder="e.g. NC DMV" />
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    <Label>Document Number</Label>
+                                                    <Input value={i9Form.listBDocNumber} onChange={setI9('listBDocNumber')} placeholder="Document number" />
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    <Label>Expiration Date</Label>
+                                                    <Input value={i9Form.listBExpDate} onChange={setI9('listBExpDate')} placeholder="MM/DD/YYYY" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-3">
+                                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">List C Document</p>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="space-y-1.5">
+                                                    <Label>Document Title <span className="text-red-500">*</span></Label>
+                                                    <Input value={i9Form.listCDocTitle} onChange={setI9('listCDocTitle')} placeholder="e.g. Social Security Card" />
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    <Label>Issuing Authority</Label>
+                                                    <Input value={i9Form.listCIssuingAuthority} onChange={setI9('listCIssuingAuthority')} placeholder="e.g. SSA" />
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    <Label>Document Number</Label>
+                                                    <Input value={i9Form.listCDocNumber} onChange={setI9('listCDocNumber')} placeholder="Document number" />
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    <Label>Expiration Date</Label>
+                                                    <Input value={i9Form.listCExpDate} onChange={setI9('listCExpDate')} placeholder="N/A if none" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1.5">
+                                        <Label>First Day of Employment <span className="text-red-500">*</span></Label>
+                                        <Input value={i9Form.firstDayOfEmployment} onChange={setI9('firstDayOfEmployment')} placeholder="MM/DD/YYYY" />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label>Additional Information</Label>
+                                        <Input value={i9Form.additionalInfo} onChange={setI9('additionalInfo')} placeholder="Optional" />
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setI9Form(prev => ({ ...prev, alternativeProcedure: !prev.alternativeProcedure }))}
+                                        className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${i9Form.alternativeProcedure ? 'bg-[#577C09] border-[#577C09]' : 'border-muted-foreground'}`}
+                                    >
+                                        {i9Form.alternativeProcedure && (
+                                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        )}
+                                    </button>
+                                    <label className="text-sm text-muted-foreground">Used an alternative procedure authorized by DHS</label>
+                                </div>
+
+                                <div className="bg-muted/30 rounded-lg p-4">
+                                    <p className="text-sm text-muted-foreground">Completing as:</p>
+                                    <p className="font-medium">{adminName}</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {error && <p className="text-sm text-red-500">{error}</p>}
+
+                        <div className="flex gap-3">
+                            <Button
+                                onClick={handleSubmit}
+                                disabled={!canSubmit || submitting}
+                                className="bg-[#577C09] hover:bg-[#3D5906] text-white disabled:opacity-50"
+                            >
+                                {submitting
+                                    ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Processing...</>
+                                    : 'Sign & Complete'
+                                }
+                            </Button>
+                            <Button variant="outline" onClick={onClose} disabled={submitting}>
+                                Cancel
+                            </Button>
+                        </div>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialog>
         )
     }
 
@@ -758,6 +834,15 @@ export default function AdminCaregiverDetail() {
                     </div>
                 </AlertDialogContent>
             </AlertDialog>
+            <AdminSignDialog
+                open={signDialogOpen}
+                onClose={() => { setSignDialogOpen(false); setSignDocumentId(null) }}
+                documentId={signDocumentId}
+                caregiver={caregiver}
+                adminName={adminName}
+                onComplete={fetchAll}
+                logAction={logAction}
+            />
             <button
                 onClick={() => navigate('/admin/employees')}
                 className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
@@ -991,34 +1076,6 @@ export default function AdminCaregiverDetail() {
                                 ))}
                             </div>
                         )}
-                        {documents.find(d => d.document_type === 'i9_completed') && (
-                            <div className="bg-white rounded-xl border border-border p-6">
-                                <h2 className="font-semibold mb-1">Form I-9 — Section 2</h2>
-                                {i9Section2Completed ? (
-                                    <div className="space-y-1">
-                                        <div className="flex items-center gap-2 text-[#577C09] text-sm">
-                                            <CheckCircle className="w-4 h-4" />
-                                            <span className="font-medium">Section 2 completed</span>
-                                        </div>
-                                        <p className="text-xs text-muted-foreground">
-                                            Completed by {i9Section2CompletedBy} on {new Date(i9Section2CompletedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <>
-                                        <p className="text-sm text-muted-foreground mb-4">
-                                            Complete Section 2 after verifying the employee's identity documents in person within 3 business days of their first day of employment.
-                                        </p>
-                                        <I9Section2Form
-                                            caregiverId={id}
-                                            adminName={adminName}
-                                            onComplete={fetchAll}
-                                            logAction={logAction}
-                                        />
-                                    </>
-                                )}
-                            </div>
-                        )}
 
                         <div>
                             <p className="text-sm font-medium mb-3">Upload on behalf of employee</p>
@@ -1087,6 +1144,58 @@ export default function AdminCaregiverDetail() {
                                     </div>
                                 )}
                             </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl border border-border p-6">
+                        <h2 className="font-semibold mb-4">Sign / Complete Documents</h2>
+                        <div className="space-y-2">
+                            {ADMIN_SIGNABLE_DOCUMENTS.map(doc => {
+                                const isCompleted = doc.id === 'i9_section2'
+                                    ? i9Section2Completed
+                                    : documents.some(d => d.document_type === doc.id && d.admin_signed_at)
+
+                                const caregiverDocExists = doc.id === 'i9_section2'
+                                    ? documents.some(d => d.document_type === 'i9_completed')
+                                    : documents.some(d => d.document_type === doc.id)
+
+                                return (
+                                    <div key={doc.id} className="flex items-center justify-between py-2 px-3 rounded-lg border border-border">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            {isCompleted
+                                                ? <CheckCircle className="w-4 h-4 text-[#577C09] shrink-0" />
+                                                : <div className="w-4 h-4 rounded-full border-2 border-muted-foreground shrink-0" />
+                                            }
+                                            <div className="min-w-0">
+                                                <p className={`text-sm font-medium truncate ${isCompleted ? 'text-[#577C09]' : ''}`}>
+                                                    {doc.label}
+                                                </p>
+                                                {isCompleted && doc.id !== 'i9_section2' && (
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Signed by {adminName} · {new Date(documents.find(d => d.document_type === doc.id)?.admin_signed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                    </p>
+                                                )}
+                                                {isCompleted && doc.id === 'i9_section2' && i9Section2CompletedBy && (
+                                                    <p className="text-xs text-muted-foreground">
+                                                        Signed by {i9Section2CompletedBy} · {new Date(i9Section2CompletedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                        {!isCompleted && caregiverDocExists && (
+                                            <button
+                                                onClick={() => { setSignDocumentId(doc.id); setSignDialogOpen(true) }}
+                                                className="text-xs text-[#577C09] hover:underline shrink-0 ml-2"
+                                            >
+                                                Complete →
+                                            </button>
+                                        )}
+                                        {!caregiverDocExists && (
+                                            <span className="text-xs text-muted-foreground shrink-0 ml-2">Awaiting caregiver</span>
+                                        )}
+                                    </div>
+                                )
+                            })}
                         </div>
                     </div>
 
