@@ -118,6 +118,7 @@ export default function AdminCaregiverDetail() {
     const [i9Section2Completed, setI9Section2Completed] = useState(false)
     const [i9Section2CompletedBy, setI9Section2CompletedBy] = useState(null)
     const [i9Section2CompletedAt, setI9Section2CompletedAt] = useState(null)
+    const [resending, setResending] = useState(false);
 
     const { logAction } = logImportantAction(id, caregiver?.name);
 
@@ -289,11 +290,12 @@ export default function AdminCaregiverDetail() {
         setShowReauth(true)
     }
 
-    const copyOnboardingLink = () => {
-        const link = `${window.location.origin}/onboard/${caregiver.token}`
-        navigator.clipboard.writeText(link)
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2000)
+    const handleResendInvite = async () => {
+        setResending(true);
+        await supabase.functions.invoke('send-invite-email', {
+            body: { caregiverId: id }
+        })
+        setResending(false);
     }
 
     const openCaregiverView = async () => {
@@ -1291,19 +1293,20 @@ export default function AdminCaregiverDetail() {
                 <div className="space-y-6">
 
                     <div className="bg-white rounded-xl border border-border p-6">
-                        <h2 className="font-semibold mb-4">Onboarding Link</h2>
+                        <h2 className="font-semibold mb-4">Onboarding Link Management</h2>
                         {caregiver.token ? (
                             <>
-                                <p className="text-xs text-muted-foreground mb-3 break-all">
-                                    {window.location.origin}/onboard/{caregiver.token}
-                                </p>
-                                <div className="flex items-center gap-3 flex-col">
+                                <div className="flex items-start gap-3 flex-col">
                                     <button
-                                        onClick={copyOnboardingLink}
-                                        className="flex items-center gap-2 text-sm text-[#577C09] hover:underline"
+                                        onClick={handleResendInvite}
+                                        disabled={resending}
+                                        className="flex items-center gap-2 text-sm text-[#577C09] hover:underline disabled:opacity-50"
                                     >
-                                        {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                                        {copied ? 'Copied!' : 'Copy link'}
+                                        {resending ? (
+                                            <><Loader2 className="w-4 h-4 animate-spin" />Sending...</>
+                                        ) : (
+                                            'Resend invite email'
+                                        )}
                                     </button>
                                     {caregiver.token && <button
                                         onClick={openCaregiverView}
