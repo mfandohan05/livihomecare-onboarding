@@ -25,9 +25,6 @@ import { supabase } from '@/lib/supabase'
 
 import { toast } from 'sonner'
 
-
-
-
 export default function OnboardingPortal() {
     const { token } = useParams()
     const [searchParams] = useSearchParams();
@@ -314,8 +311,6 @@ export default function OnboardingPortal() {
                 } role={caregiver.role} caregiver={caregiver} />
             case 'Personal Information':
                 return <PersonalInformationPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.personalInfo} onChange={(data) => updateFormData('personalInfo', data)} isPreview={isPreview} />
-            case 'Enrollment Profile / Enrollment':
-                return <ERSPApplicationPage stepLabel={stepLabel} onNext={handleNext} setPopupOpen={setPopupOpen} initialData={formData.erspApplication} onChange={(data) => updateFormData('erspApplication', data)} />
             case 'New Hire Orientation':
                 return <NewHireOrientationPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.orientationQuiz} onChange={async (data) => {
                     updateFormData('orientationQuiz', data)

@@ -67,7 +67,6 @@ const stepFormDataKey = {
     'Welcome': null,
     'Upload Documents': 'uploads',
     'Personal Information': 'personalInfo',
-    'Enrollment Profile / Enrollment': 'erspApplication',
     'New Hire Orientation': 'orientationQuiz',
     'Bloodborne Pathogens': 'bloodborne',
     'Competency Checklist': 'competency',
@@ -877,7 +876,7 @@ export default function AdminCaregiverDetail() {
                                         <p className="text-xs text-muted-foreground mt-0.5">DOB: {ssn.dob}</p>
                                     )}
                                     {showSsn && ssn?.ein && (
-                                        <p className="text-xs text-muted-foreground mt-0.5">EIN: {ssn.ein}</p>
+                                        <p className="text-xs text-muted-foreground mt-0.5">EIN: <span className='font-mono'>{ssn.ein}</span></p>
                                     )}
                                 </div>
                                 <button
