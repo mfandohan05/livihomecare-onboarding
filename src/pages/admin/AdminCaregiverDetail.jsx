@@ -14,6 +14,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { formatPhone } from '@/lib/formUtils'
+import { logImportantAction } from '@/lib/logAction'
 
 const statusColor = (status) => {
     if (status === 'completed') return 'text-[#577C09] bg-[#E8F0D0]'
@@ -118,17 +119,7 @@ export default function AdminCaregiverDetail() {
     const [i9Section2CompletedBy, setI9Section2CompletedBy] = useState(null)
     const [i9Section2CompletedAt, setI9Section2CompletedAt] = useState(null)
 
-    const logAction = async (action, metadata = {}) => {
-        const { data: { session } } = await supabase.auth.getSession()
-        await supabase.from('audit_logs').insert({
-            admin_id: session.user.id,
-            admin_email: session.user.email,
-            action,
-            caregiver_id: id,
-            caregiver_name: caregiver.name,
-            metadata
-        })
-    }
+    const { logAction } = logImportantAction(id, caregiver?.name);
 
 
     useEffect(() => {
@@ -177,7 +168,7 @@ export default function AdminCaregiverDetail() {
     }
 
     const handleDownload = async (doc) => {
-        await logAction('downloaded_document', { document_type: doc.document_type })
+        await logAction('viewed_document', { document_type: doc.document_type })
         const generatedPdfTypes = [
             'i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed',
             'drug_test_policy_signed', 'criminal_background_check_signed',
