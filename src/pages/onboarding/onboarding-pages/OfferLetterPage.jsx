@@ -45,7 +45,7 @@ function CaregiverOfferLetter({ caregiver }) {
           <p className="text-muted-foreground">
             Compensation rates may vary depending on the specific client case, the level of care
             required, and your experience, qualifications, and certifications. Hands-on care
-            assignments will start at <strong>${caregiver.pay_rate} per hour</strong> and may increase based on
+            assignments will start at <strong>${caregiver.pay_rate} per hour</strong> and may change based on
             the client's needs, level of care required, scheduling demands, and at the sole
             discretion of the company. The base rate for non-hands-on companion or sitter
             services is <strong>${caregiver.companion_pay_rate} per hour</strong>.

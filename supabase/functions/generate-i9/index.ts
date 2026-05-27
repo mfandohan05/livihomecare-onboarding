@@ -121,7 +121,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    form.flatten();
+    // form.flatten();
     const filledPdfBytes = await pdfDoc.save();
     const outputPath = `${caregiverId}/i9_completed.pdf`;
 
