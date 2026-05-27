@@ -237,7 +237,7 @@ Medication reminders
 Light housekeeping"
                             />
                             </Field>
-                            <p className="text-xs text-muted-foreground">Each line will appear as a bullet point for the caregiver.</p>
+                            <p className="text-xs text-muted-foreground">Each line will appear as a bullet point for the employee.</p>
                         </div>
 
                     )}
