@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { stepsByRole } from '@/data/steps'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Download, Upload, Eye, EyeOff, Copy, Check, Loader2, CheckCircle, Clock } from 'lucide-react'
+import { ArrowLeft, Upload, Eye, EyeOff, Copy, Check, Loader2, CheckCircle } from 'lucide-react'
 import {
     AlertDialog,
     AlertDialogContent,
