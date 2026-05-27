@@ -32,14 +32,14 @@ export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver
       label: <span>Social Security Card/Other I-9 Identity Documentation</span>,
       icon: IdCard,
       required: true,
-      description: "Photo or scan of your Social Security card or other documentation"
+      description: "Photo or scan of your Social Security card or other I-9 identity documentation"
     },
     {
       id: 'badgePhoto',
       label: "Badge Photo",
       icon: Camera,
       required: true,
-      description: "A clear, recent photo of yourself for your employee badge"
+      description: "A clear, recent photo of yourself for your employee badge. Please ensure your photo meets the following requirements: face fully visible, no sunglasses or tinted glasses, no hats or head coverings (unless worn for religious reasons), plain or neutral background, and no filters or AI-generated images."
     },
   ]
 

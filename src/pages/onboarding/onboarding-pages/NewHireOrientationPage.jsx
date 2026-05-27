@@ -397,6 +397,76 @@ const sections = [
                 correct: 1
             },
             {
+                question: "Which of the following is considered PHI (Protected Health Information)?",
+                choices: [
+                    "A caregiver's work schedule",
+                    "The weather forecast for the day",
+                    "A client's date of birth and medical diagnosis",
+                    "The address of the Livi Home Care office"
+                ],
+                correct: 2
+            },
+            {
+                question: "A family member calls asking about a client's condition. What should you do?",
+                choices: [
+                    "Share the information since they are family",
+                    "Only share information if the client has authorized you to do so",
+                    "Tell them to call back later",
+                    "Share general information but not specifics"
+                ],
+                correct: 1
+            },
+            {
+                question: "You are at a restaurant and run into a friend. They ask how your client is doing. What should you do?",
+                choices: [
+                    "Share general information since you are not at work",
+                    "Tell them the client's first name only",
+                    "Decline to discuss any client information in public",
+                    "It is okay to share since your friend is not in healthcare"
+                ],
+                correct: 2
+            },
+            {
+                question: "Where should all charting and reports be completed?",
+                choices: [
+                    "At home after your shift",
+                    "At the Livi Home Care office",
+                    "In the client's home",
+                    "Wherever is most convenient"
+                ],
+                correct: 2
+            },
+            {
+                question: "Which of the following is an acceptable way to transmit PHI electronically?",
+                choices: [
+                    "Regular text message to a coworker",
+                    "Personal Gmail account",
+                    "Voicemail to the office",
+                    "Encrypted communication to an authorized Livi Home Care employee"
+                ],
+                correct: 3
+            },
+            {
+                question: "Taking a photo of a client without their consent is considered:",
+                choices: [
+                    "Acceptable if it is for documentation purposes",
+                    "A form of abuse and a HIPAA violation",
+                    "Acceptable if you do not share it",
+                    "Only a violation if the photo is posted online"
+                ],
+                correct: 1
+            },
+            {
+                question: "Who can access a client's Protected Health Information?",
+                choices: [
+                    "Any Livi Home Care employee",
+                    "The client's neighbors if they ask",
+                    "Only authorized personnel on a need-to-know basis",
+                    "Anyone who requests it"
+                ],
+                correct: 2
+            },
+            {
                 question: "Which of the following is NOT an example of PHI?",
                 choices: [
                     "Client's name and date of birth",
