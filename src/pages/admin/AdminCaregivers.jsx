@@ -12,6 +12,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog'
 import { Upload, ChevronDown } from 'lucide-react'
+import { formatPhone } from '@/lib/formUtils'
 
 const Field = ({ label, id, children, required }) => (
     <div className="space-y-1.5">
@@ -136,7 +137,7 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
                                     <Input id="email" type="email" value={form.email} onChange={set('email')} placeholder="maria@email.com" />
                                 </Field>
                                 <Field label="Phone" id="phone">
-                                    <Input id="phone" value={form.phone} onChange={set('phone')} placeholder="(704) 555-0123" />
+                                    <Input id="phone" value={form.phone} onChange={(e) => setForm(prev => ({ ...prev, phone: formatPhone(e.target.value) }))} placeholder="(704) 555-0123" />
                                 </Field>
                             </div>
                         </div>

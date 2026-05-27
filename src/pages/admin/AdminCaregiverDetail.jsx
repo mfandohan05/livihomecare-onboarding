@@ -468,7 +468,6 @@ export default function AdminCaregiverDetail() {
 
     return (
         <div>
-            {/* Reauth Dialog */}
             <AlertDialog open={showReauth} onOpenChange={setShowReauth}>
                 <AlertDialogContent className="max-w-sm">
                     <AlertDialogHeader>
@@ -513,7 +512,6 @@ export default function AdminCaregiverDetail() {
                     </div>
                 </AlertDialogContent>
             </AlertDialog>
-            {/* Back button */}
             <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
                 <AlertDialogContent className="max-w-sm">
                     <AlertDialogHeader>
@@ -566,7 +564,6 @@ export default function AdminCaregiverDetail() {
                 Back to employees
             </button>
 
-            {/* Header */}
             <div className="flex items-start justify-between mb-8">
                 <div className="flex items-center gap-4">
                     <div className="w-14 h-14 rounded-full bg-[#577C09] flex items-center justify-center text-white text-lg font-semibold">
@@ -588,10 +585,8 @@ export default function AdminCaregiverDetail() {
             </div>
 
             <div className="grid grid-cols-3 gap-6">
-                {/* Left column */}
                 <div className="col-span-2 space-y-6">
 
-                    {/* Personal Info */}
                     <div className="bg-white rounded-xl border border-border p-6">
                         <h2 className="font-semibold mb-4">Personal Information</h2>
                         <div className="grid grid-cols-2 gap-4 text-sm">
@@ -628,7 +623,6 @@ export default function AdminCaregiverDetail() {
                         </div>
                     </div>
 
-                    {/* Caregiver Provided Info */}
                     {Object.keys(personalInfo).length > 0 && (
                         <div className="bg-white rounded-xl border border-border p-6">
                             <h2 className="font-semibold mb-4">Personal Information (Caregiver Provided)</h2>
@@ -657,7 +651,6 @@ export default function AdminCaregiverDetail() {
                                 </div>
                             </div>
 
-                            {/* Primary Emergency Contact */}
                             {personalInfo.primaryEmergencyFirstName && (
                                 <div className="mt-6">
                                     <h3 className="text-sm font-medium mb-3 pb-2 border-b">Primary Emergency Contact</h3>
@@ -694,7 +687,6 @@ export default function AdminCaregiverDetail() {
                                 </div>
                             )}
 
-                            {/* Secondary Emergency Contact */}
                             {personalInfo.secondaryEmergencyFirstName && (
                                 <div className="mt-6">
                                     <h3 className="text-sm font-medium mb-3 pb-2 border-b">Secondary Emergency Contact</h3>
@@ -732,7 +724,7 @@ export default function AdminCaregiverDetail() {
                             )}
                         </div>
                     )}
-                    {/* Competency Checklist */}
+
                     {competency && Object.keys(competency.checked || {}).length > 0 && (
                         <div className="bg-white rounded-xl border border-border p-6">
                             <h2 className="font-semibold mb-4">Competency Checklist</h2>
@@ -778,7 +770,6 @@ export default function AdminCaregiverDetail() {
                         )}
                         <h2 className="font-semibold mb-4">Documents</h2>
 
-                        {/* Uploaded documents */}
                         {documents.length > 0 && (
                             <div className="space-y-2 mb-6">
                                 {documents.map((doc) => (
@@ -799,7 +790,6 @@ export default function AdminCaregiverDetail() {
                             </div>
                         )}
 
-                        {/* Upload on behalf */}
                         <div>
                             <p className="text-sm font-medium mb-3">Upload on behalf of employee</p>
                             <div className="space-y-2">
@@ -833,7 +823,6 @@ export default function AdminCaregiverDetail() {
                                         </div>
                                     )
                                 })}
-                                {/* Custom offer letter upload for other role */}
                                 {caregiver.role === 'other' && (
                                     <div className="mt-4 pt-4 border-t">
                                         <p className="text-sm font-medium mb-1">Custom Offer Letter</p>
@@ -871,12 +860,10 @@ export default function AdminCaregiverDetail() {
                         </div>
                     </div>
 
-                    {/* Sensitive Data */}
                     <div className="bg-white rounded-xl border border-border p-6">
                         <h2 className="font-semibold mb-4">Sensitive Information</h2>
                         <div className="space-y-4">
 
-                            {/* SSN */}
                             <div className="flex items-center justify-between py-3 px-4 rounded-lg bg-muted/30">
                                 <div>
                                     <p className="text-sm font-medium">Social Security Number</p>
@@ -907,7 +894,6 @@ export default function AdminCaregiverDetail() {
                                 </button>
                             </div>
 
-                            {/* Banking */}
                             <div className="flex items-center justify-between py-3 px-4 rounded-lg bg-muted/30">
                                 <div>
                                     <p className="text-sm font-medium">Direct Deposit</p>
@@ -947,10 +933,8 @@ export default function AdminCaregiverDetail() {
                     </button>
                 </div>
 
-                {/* Right column */}
                 <div className="space-y-6">
 
-                    {/* Onboarding Link */}
                     <div className="bg-white rounded-xl border border-border p-6">
                         <h2 className="font-semibold mb-4">Onboarding Link</h2>
                         {caregiver.token ? (
@@ -1002,7 +986,6 @@ export default function AdminCaregiverDetail() {
                         )}
                     </div>
 
-                    {/* Progress */}
                     <div className="bg-white rounded-xl border border-border p-6">
                         <h2 className="font-semibold mb-4">Onboarding Progress</h2>
                         {progress ? (
@@ -1036,7 +1019,6 @@ export default function AdminCaregiverDetail() {
                             <p className="text-sm text-muted-foreground">Not started yet</p>
                         )}
                     </div>
-                    {/* Manage Progress */}
                     {progress && (
                         <div className="bg-white rounded-xl border border-border p-6">
                             <div className="flex items-center justify-between mb-4">
@@ -1102,7 +1084,6 @@ export default function AdminCaregiverDetail() {
                         </div>
                     )}
 
-                    {/* Time & Pay */}
                     <div className="bg-white rounded-xl border border-border p-6">
                         <h2 className="font-semibold mb-4">Orientation Time & Pay</h2>
                         {timeLog ? (
