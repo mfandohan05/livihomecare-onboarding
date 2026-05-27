@@ -65,6 +65,26 @@ const jobDescriptions = {
     }
 }
 
+const getJobDescription = (caregiver) => {
+    if (caregiver.role === 'other' && caregiver.job_duties) {
+        return {
+            title: caregiver.job_description || 'Job Description',
+            intro: '',
+            duties: caregiver.job_duties
+                .split('\n')
+                .filter(line => line.trim())
+                .map(line => line.trim())
+        }
+    }
+    if (caregiver.role === 'nurse_prn' || caregiver.role === 'nurse_director') {
+        return jobDescriptions.nurse
+    }
+    if (caregiver.role === 'other') {
+        return jobDescriptions.other
+    }
+    return jobDescriptions.caregiver
+}
+
 const SignatureField = ({ formId, label = 'Type your full name to sign', signatures, onSign, caregiver }) => (
     <div className="mt-6 pt-6 border-t border-border">
         <p className="text-xs text-muted-foreground mb-3">
@@ -186,7 +206,7 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
             id: 'form_1',
             title: `Job Description - ${caregiver.job_description}`,
             render: () => {
-                const jobDesc = jobDescriptions[caregiver.role] || jobDescriptions.caregiver
+                const jobDesc = getJobDescription(caregiver)
 
                 return (
                     <>

@@ -740,7 +740,15 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver, setSa
                     file_name: `${caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')}_I9_Completed.pdf`,
                     file_path: `${caregiver.id}/${caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')}_I9_Section1.pdf`,
                     mime_type: 'application/pdf',
-                }, { onConflict: 'caregiver_id, document_type' })
+                }, { onConflict: 'caregiver_id, document_type' });
+            await supabase.from('audit_logs').insert({
+                admin_id: null,
+                admin_email: null,
+                action: 'completed_i9_section1',
+                caregiver_id: caregiver.id,
+                caregiver_name: caregiver.name,
+                metadata: { completed_at: new Date().toISOString() }
+            })
         }
 
         if (formId === 'w4') {

@@ -25,9 +25,6 @@ import { supabase } from '@/lib/supabase'
 
 import { toast } from 'sonner'
 
-
-
-
 export default function OnboardingPortal() {
     const { token } = useParams()
     const [searchParams] = useSearchParams();
@@ -143,7 +140,26 @@ export default function OnboardingPortal() {
     }, [caregiver?.id])
 
     const isNurse = caregiver?.role === 'nurse_prn' || caregiver?.role === "nurse_director";
-    // mark last step completed
+
+    const saveCoordinates = async (caregiverId, personalInfo) => {
+        if (!personalInfo?.streetAddress) return
+
+        const address = `${personalInfo.streetAddress}, ${personalInfo.city}, ${personalInfo.state} ${personalInfo.zip}`
+        const encoded = encodeURIComponent(address)
+
+        const res = await fetch(
+            `https://api.mapbox.com/geocoding/v5/mapbox.places/${encoded}.json?access_token=${import.meta.env.VITE_MAPBOX_TOKEN}&country=US&limit=1`
+        )
+        const data = await res.json()
+
+        if (data.features?.length > 0) {
+            const [lng, lat] = data.features[0].center
+            await supabase
+                .from('caregivers')
+                .update({ lat, lng })
+                .eq('id', caregiverId)
+        }
+    }
     useEffect(() => {
         if (!steps.length) {
             return;
@@ -161,7 +177,9 @@ export default function OnboardingPortal() {
                     .select('id')
                     .eq('caregiver_id', caregiver.id)
                     .eq('completed', true)
-                    .maybeSingle()
+                    .maybeSingle();
+
+                    await saveCoordinates(caregiver.id, formData.personalInfo)
 
                 if (!data) {
                     const actualStart = localStorage.getItem(`livi_session_start_${token}`)
@@ -174,6 +192,7 @@ export default function OnboardingPortal() {
             }
 
             saveLog();
+            
         }
     }, [activeStep])
     const prevIsIdle = useRef(isIdle);
@@ -184,7 +203,7 @@ export default function OnboardingPortal() {
         prevIsIdle.current = isIdle;
 
         if (isIdle) {
-            toast('Recording activity paused: no activity detected.', {
+            toast('Recording activity paused.', {
                 description: 'No activity detected',
                 icon: '⏸',
                 duration: 3000,
@@ -292,8 +311,6 @@ export default function OnboardingPortal() {
                 } role={caregiver.role} caregiver={caregiver} />
             case 'Personal Information':
                 return <PersonalInformationPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.personalInfo} onChange={(data) => updateFormData('personalInfo', data)} isPreview={isPreview} />
-            case 'Enrollment Profile / Enrollment':
-                return <ERSPApplicationPage stepLabel={stepLabel} onNext={handleNext} setPopupOpen={setPopupOpen} initialData={formData.erspApplication} onChange={(data) => updateFormData('erspApplication', data)} />
             case 'New Hire Orientation':
                 return <NewHireOrientationPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.orientationQuiz} onChange={async (data) => {
                     updateFormData('orientationQuiz', data)

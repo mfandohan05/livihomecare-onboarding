@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import AdminLayout from '@/components/admin/AdminLayout'
 import { Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -12,7 +11,8 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog'
-import { Upload } from 'lucide-react'
+import { Upload, ChevronDown } from 'lucide-react'
+import { formatPhone } from '@/lib/formUtils'
 
 const Field = ({ label, id, children, required }) => (
     <div className="space-y-1.5">
@@ -28,6 +28,7 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
     const [offerLetterFile, setOfferLetterFile] = useState(null)
+    const [jobDutiesDraft, setJobDutiesDraft] = useState('')
     const [form, setForm] = useState({
         name: '',
         email: '',
@@ -40,6 +41,7 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
         companion_pay_rate: '',
         job_description: '',
     })
+
 
     const set = (key) => (e) => setForm(prev => ({ ...prev, [key]: e.target.value }))
 
@@ -63,6 +65,7 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
                 companion_pay_rate: form.companion_pay_rate ? parseFloat(form.companion_pay_rate) : null,
                 status: 'pending',
                 job_description: form.job_description,
+                job_duties: form.role === 'other' ? jobDutiesDraft : null,
                 link_expires_at: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString()
             })
             .select()
@@ -98,8 +101,9 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
         setForm({
             name: '', email: '', phone: '', role: 'caregiver',
             position_title: '', employment_type: '', start_date: '',
-            pay_rate: '', companion_pay_rate: '',
+            pay_rate: '', companion_pay_rate: '', job_description: ''
         })
+        setJobDutiesDraft('')
         setLoading(false)
         onCreated(data)
 
@@ -136,7 +140,7 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
                                     <Input id="email" type="email" value={form.email} onChange={set('email')} placeholder="maria@email.com" />
                                 </Field>
                                 <Field label="Phone" id="phone">
-                                    <Input id="phone" value={form.phone} onChange={set('phone')} placeholder="(704) 555-0123" />
+                                    <Input id="phone" value={form.phone} onChange={(e) => setForm(prev => ({ ...prev, phone: formatPhone(e.target.value) }))} placeholder="(704) 555-0123" />
                                 </Field>
                             </div>
                         </div>
@@ -206,7 +210,7 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
                         <div>
                             <h3 className="text-sm font-medium mb-4 pb-2 border-b">Offer Letter</h3>
                             <Field label="Upload offer letter (PDF)" id="offer_letter" required>
-                                <label className="flex items-center gap-3 border border-dashed border-border rounded-lg px-4 py-3 cursor-pointer hover:bg-muted/30 transition-colors">
+                                <label className="flex items-center gap-3 border border-dashed border-border mb-4 rounded-lg px-4 py-3 cursor-pointer hover:bg-muted/30 transition-colors">
                                     <input
                                         type="file"
                                         accept=".pdf"
@@ -221,7 +225,21 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
                                     )}
                                 </label>
                             </Field>
+                            <Field label="List the job responsibilities for this position." id="job_duties" required>
+                            <textarea
+                                value={jobDutiesDraft}
+                                onChange={(e) => setJobDutiesDraft(e.target.value)}
+                                rows={6}
+                                className="w-full border border-border rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:border-[#577C09]"
+                                placeholder="Enter each duty on a new line, like so:
+Assist with personal care
+Medication reminders
+Light housekeeping"
+                            />
+                            </Field>
+                            <p className="text-xs text-muted-foreground">Each line will appear as a bullet point for the caregiver.</p>
                         </div>
+
                     )}
 
                     {error && <p className="text-sm text-red-500">{error}</p>}
@@ -239,7 +257,7 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
                             setForm({
                                 name: 'email', email: '', phone: '', role: 'caregiver',
                                 position_title: '', employment_type: '', start_date: '',
-                                pay_rate: '', companion_pay_rate: '', job_description: ''
+                                pay_rate: '', companion_pay_rate: '', job_description: '', job_duties: ''
                             })
                             onClose();
                         }}>
@@ -266,6 +284,21 @@ export default function AdminCaregivers() {
     const [totalCount, setTotalCount] = useState(0)
     const PER_PAGE = 20;
     const [debouncedSearch, setDebouncedSearch] = useState('');
+    const SKILL_SECTIONS = [
+        { id: 'conditions', title: 'Conditions', items: ['Vision Impaired', 'ALS (Lou Gehrig\'s Disease)', 'Paraplegic', 'Dementia', 'Assisting the Blind', 'Multiple Sclerosis', 'Cerebral Palsy', 'Hearing Impaired', 'Mental Illness', 'Parkinson\'s', 'Traumatic Brain Injury (TBI)', 'Death & Dying', 'Alzheimer\'s', 'Quadriplegic', 'Cancer', 'Diabetes', 'Strokes'] },
+        { id: 'personalCare', title: 'Personal Care', items: ['Bed Pan', 'Commode', 'Adult Diapers', 'Colostomy Bag', 'Toileting', 'Peri Care — Women', 'Peri Care — Men'] },
+        { id: 'bathingCare', title: 'Bathing Care', items: ['Showering', 'Bed Bath', 'Shower Seat', 'Shaving Face', 'Shaving Legs', 'Nail Care', 'Hair Cuts', 'Skin Care'] },
+        { id: 'oralCare', title: 'Oral Care', items: ['Denture Care', 'Tooth Brushing'] },
+        { id: 'vitals', title: 'Vitals', items: ['Blood Pressure', 'Pulse', 'Temperature'] },
+        { id: 'catheters', title: 'Catheters', items: ['Foley Catheter'] },
+        { id: 'otherCare', title: 'Other Care', items: ['Make Occupied Bed', 'Medication Assistance', 'Suppository', 'Med Box', 'Oxygen', 'Massage', 'ADLs'] },
+        { id: 'mobility', title: 'Mobility', items: ['Car Transfer', 'Wheelchair', 'Chair', 'Partial Weight-Bearing', 'Full Weight-Bearing', 'Pivot Disc', 'Repositioning', 'Ambulation', 'Slide Board', 'Range of Motion', 'Constraints', 'Exercise', 'Walking with Cane', 'Walking with Walker', 'Placing a Wheelchair in a Car', 'Gait Belt'] },
+        { id: 'homemaker', title: 'Homemaker', items: ['Laundry', 'Bed Linen', 'Clean Kitchen', 'Bathroom', 'Vacuum', 'Dust', 'Pet Care', 'Trash', 'Appointments', 'Errands', 'Plant Care', 'Companionship', 'Sports / Park Activities', 'Heavy Cleaning', 'Outings', 'Meal Preparation', 'Vegetarian Diet', 'Balanced Diet', 'Salt-Free Diet', 'Ketogenic Diet'] },
+    ];
+    const [skillFilters, setSkillFilters] = useState([]);
+    const [showSkillDropdown, setShowSkillDropdown] = useState(false);
+    const [pendingSkills, setPendingSkills] = useState([]);
+    const skillDropdownRef = useRef(null);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -276,7 +309,17 @@ export default function AdminCaregivers() {
 
     useEffect(() => {
         fetchCaregivers()
-    }, [page, debouncedSearch, statusFilter, roleFilter])
+    }, [page, debouncedSearch, statusFilter, roleFilter, skillFilters])
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (skillDropdownRef.current && !skillDropdownRef.current.contains(e.target)) {
+                setShowSkillDropdown(false);
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    })
 
     const fetchCaregivers = async () => {
         setLoading(true)
@@ -285,19 +328,34 @@ export default function AdminCaregivers() {
 
         let query = supabase
             .from('caregivers')
-            .select(`
-            *,
-            caregiver_progress (active_step, completed_steps),
-            caregiver_time_logs (active_seconds, completed)
-        `, { count: 'exact' })
+            .select(`*, caregiver_progress(active_step, completed_steps), caregiver_time_logs(active_seconds, completed)`, { count: 'exact' })
             .order('created_at', { ascending: false })
-            .range(from, to)
 
-        if (debouncedSearch) query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%`)
+        if (debouncedSearch) query = query.or(`name.ilike.%${debouncedSearch}%,email.ilike.%${debouncedSearch}%`)
         if (statusFilter !== 'all') query = query.eq('status', statusFilter)
         if (roleFilter !== 'all') query = query.eq('role', roleFilter)
 
-        const { data, count } = await query
+        if (skillFilters.length > 0) {
+            const { data: progressData } = await supabase
+                .from('caregiver_progress')
+                .select('caregiver_id, form_data')
+
+            const matchingIds = progressData
+                ?.filter(p => skillFilters.every(skill => p.form_data?.compentency?.checked?.[skill]))
+                .map(p => p.caregiver_id) || []
+
+            if (matchingIds.length === 0) {
+                setCaregivers([])
+                setFiltered([])
+                setTotalCount(0)
+                setLoading(false)
+                return
+            }
+
+            query = query.in('id', matchingIds)
+        }
+
+        const { data, count } = await query.range(from, to)
 
         if (data) {
             setCaregivers(data)
@@ -309,7 +367,7 @@ export default function AdminCaregivers() {
 
     useEffect(() => {
         setPage(1)
-    }, [debouncedSearch, statusFilter, roleFilter])
+    }, [debouncedSearch, statusFilter, roleFilter, skillFilters])
 
     const statusColor = (status) => {
         if (status === 'completed') return 'text-[#577C09] bg-[#E8F0D0]'
@@ -396,6 +454,86 @@ export default function AdminCaregivers() {
                     <option value="nurse_director">Nurse (Director)</option>
                     <option value="other">Other</option>
                 </select>
+                <div className="relative" ref={skillDropdownRef}>
+                    <button
+                        onClick={() => setShowSkillDropdown(prev => !prev)}
+                        className={`flex items-center gap-2 border rounded-lg px-3 py-2 text-sm bg-white transition-colors ${skillFilters.length > 0 ? 'border-[#577C09] text-[#577C09]' : 'border-border text-foreground'}`}
+                    >
+                        Skills
+                        {skillFilters.length > 0 && (
+                            <span className="bg-[#577C09] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                {skillFilters.length}
+                            </span>
+                        )}
+                        <ChevronDown className="w-3 h-3" />
+                    </button>
+
+                    {showSkillDropdown && (
+                        <div className="absolute top-full left-0 mt-1 w-72 bg-white border border-border rounded-xl shadow-lg z-50 max-h-96 overflow-y-auto">
+                            <div className="p-3 border-b border-border flex items-center justify-between">
+                                <p className="text-xs font-medium text-muted-foreground">Filter by skill</p>
+                                {pendingSkills.length > 0 && (
+                                    <button
+                                        onClick={() => {
+                                            setPendingSkills([])
+                                            setSkillFilters([])
+                                        }}
+                                        className="text-xs text-red-500 hover:underline"
+                                    >
+                                        Clear all
+                                    </button>
+                                )}
+                            </div>
+
+                            {SKILL_SECTIONS.map(section => (
+                                <div key={section.id} className="p-3 border-b border-border last:border-0">
+                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">{section.title}</p>
+                                    <div className="space-y-1">
+                                        {section.items.map(item => {
+                                            const key = `${section.id}__${item}`
+                                            const isSelected = pendingSkills.includes(key)
+                                            return (
+                                                <button
+                                                    key={key}
+                                                    onClick={() => {
+                                                        setPendingSkills(prev =>
+                                                            isSelected
+                                                                ? prev.filter(k => k !== key)
+                                                                : [...prev, key]
+                                                        )
+                                                    }}
+                                                    className={`w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors ${isSelected ? 'bg-[#E8F0D0] text-[#577C09]' : 'hover:bg-muted/50'}`}
+                                                >
+                                                    <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${isSelected ? 'bg-[#577C09] border-[#577C09]' : 'border-muted-foreground'}`}>
+                                                        {isSelected && (
+                                                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                            </svg>
+                                                        )}
+                                                    </div>
+                                                    {item}
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                            ))}
+
+                            <div className="p-3 border-t border-border sticky bottom-0 bg-white">
+                                <button
+                                    onClick={() => {
+                                        setSkillFilters(pendingSkills)
+                                        setShowSkillDropdown(false)
+                                        setPage(1)
+                                    }}
+                                    className="w-full py-2 bg-[#577C09] hover:bg-[#3D5906] text-white rounded-lg text-sm font-medium transition-colors"
+                                >
+                                    Apply {pendingSkills.length > 0 ? `(${pendingSkills.length} skills)` : ''}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
 
             <div className="bg-white rounded-xl border border-border overflow-x-auto">
@@ -447,7 +585,7 @@ export default function AdminCaregivers() {
                                         </td>
                                         <td className="px-6 py-4 text-sm capitalize">{roleLabel(caregiver.role)}</td>
                                         <td className="px-6 py-4 text-sm text-muted-foreground">{caregiver.employment_type || '—'}</td>
-                                        <td className="px-6 py-4 text-sm text-muted-foreground">{caregiver.phone || '—'}</td>
+                                        <td className="px-6 py-4 text-sm text-muted-foreground">{formatPhone(caregiver.phone) || '—'}</td>
                                         <td className="px-6 py-4 text-sm text-muted-foreground">
                                             {caregiver.start_date ? new Date(caregiver.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
                                         </td>

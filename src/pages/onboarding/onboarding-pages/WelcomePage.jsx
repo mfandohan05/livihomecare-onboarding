@@ -18,18 +18,17 @@ function WelcomePage({ caregiver, onNext, welcomeSteps }) {
                 through everything you need to complete before your first shift.
             </p>
 
-            {/* Documents needed warning */}
             <div className="border border-amber-200 bg-amber-50 rounded-lg p-5 mb-6">
                 <div className="flex items-start gap-3">
                     <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                     <div>
                         <p className="text-sm font-medium text-amber-800 mb-2">
-                            Before you begin — have these documents ready:
+                            Before you begin, have these documents ready:
                         </p>
                         <ul className="space-y-1 text-sm text-amber-700">
                             {[
                                 "Driver's License",
-                                "Social Security Card",
+                                <span>Social Security Card or other <a href="https://www.uscis.gov/i-9-central/form-i-9-acceptable-documents" target="_blank" rel="noopener noreferrer" className="underline text-amber-800 hover:text-amber-900">I-9 accepted identity document</a></span>,
                                 "Car Insurance",
                                 "TB Test / TB Skin Test results",
                                 "Hepatitis B vaccination record (if applicable)",
@@ -48,7 +47,6 @@ function WelcomePage({ caregiver, onNext, welcomeSteps }) {
                 </div>
             </div>
 
-            {/* What you'll cover */}
             <div className="bg-[#E8F0D0] rounded-lg p-6 mb-6">
                 <p className="text-sm font-medium text-[#577C09] mb-3">
                     Here's what you'll cover:

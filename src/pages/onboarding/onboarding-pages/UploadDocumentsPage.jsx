@@ -29,17 +29,17 @@ export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver
     },
     {
       id: 'socialSecurityCard',
-      label: "Social Security Card",
+      label: <span>Social Security Card/Other I-9 Identity Documentation</span>,
       icon: IdCard,
       required: true,
-      description: "Photo or scan of your Social Security card"
+      description: "Photo or scan of your Social Security card or other I-9 identity documentation"
     },
     {
       id: 'badgePhoto',
       label: "Badge Photo",
       icon: Camera,
       required: true,
-      description: "A clear, recent photo of yourself for your employee badge"
+      description: "A clear, recent photo of yourself for your employee badge. Please ensure your photo meets the following requirements: face fully visible, no sunglasses or tinted glasses, no hats or head coverings (unless worn for religious reasons), plain or neutral background, and no filters or AI-generated images."
     },
   ]
 
@@ -132,7 +132,8 @@ export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver
       <h1 className="text-3xl font-bold mb-2">Upload Documents</h1>
       <p className="text-muted-foreground mb-8">
         Please upload clear photos or scans of each document below.
-        All documents marked as required must be uploaded before continuing.
+        All documents marked as required must be uploaded before continuing. <br />
+        If you do not have a Social Security card, you may upload any document from the <a className="underline" href="https://www.uscis.gov/i-9-central/form-i-9-acceptable-documents">I-9 List of Acceptable Documents</a> instead — such as a U.S. Passport, Permanent Resident Card, or Employment Authorization Document.
       </p>
 
       <div className="space-y-4 mb-8">
