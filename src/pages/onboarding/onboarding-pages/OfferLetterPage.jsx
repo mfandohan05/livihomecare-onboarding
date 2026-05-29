@@ -9,6 +9,7 @@ const today = new Date().toLocaleDateString('en-US', {
   year: 'numeric',
   month: 'long',
   day: 'numeric',
+  timeZone: 'America/New_York'
 })
 
 function CaregiverOfferLetter({ caregiver }) {

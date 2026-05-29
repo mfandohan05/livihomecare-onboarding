@@ -10,6 +10,7 @@ const corsHeaders = {
 const allowedOrigins = [
   'https://app.livihomecare.com',
   'http://localhost:5173',
+  'http://localhost:5174'
 ]
 
 const today = () => {
@@ -18,6 +19,7 @@ const today = () => {
     month: "2-digit",
     day: "2-digit",
     year: "numeric",
+    timeZone: 'America/New_York'
   });
 };
 
