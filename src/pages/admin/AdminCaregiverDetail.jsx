@@ -783,7 +783,7 @@ export default function AdminCaregiverDetail() {
                                 disabled={!reauthPassword || reauthLoading}
                                 className={`${reauthTarget === 'reset' ? 'bg-red-500 hover:bg-red-600' : 'bg-[#577C09] hover:bg-[#3D5906]'} text-white disabled:opacity-50`}
                             >
-                                {reauthLoading ? 'Verifying...' : 'Reset All Progress'}
+                                {reauthLoading ? 'Verifying...' : 'Confirm'}
                             </Button>
                             <Button
                                 variant="outline"
