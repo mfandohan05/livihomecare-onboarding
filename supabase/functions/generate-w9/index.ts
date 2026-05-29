@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
       month: "2-digit",
       day: "2-digit",
       year: "numeric",
-      timeZone: 'America/New_York'
+      timeZone: 'America/New_York',
     });
 
     const setText = (fieldId: string, value: string | undefined) => {
