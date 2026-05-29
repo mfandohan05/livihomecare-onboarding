@@ -310,7 +310,7 @@ const sections = [
     },
     {
         id: 4,
-        title: 'Client Rights & HIPAA',
+        title: 'Client Rights & HIPAA (Part 1)',
         slides: [
             {
                 title: 'Abuse, Neglect & Exploitation',
@@ -510,6 +510,187 @@ const sections = [
     },
     {
         id: 5,
+        title: "Client Rights & HIPAA (Part 2)",
+        slides: [
+            {
+                title: 'What is HIPAA?',
+                content: [
+                    "HIPAA stands for the Health Insurance Portability and Accountability Act. It protects patient health information and establishes privacy standards.",
+                    "HIPAA Privacy Rule: Defines how healthcare providers handle PHI, protects patient information, and establishes national privacy standards."
+                ]
+            },
+            {
+                title: "PHI",
+                content: [
+                    "PHI means Protected Health Information. PHI can exist in paper records, computers, printers, copiers, and other formats.",
+                    "Identifiers such as names, addresses, phone numbers, and other personal details can be considered PHI.",
+                    "PHI can be shared only with authorized individuals and for approved healthcare purposes. Never share information with unauthorized friends, family, or others.",
+                    "Keep files closed after use, secure notes and forms, and never leave PHI visible in public areas.",
+                    "Always observe the minimum necessary rule: use and access only the minimum amount of PHI necessary to perform your job duties.",
+                    "Never share passwords, position screens away from public view, and lock or log off computers when unattended.",
+
+                ]
+            },
+            {
+                title: "Patient Rights & HIPAA Violations",
+                content: [
+                    "Patients control how their PHI is shared and may request restrictions on disclosure and access their own records.",
+                    "Accessing records out of curiosity, discussing clients inappropriately, or exposing PHI may result in discipline or job loss.",
+                    "Avoid including unnecessary PHI, document authorized disclosures, and follow agency procedures for secure communication.",
+                    "Protect confidentiality, respect privacy, secure information, and report potential privacy or security concerns."
+                ]
+            }
+        ],
+        quiz: [
+            {
+                question: "The definition of HIPAA is:",
+                choices: [
+                    "Health Information Policy Article Amendment",
+                    "Health Internet Public Authority Act",
+                    "Health Insurance Portability and Accountability Act",
+                    "None of the above"
+                ],
+                correct: 2
+            },
+            {
+                question: "HIPAA and the Privacy Rule that is part of HIPAA:",
+                choices: [
+                    "Defines how health care providers must relate to Protected Health Information (PHI)",
+                    "Is designed to protect patient's health information",
+                    "Sets a national standard for health information privacy",
+                    "All of the above"
+                ],
+                correct: 3
+            },
+            {
+                question: "PHI can be found in:",
+                choices: [
+                    "Paper records",
+                    "Computers and printers",
+                    "Copiers",
+                    "All of the above"
+                ],
+                correct: 3
+            },
+            {
+                question: "One common identifier of PHI is:",
+                choices: [
+                    "Street address",
+                    "Language spoken",
+                    "Make of a car",
+                    "Pet's name"
+                ],
+                correct: 0
+            },
+            {
+                question: "Times you can share protected health information include:",
+                choices: [
+                    "With friends of the client",
+                    "With the client's pharmacist",
+                    "With the minister of the client",
+                    "With your spouse"
+                ],
+                correct: 1
+            },
+            {
+                question: "Medical records management includes:",
+                choices: [
+                    "Keeping client folders closed after use",
+                    "Leaving protected health information in public areas",
+                    "Securing notes, labels, or forms with patient names",
+                    "Both A and C"
+                ],
+                correct: 3
+            },
+            {
+                question: "The Minimum Use requirement of HIPAA means:",
+                choices: [
+                    "Using the minimum computer time",
+                    "Minimum use of paper records",
+                    "Using the minimum amount of protected health information needed to do the job",
+                    "None of the above"
+                ],
+                correct: 2
+            },
+            {
+                question: "Computer security includes:",
+                choices: [
+                    "Never sharing your passwords with others",
+                    "Turning your computer monitor away from public view",
+                    "Logging off or locking the computer when away from your desk",
+                    "All of the above"
+                ],
+                correct: 3
+            },
+            {
+                question: "All health care providers, including doctors, nurses, home care providers and companion home makers are required to keep client information private.",
+                choices: [
+                    "True",
+                    "False"
+                ],
+                correct: 0
+            },
+            {
+                question: "Only 10% of computer security is technical. 90% relies upon the person who is using the computer.",
+                choices: [
+                    "True",
+                    "False"
+                ],
+                correct: 0
+            },
+            {
+                question: "You should include PHI on the fax cover sheet.",
+                choices: [
+                    "True",
+                    "False"
+                ],
+                correct: 1
+            },
+            {
+                question: "Reading patient or client medical records casually or just to satisfy curiosity is a breach of HIPAA and can lead to reprimand or job loss.",
+                choices: [
+                    "True",
+                    "False"
+                ],
+                correct: 0
+            },
+            {
+                question: "HIPAA supports each person's right to place restrictions on how his or her private health information is used or shared.",
+                choices: [
+                    "True",
+                    "False"
+                ],
+                correct: 0
+            },
+            {
+                question: "Your client has a right to view his or her private health information and to copy it.",
+                choices: [
+                    "True",
+                    "False"
+                ],
+                correct: 0
+            },
+            {
+                question: "If you see a record in public view where others can see it, you should take it to the appropriate person or your supervisor.",
+                choices: [
+                    "True",
+                    "False"
+                ],
+                correct: 0
+            },
+            {
+                question: "As a security measure, you should document phone calls when giving PHI to someone authorized to receive it.",
+                choices: [
+                    "True",
+                    "False"
+                ],
+                correct: 0
+            },
+
+        ]
+    },
+    {
+        id: 6,
         title: 'Documentation',
         slides: [
             {
@@ -621,7 +802,7 @@ const sections = [
         ]
     },
     {
-        id: 6,
+        id: 7,
         title: 'Employee Policy',
         slides: [
             {
@@ -1036,7 +1217,7 @@ export default function NewHireOrientationPage({ stepLabel, onNext, initialData,
             </div>
             <h1 className="text-3xl font-bold mb-2">New Hire Orientation</h1>
             <p className="text-muted-foreground mb-6">
-                Complete all 6 sections and their quizzes.
+                Complete all {sections.length} sections and their quizzes.
             </p>
 
             {/* Overall Progress */}
