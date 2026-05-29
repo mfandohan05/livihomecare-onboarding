@@ -185,7 +185,7 @@ export default function AdminCaregiverDetail() {
     }
 
     const handleDownload = async (doc) => {
-        await logAction('viewed_document', { document_type: doc.document_type })
+        await logAction('viewed_document', { document_type: documentTypeToName[doc.document_type] })
         const generatedPdfTypes = [
             'i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed',
             'drug_test_policy_signed', 'criminal_background_check_signed',
@@ -204,6 +204,27 @@ export default function AdminCaregiverDetail() {
         if (data?.signedUrl) {
             window.open(data.signedUrl, '_blank')
         }
+    }
+    const documentTypeToName = {
+        "tbTest": "TB Test",
+        "w4_completed": "W-4",
+        "w9_completed": "W-9",
+        "i9_completed": "I-9",
+        "bloodborne_certificate": "Bloodborne Training Certification",
+        "nursingLicense": "Nursing License",
+        "badgePhoto": "Badge Photo",
+        "socialSecurityCard": "Social Security Card / Other I-9 Documentation",
+        "carInsurance": "Car Insurance",
+        "driversLicense": "Driver's License",
+        "hep_b_declination_signed": "Hep B Declination/Acknowledgement Form",
+        "non_compete_signed": "Non-Compete (Signed)",
+        "orientation_checklist_signed": "Orientation Checklist (Signed)",
+        "new_hire_notification_signed": "New Hire Notification (Signed)",
+        "criminal_background_check_signed": "Criminal Background Check Consent (Signed)",
+        "drug_test_policy_signed": "Drug Test Policy (Signed)",
+        "offer_letter_other": "Offer Letter",
+        "nc4ez_completed": "NC-4EZ",
+        "certifications": "Certifications"
     }
 
     const handleUpload = async (documentType, file) => {
@@ -233,7 +254,7 @@ export default function AdminCaregiverDetail() {
                 action: 'uploaded_doc_on_behalf',
                 caregiver_id: caregiver.id,
                 caregiver_name: caregiver.name,
-                metadata: { "document_type": documentType }
+                metadata: { "document_type": documentTypeToName[documentType] }
             })
             await fetchAll()
         }
