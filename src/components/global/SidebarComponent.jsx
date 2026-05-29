@@ -60,7 +60,6 @@ function SidebarComponent({ steps, activeStep, setActiveStep, handleNext, caregi
             </SidebarContent>
             <SidebarFooter>
                 <button onClick={handleNext}>(Testing Purposes Only) <br />Skip to the next page</button>
-                <button onClick={resetFormData}>(Testing Purposes Only) <br />Clear all form data</button>
                 <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 text-xs text-muted-foreground">
                     {isIdle ? (
                         <>
