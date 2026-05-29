@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { stepsByRole } from '@/data/steps'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Upload, Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react'
+import { ArrowLeft, Upload, Eye, EyeOff, Loader2, CheckCircle, Pencil } from 'lucide-react'
 import {
     AlertDialog,
     AlertDialogContent,
@@ -123,7 +123,27 @@ export default function AdminCaregiverDetail() {
     const [hasBanking, setHasBanking] = useState(false);
     const [adminEmail, setAdminEmail] = useState('');
     const [adminId, setAdminId] = useState('')
-    
+    const [editingInfo, setEditingInfo] = useState(false);
+    const [infoDraft, setInfoDraft] = useState({})
+    const updatedInfoFields = useRef(new Set());
+
+    const handleSaveInfo = async () => {
+        await supabase
+            .from('caregivers')
+            .update({
+                email: infoDraft.email,
+                phone: infoDraft.phone,
+                employment_type: infoDraft.employment_type,
+                start_date: infoDraft.start_date || null,
+                pay_rate: parseFloat(infoDraft.pay_rate),
+                companion_pay_rate: infoDraft.companion_pay_rate ? parseFloat(infoDraft.companion_pay_rate) : null,
+            })
+            .eq('id', id)
+        setEditingInfo(false)
+        await fetchAll()
+        const changedFields = [...updatedInfoFields.current]
+        await logAction('updated_employee_info', changedFields)
+    }
 
     const { logAction } = logImportantAction(id, caregiver?.name);
 
@@ -401,7 +421,7 @@ export default function AdminCaregiverDetail() {
                 .not('document_type', 'in', '("i9_completed","w4_completed","w9_completed","nc4ez_completed")')
         }
 
-        await logAction('removed_step', { "Step Name": stepName} )
+        await logAction('removed_step', { "Step Name": stepName })
 
         await fetchAll()
         setDeletingStep(null)
@@ -838,6 +858,78 @@ export default function AdminCaregiverDetail() {
                     </div>
                 </AlertDialogContent>
             </AlertDialog>
+            <AlertDialog open={editingInfo} onOpenChange={setEditingInfo}>
+                <AlertDialogContent className="max-w-lg">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Edit Personal Information</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Update {caregiver?.name}'s employment information.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="grid grid-cols-2 gap-4 pt-2">
+                        <div className="space-y-1.5">
+                            <Label>Email</Label>
+                            <Input value={infoDraft.email || ''} onChange={(e) => {
+                                setInfoDraft(prev => ({ ...prev, email: e.target.value }))
+                                updatedInfoFields.current.add("Employee E-mail Address");
+                            }
+                            } />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label>Phone</Label>
+                            <Input value={infoDraft.phone || ''} onChange={(e) => {
+                                setInfoDraft(prev => ({ ...prev, phone: formatPhone(e.target.value) }))
+                                updatedInfoFields.current.add("Employee Phone Number");
+                            }} />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label>Employment Type</Label>
+                            <select
+                                value={infoDraft.employment_type || ''}
+                                onChange={(e) => {
+                                    setInfoDraft(prev => ({ ...prev, employment_type: e.target.value }))
+                                    updatedInfoFields.current.add("Employee Employment Type");
+                                }}
+                                className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white"
+                            >
+                                <option value="">Select type</option>
+                                <option value="Hourly, Part-Time">Hourly, Part-Time</option>
+                                <option value="Hourly, Full-Time">Hourly, Full-Time</option>
+                                <option value="Independent Contractor">Independent Contractor</option>
+                            </select>
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label>Start Date</Label>
+                            <Input type="date" value={infoDraft.start_date || ''} onChange={(e) => {
+                                setInfoDraft(prev => ({ ...prev, start_date: e.target.value }))
+                                updatedInfoFields.current.add("Employee Start Date");
+                            }} />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label>Pay Rate ($/hr)</Label>
+                            <Input type="number" value={infoDraft.pay_rate || ''} onChange={(e) => {
+                                setInfoDraft(prev => ({ ...prev, pay_rate: e.target.value }))
+                                updatedInfoFields.current.add("Employee Pay Rate");
+                            }} />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label>Companion Pay Rate ($/hr)</Label>
+                            <Input type="number" value={infoDraft.companion_pay_rate || ''} onChange={(e) => {
+                                setInfoDraft(prev => ({ ...prev, companion_pay_rate: e.target.value }))
+                                updatedInfoFields.current.add("Employee Pay Rate");
+                            }} placeholder="Optional" />
+                        </div>
+                    </div>
+                    <div className="flex gap-3 pt-4">
+                        <Button onClick={handleSaveInfo} className="bg-[#577C09] hover:bg-[#3D5906] text-white">
+                            Save Changes
+                        </Button>
+                        <Button variant="outline" onClick={() => setEditingInfo(false)}>
+                            Cancel
+                        </Button>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialog>
             <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
                 <AlertDialogContent className="max-w-sm">
                     <AlertDialogHeader>
@@ -924,6 +1016,7 @@ export default function AdminCaregiverDetail() {
 
                     <div className="bg-white rounded-xl border border-border p-6">
                         <h2 className="font-semibold mb-4">Personal Information</h2>
+
                         <div className="grid grid-cols-2 gap-4 text-sm">
                             <div>
                                 <p className="text-muted-foreground">Email</p>
@@ -955,6 +1048,27 @@ export default function AdminCaregiverDetail() {
                                     <p className="font-medium">${caregiver.companion_pay_rate}/hr</p>
                                 </div>
                             )}
+                        </div>
+                        <div className='flex justify-end'>
+                            <button
+                                onClick={() => {
+                                    setInfoDraft({
+                                        email: caregiver.email,
+                                        phone: caregiver.phone || '',
+                                        employment_type: caregiver.employment_type || '',
+                                        start_date: caregiver.start_date || '',
+                                        pay_rate: caregiver.pay_rate,
+                                        companion_pay_rate: caregiver.companion_pay_rate || '',
+                                    })
+                                    setEditingInfo(true)
+                                }}
+                                className="text-md text-[#577C09] hover:underline"
+                            >
+                                <Button variant="outline" size="sm">
+                                    <Pencil className="h-4 w-4 mr-2" />
+                                    Edit
+                                </Button>
+                            </button>
                         </div>
                     </div>
 

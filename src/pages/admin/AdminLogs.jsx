@@ -20,12 +20,13 @@ const ACTION_LABELS = {
     created_employee: "Created Employee",
     removed_step: "Removed Steps",
     reset_all_progress: "Reset All Progress",
-    uploaded_doc_on_behalf: "Uploaded Document For Employee"
+    uploaded_doc_on_behalf: "Uploaded Document For Employee",
+    updated_employee_info: "Updated Employee Info"
 }
 
 const actionColor = (action) => {
     if (action.includes('deleted') || (action.includes('remove')) || (action.includes('reset'))) return 'bg-red-50 text-red-700 border-red-200'
-    if (action.includes('viewed') || action.includes('opened') || (action.includes('created')) || (action.includes('uploaded'))) return 'bg-amber-50 text-amber-700 border-amber-200'
+    if (action.includes('viewed') || action.includes('opened') || (action.includes('created')) || (action.includes('up'))) return 'bg-amber-50 text-amber-700 border-amber-200'
     if (action.includes('signed') || action.includes('completed') || action.includes('regenerate')) return 'bg-[#E8F0D0] text-[#577C09] border-[#577C09]/20'
     return 'bg-muted text-muted-foreground border-border'
 }
@@ -62,7 +63,7 @@ export default function AdminLogs() {
 
             if (data?.role !== 'superadmin') {
                 navigate('/admin/dashboard')
-                return
+                return;
             }
             setAdminRole(data.role)
             setCheckingRole(false)
@@ -286,8 +287,13 @@ export default function AdminLogs() {
                                             <div className="space-y-0.5">
                                                 {Object.entries(log.metadata).map(([key, value]) => (
                                                     <p key={key} className="text-xs">
-                                                        <span className="font-medium capitalize">{key.replace(/_/g, ' ')}:</span>{' '}
-                                                        {String(value)}
+                                                        {!isNaN(key) ? (
+                                                            value
+                                                        ) : (
+                                                            <><span className="font-medium capitalize">{key.replace(/_/g, ' ')}:</span>{' '}
+                                                                {String(value)}</>
+                                                        )}
+
                                                     </p>
                                                 ))}
                                             </div>
