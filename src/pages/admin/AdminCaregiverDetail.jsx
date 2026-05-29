@@ -174,11 +174,9 @@ export default function AdminCaregiverDetail() {
         setPersonalInfo(personalInfo)
         setTimeLog(timeData)
         setLoading(false)
-        hasSsn = !!taxData?.ssn_encrypted;
-        hasBanking = !!bankingData?.id;
 
-        setHasSsn(hasSsn);
-        setHasBanking(hasBanking);
+        setHasSsn(!!taxData?.ssn_encrypted);
+        setHasBanking(!!bankingData?.id);
     }
 
     const handleDownload = async (doc) => {
@@ -1409,7 +1407,7 @@ export default function AdminCaregiverDetail() {
                             <div className="space-y-2">
                                 {progress.completed_steps?.length > 0 ? (
                                     [...progress.completed_steps].sort((a, b) => a - b).map((stepId, index, arr) => {
-                                        const isLatest = index === arr.length - 1
+                                        const isLatest = index === arr.length
                                         const roleSteps = stepsByRole[caregiver.role] || stepsByRole.caregiver
                                         const stepName = roleSteps.find(s => s.id === stepId)?.stepName || `Step ${stepId}`
                                         return (
