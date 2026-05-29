@@ -431,7 +431,7 @@ export default function AdminCaregiverDetail() {
         setResetting(true)
 
         await supabase.from('caregiver_progress').delete().eq('caregiver_id', id)
-        await supabase.from('caregivers').update({ status: 'pending', link_expires_at: null }).eq('id', id)
+        await supabase.from('caregivers').update({ status: 'pending', link_expires_at: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString() }).eq('id', id)
         await supabase.from('caregiver_time_logs').delete().eq('caregiver_id', id)
         await supabase.from('caregiver_tax_forms').delete().eq('caregiver_id', id)
 

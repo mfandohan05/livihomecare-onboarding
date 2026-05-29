@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { LayoutDashboard, Users, LogOut, ChevronDown, Map, Logs } from 'lucide-react'
 import companyLogo from '@/assets/logo.png'
+import { APP_VERSION } from '@/version'
 
 export default function AdminLayout({ children }) {
     const navigate = useNavigate()
@@ -87,7 +88,7 @@ export default function AdminLayout({ children }) {
                         <img src={companyLogo} alt="Livi Home Care" className="w-[50px]" />
                         <div>
                             <p className="font-semibold text-sm leading-none">Ready, Set, Onboard!</p>
-                            <p className="text-xs text-muted-foreground leading-none mt-0.5">Admin Portal</p>
+                            <p className="text-xs text-muted-foreground leading-none mt-0.5">Admin Portal v.{APP_VERSION}</p>
                         </div>
                     </div>
 
