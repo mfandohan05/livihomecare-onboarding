@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
         'Authorization': `Bearer ${Deno.env.get('RESEND_API_KEY')}`,
       },
       body: JSON.stringify({
-        from: 'Livi Home Care <noreply@livihomecare.com>',
+        from: 'Livi Home Care <onboarding@resend.dev>',
         to: caregiver.email,
         subject: 'Welcome to Livi Home Care — Complete Your Onboarding',
         html: `
