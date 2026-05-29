@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { stepsByRole } from '@/data/steps'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Upload, Eye, EyeOff, Copy, Check, Loader2, CheckCircle } from 'lucide-react'
+import { ArrowLeft, Upload, Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react'
 import {
     AlertDialog,
     AlertDialogContent,
@@ -121,6 +121,9 @@ export default function AdminCaregiverDetail() {
     const [resending, setResending] = useState(false);
     const [hasSsn, setHasSsn] = useState(false);
     const [hasBanking, setHasBanking] = useState(false);
+    const [adminEmail, setAdminEmail] = useState('');
+    const [adminId, setAdminId] = useState('')
+    
 
     const { logAction } = logImportantAction(id, caregiver?.name);
 
@@ -150,11 +153,13 @@ export default function AdminCaregiverDetail() {
         if (session) {
             const { data: adminData } = await supabase
                 .from('admin_users')
-                .select('name')
+                .select('name, email, id')
                 .eq('id', session.user.id)
                 .single()
             if (adminData) {
-                setAdminName(adminData.name)
+                setAdminName(adminData.name);
+                setAdminEmail(adminData.email);
+                setAdminId(adminData.id);
             }
         }
 
@@ -567,7 +572,9 @@ export default function AdminCaregiverDetail() {
                         body: {
                             caregiverId: caregiver.id,
                             documentType: documentId,
-                            adminName
+                            adminId: adminId,
+                            adminEmail: adminEmail,
+                            adminName: adminName,
                         }
                     })
                     if (result.error) throw new Error(result.error.message)
@@ -575,7 +582,7 @@ export default function AdminCaregiverDetail() {
                 onComplete()
                 onClose()
             } catch (err) {
-                setError(err.message)
+                setError("There was an error signing, please try again later.")
             }
             setSubmitting(false)
         }
