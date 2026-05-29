@@ -29,6 +29,9 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
     const [error, setError] = useState(null)
     const [offerLetterFile, setOfferLetterFile] = useState(null)
     const [jobDutiesDraft, setJobDutiesDraft] = useState('')
+    const [adminEmail, setAdminEmail] = useState('');
+    const [adminName, setAdminName] = useState('');
+    const [adminId, setAdminId] = useState('');
     const [form, setForm] = useState({
         name: '',
         email: '',
@@ -41,6 +44,24 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
         companion_pay_rate: '',
         job_description: '',
     })
+    useEffect(() => {
+        fetchAdminData();
+    }, [])
+
+    const fetchAdminData = async () => {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+            const { data: adminData } = await supabase
+                .from('admin_users')
+                .select('name, email, id')
+                .eq('id', session.user.id)
+                .single();
+            setAdminEmail(adminData.email);
+            setAdminName(adminData.name);
+            setAdminId(adminData.id);
+        }  
+
+    }
 
 
     const set = (key) => (e) => setForm(prev => ({ ...prev, [key]: e.target.value }))
@@ -76,6 +97,12 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
             setLoading(false)
             return
         }
+        await supabase.from('audit_logs').insert({
+            admin_email: adminEmail,
+            admin_id: adminId,
+            action: 'created_employee',
+            caregiver_name: form.name, 
+        })
         if (form.role === 'other' && offerLetterFile) {
             const fileExt = offerLetterFile.name.split('.').pop()
             const sanitizedName = form.name.replace(/[^a-zA-Z0-9]/g, '_')
@@ -299,6 +326,7 @@ export default function AdminCaregivers() {
     const [showSkillDropdown, setShowSkillDropdown] = useState(false);
     const [pendingSkills, setPendingSkills] = useState([]);
     const skillDropdownRef = useRef(null);
+    
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -310,7 +338,7 @@ export default function AdminCaregivers() {
     useEffect(() => {
         fetchCaregivers()
     }, [page, debouncedSearch, statusFilter, roleFilter, skillFilters])
-
+    
     useEffect(() => {
         const handleClickOutside = (e) => {
             if (skillDropdownRef.current && !skillDropdownRef.current.contains(e.target)) {

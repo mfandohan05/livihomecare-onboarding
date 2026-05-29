@@ -227,7 +227,14 @@ export default function AdminCaregiverDetail() {
                     file_size: file.size,
                     mime_type: file.type,
                 }, { onConflict: 'caregiver_id, document_type' })
-
+            await supabase.from('audit_logs').insert({
+                admin_email: adminEmail,
+                admin_id: adminId,
+                action: 'uploaded_doc_on_behalf',
+                caregiver_id: caregiver.id,
+                caregiver_name: caregiver.name,
+                metadata: { "document_type": documentType }
+            })
             await fetchAll()
         }
         setUploadingDoc(null)
@@ -373,6 +380,8 @@ export default function AdminCaregiverDetail() {
                 .not('document_type', 'in', '("i9_completed","w4_completed","w9_completed","nc4ez_completed")')
         }
 
+        await logAction('removed_step', { "Step Name": stepName} )
+
         await fetchAll()
         setDeletingStep(null)
     }
@@ -396,6 +405,8 @@ export default function AdminCaregiverDetail() {
         if (taxPdfFiles.length > 0) await supabase.storage.from('generated-pdfs').remove(taxPdfFiles)
 
         await supabase.from('caregiver_documents').delete().eq('caregiver_id', id)
+
+        await logAction('reset_all_progress')
 
         await fetchAll()
         setResetting(false)
@@ -492,7 +503,7 @@ export default function AdminCaregiverDetail() {
                 link_expires_at: newExpiry,
             })
             .eq('id', id)
-
+        await logAction('regenerated_link');
         await supabase.functions.invoke('send-invite-email', {
             body: { caregiverId: id }
         })
