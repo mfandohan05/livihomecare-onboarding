@@ -4,6 +4,7 @@ import Map, { Marker, Popup, NavigationControl } from 'react-map-gl/mapbox'
 import { supabase } from '@/lib/supabase'
 import { Search, MapPin, Navigation, X, ExternalLink } from 'lucide-react'
 import { formatPhone } from '@/lib/formUtils'
+import { job_label } from '@/lib/labelUtils'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN
@@ -305,7 +306,7 @@ export default function AdminCaregiverMap() {
                                                     </span>
                                                 )}
                                             </div>
-                                            <p className="text-xs text-muted-foreground capitalize">{caregiver.role}</p>
+                                            <p className="text-xs text-muted-foreground capitalize">{job_label(caregiver.role)}</p>
                                             <p className="text-xs text-muted-foreground truncate mt-0.5">{caregiver.address}</p>
                                         </div>
                                     </div>
