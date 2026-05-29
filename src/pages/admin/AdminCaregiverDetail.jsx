@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { stepsByRole } from '@/data/steps'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Upload, Eye, EyeOff, Copy, Check, Loader2, CheckCircle } from 'lucide-react'
+import { ArrowLeft, Upload, Eye, EyeOff, Loader2, CheckCircle, Pencil } from 'lucide-react'
 import {
     AlertDialog,
     AlertDialogContent,
@@ -119,6 +119,31 @@ export default function AdminCaregiverDetail() {
     const [i9Section2CompletedBy, setI9Section2CompletedBy] = useState(null)
     const [i9Section2CompletedAt, setI9Section2CompletedAt] = useState(null)
     const [resending, setResending] = useState(false);
+    const [hasSsn, setHasSsn] = useState(false);
+    const [hasBanking, setHasBanking] = useState(false);
+    const [adminEmail, setAdminEmail] = useState('');
+    const [adminId, setAdminId] = useState('')
+    const [editingInfo, setEditingInfo] = useState(false);
+    const [infoDraft, setInfoDraft] = useState({})
+    const updatedInfoFields = useRef(new Set());
+
+    const handleSaveInfo = async () => {
+        await supabase
+            .from('caregivers')
+            .update({
+                email: infoDraft.email,
+                phone: infoDraft.phone,
+                employment_type: infoDraft.employment_type,
+                start_date: infoDraft.start_date || null,
+                pay_rate: parseFloat(infoDraft.pay_rate),
+                companion_pay_rate: infoDraft.companion_pay_rate ? parseFloat(infoDraft.companion_pay_rate) : null,
+            })
+            .eq('id', id)
+        setEditingInfo(false)
+        await fetchAll()
+        const changedFields = [...updatedInfoFields.current]
+        await logAction('updated_employee_info', changedFields)
+    }
 
     const { logAction } = logImportantAction(id, caregiver?.name);
 
@@ -141,20 +166,28 @@ export default function AdminCaregiverDetail() {
         ])
         const { data: taxData } = await supabase
             .from('caregiver_tax_forms')
-            .select('i9_section2_completed_at, i9_section2_completed_by')
+            .select('i9_section2_completed_at, i9_section2_completed_by, ssn_encrypted')
             .eq('caregiver_id', id)
             .maybeSingle();
         const { data: { session } } = await supabase.auth.getSession()
         if (session) {
             const { data: adminData } = await supabase
                 .from('admin_users')
-                .select('name')
+                .select('name, email, id')
                 .eq('id', session.user.id)
                 .single()
             if (adminData) {
-                setAdminName(adminData.name)
+                setAdminName(adminData.name);
+                setAdminEmail(adminData.email);
+                setAdminId(adminData.id);
             }
         }
+
+        const { data: bankingData } = await supabase
+            .from('caregiver_banking')
+            .select('id')
+            .eq('caregiver_id', id)
+            .maybeSingle();
 
         setI9Section2Completed(!!taxData?.i9_section2_completed_at)
         setI9Section2CompletedBy(taxData?.i9_section2_completed_by || null)
@@ -166,10 +199,13 @@ export default function AdminCaregiverDetail() {
         setPersonalInfo(personalInfo)
         setTimeLog(timeData)
         setLoading(false)
+
+        setHasSsn(!!taxData?.ssn_encrypted);
+        setHasBanking(!!bankingData?.id);
     }
 
     const handleDownload = async (doc) => {
-        await logAction('viewed_document', { document_type: doc.document_type })
+        await logAction('viewed_document', { document_type: documentTypeToName[doc.document_type] })
         const generatedPdfTypes = [
             'i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed',
             'drug_test_policy_signed', 'criminal_background_check_signed',
@@ -188,6 +224,27 @@ export default function AdminCaregiverDetail() {
         if (data?.signedUrl) {
             window.open(data.signedUrl, '_blank')
         }
+    }
+    const documentTypeToName = {
+        "tbTest": "TB Test",
+        "w4_completed": "W-4",
+        "w9_completed": "W-9",
+        "i9_completed": "I-9",
+        "bloodborne_certificate": "Bloodborne Training Certification",
+        "nursingLicense": "Nursing License",
+        "badgePhoto": "Badge Photo",
+        "socialSecurityCard": "Social Security Card / Other I-9 Documentation",
+        "carInsurance": "Car Insurance",
+        "driversLicense": "Driver's License",
+        "hep_b_declination_signed": "Hep B Declination/Acknowledgement Form",
+        "non_compete_signed": "Non-Compete (Signed)",
+        "orientation_checklist_signed": "Orientation Checklist (Signed)",
+        "new_hire_notification_signed": "New Hire Notification (Signed)",
+        "criminal_background_check_signed": "Criminal Background Check Consent (Signed)",
+        "drug_test_policy_signed": "Drug Test Policy (Signed)",
+        "offer_letter_other": "Offer Letter",
+        "nc4ez_completed": "NC-4EZ",
+        "certifications": "Certifications"
     }
 
     const handleUpload = async (documentType, file) => {
@@ -211,7 +268,14 @@ export default function AdminCaregiverDetail() {
                     file_size: file.size,
                     mime_type: file.type,
                 }, { onConflict: 'caregiver_id, document_type' })
-
+            await supabase.from('audit_logs').insert({
+                admin_email: adminEmail,
+                admin_id: adminId,
+                action: 'uploaded_doc_on_behalf',
+                caregiver_id: caregiver.id,
+                caregiver_name: caregiver.name,
+                metadata: { "document_type": documentTypeToName[documentType] }
+            })
             await fetchAll()
         }
         setUploadingDoc(null)
@@ -357,6 +421,8 @@ export default function AdminCaregiverDetail() {
                 .not('document_type', 'in', '("i9_completed","w4_completed","w9_completed","nc4ez_completed")')
         }
 
+        await logAction('removed_step', { "Step Name": stepName })
+
         await fetchAll()
         setDeletingStep(null)
     }
@@ -365,7 +431,7 @@ export default function AdminCaregiverDetail() {
         setResetting(true)
 
         await supabase.from('caregiver_progress').delete().eq('caregiver_id', id)
-        await supabase.from('caregivers').update({ status: 'pending', link_expires_at: null }).eq('id', id)
+        await supabase.from('caregivers').update({ status: 'pending', link_expires_at: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString() }).eq('id', id)
         await supabase.from('caregiver_time_logs').delete().eq('caregiver_id', id)
         await supabase.from('caregiver_tax_forms').delete().eq('caregiver_id', id)
 
@@ -380,6 +446,8 @@ export default function AdminCaregiverDetail() {
         if (taxPdfFiles.length > 0) await supabase.storage.from('generated-pdfs').remove(taxPdfFiles)
 
         await supabase.from('caregiver_documents').delete().eq('caregiver_id', id)
+
+        await logAction('reset_all_progress')
 
         await fetchAll()
         setResetting(false)
@@ -476,7 +544,7 @@ export default function AdminCaregiverDetail() {
                 link_expires_at: newExpiry,
             })
             .eq('id', id)
-
+        await logAction('regenerated_link');
         await supabase.functions.invoke('send-invite-email', {
             body: { caregiverId: id }
         })
@@ -556,7 +624,9 @@ export default function AdminCaregiverDetail() {
                         body: {
                             caregiverId: caregiver.id,
                             documentType: documentId,
-                            adminName
+                            adminId: adminId,
+                            adminEmail: adminEmail,
+                            adminName: adminName,
                         }
                     })
                     if (result.error) throw new Error(result.error.message)
@@ -564,7 +634,7 @@ export default function AdminCaregiverDetail() {
                 onComplete()
                 onClose()
             } catch (err) {
-                setError(err.message)
+                setError("There was an error signing, please try again later.")
             }
             setSubmitting(false)
         }
@@ -772,7 +842,7 @@ export default function AdminCaregiverDetail() {
                                 disabled={!reauthPassword || reauthLoading}
                                 className={`${reauthTarget === 'reset' ? 'bg-red-500 hover:bg-red-600' : 'bg-[#577C09] hover:bg-[#3D5906]'} text-white disabled:opacity-50`}
                             >
-                                {reauthLoading ? 'Verifying...' : 'Reset All Progress'}
+                                {reauthLoading ? 'Verifying...' : 'Confirm'}
                             </Button>
                             <Button
                                 variant="outline"
@@ -785,6 +855,78 @@ export default function AdminCaregiverDetail() {
                                 Cancel
                             </Button>
                         </div>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialog>
+            <AlertDialog open={editingInfo} onOpenChange={setEditingInfo}>
+                <AlertDialogContent className="max-w-lg">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Edit Personal Information</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Update {caregiver?.name}'s employment information.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="grid grid-cols-2 gap-4 pt-2">
+                        <div className="space-y-1.5">
+                            <Label>Email</Label>
+                            <Input value={infoDraft.email || ''} onChange={(e) => {
+                                setInfoDraft(prev => ({ ...prev, email: e.target.value }))
+                                updatedInfoFields.current.add("Employee E-mail Address");
+                            }
+                            } />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label>Phone</Label>
+                            <Input value={infoDraft.phone || ''} onChange={(e) => {
+                                setInfoDraft(prev => ({ ...prev, phone: formatPhone(e.target.value) }))
+                                updatedInfoFields.current.add("Employee Phone Number");
+                            }} />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label>Employment Type</Label>
+                            <select
+                                value={infoDraft.employment_type || ''}
+                                onChange={(e) => {
+                                    setInfoDraft(prev => ({ ...prev, employment_type: e.target.value }))
+                                    updatedInfoFields.current.add("Employee Employment Type");
+                                }}
+                                className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white"
+                            >
+                                <option value="">Select type</option>
+                                <option value="Hourly, Part-Time">Hourly, Part-Time</option>
+                                <option value="Hourly, Full-Time">Hourly, Full-Time</option>
+                                <option value="Independent Contractor">Independent Contractor</option>
+                            </select>
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label>Start Date</Label>
+                            <Input type="date" value={infoDraft.start_date || ''} onChange={(e) => {
+                                setInfoDraft(prev => ({ ...prev, start_date: e.target.value }))
+                                updatedInfoFields.current.add("Employee Start Date");
+                            }} />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label>Pay Rate ($/hr)</Label>
+                            <Input type="number" value={infoDraft.pay_rate || ''} onChange={(e) => {
+                                setInfoDraft(prev => ({ ...prev, pay_rate: e.target.value }))
+                                updatedInfoFields.current.add("Employee Pay Rate");
+                            }} />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label>Companion Pay Rate ($/hr)</Label>
+                            <Input type="number" value={infoDraft.companion_pay_rate || ''} onChange={(e) => {
+                                setInfoDraft(prev => ({ ...prev, companion_pay_rate: e.target.value }))
+                                updatedInfoFields.current.add("Employee Pay Rate");
+                            }} placeholder="Optional" />
+                        </div>
+                    </div>
+                    <div className="flex gap-3 pt-4">
+                        <Button onClick={handleSaveInfo} className="bg-[#577C09] hover:bg-[#3D5906] text-white">
+                            Save Changes
+                        </Button>
+                        <Button variant="outline" onClick={() => setEditingInfo(false)}>
+                            Cancel
+                        </Button>
                     </div>
                 </AlertDialogContent>
             </AlertDialog>
@@ -874,6 +1016,7 @@ export default function AdminCaregiverDetail() {
 
                     <div className="bg-white rounded-xl border border-border p-6">
                         <h2 className="font-semibold mb-4">Personal Information</h2>
+
                         <div className="grid grid-cols-2 gap-4 text-sm">
                             <div>
                                 <p className="text-muted-foreground">Email</p>
@@ -905,6 +1048,27 @@ export default function AdminCaregiverDetail() {
                                     <p className="font-medium">${caregiver.companion_pay_rate}/hr</p>
                                 </div>
                             )}
+                        </div>
+                        <div className='flex justify-end'>
+                            <button
+                                onClick={() => {
+                                    setInfoDraft({
+                                        email: caregiver.email,
+                                        phone: caregiver.phone || '',
+                                        employment_type: caregiver.employment_type || '',
+                                        start_date: caregiver.start_date || '',
+                                        pay_rate: caregiver.pay_rate,
+                                        companion_pay_rate: caregiver.companion_pay_rate || '',
+                                    })
+                                    setEditingInfo(true)
+                                }}
+                                className="text-md text-[#577C09] hover:underline"
+                            >
+                                <Button variant="outline" size="sm">
+                                    <Pencil className="h-4 w-4 mr-2" />
+                                    Edit
+                                </Button>
+                            </button>
                         </div>
                     </div>
 
@@ -1057,7 +1221,12 @@ export default function AdminCaregiverDetail() {
 
                         {documents.length > 0 && (
                             <div className="space-y-2 mb-6">
-                                {documents.map((doc) => (
+                                {documents.filter(doc => {
+                                    if (doc.document_type === 'w4_completed') {
+                                        return caregiver.role !== 'nurse_prn' && caregiver.role !== 'nurse_director'
+                                    }
+                                    return true;
+                                }).map((doc) => (
                                     <div key={doc.id} className="flex items-center justify-between py-2 px-3 rounded-lg border border-border hover:bg-muted/30 transition-colors">
                                         <div>
                                             <p className="text-sm font-medium">{docLabel(doc.document_type)}</p>
@@ -1219,68 +1388,72 @@ export default function AdminCaregiverDetail() {
 
                     <div className="bg-white rounded-xl border border-border p-6">
                         <h2 className="font-semibold mb-4">Sensitive Information</h2>
-                        <div className="space-y-4">
-
-                            <div className="flex items-center justify-between py-3 px-4 rounded-lg bg-muted/30">
-                                <div>
-                                    <p className="text-sm font-medium">Social Security Number</p>
-                                    {showSsn && ssn ? (
-                                        <p className="text-sm font-mono mt-0.5">{ssn.ssn || '—'}</p>
-                                    ) : (
-                                        <p className="text-sm text-muted-foreground mt-0.5">••••••••••</p>
-                                    )}
-                                    {showSsn && ssn?.dob && (
-                                        <p className="text-xs text-muted-foreground mt-0.5">DOB: {ssn.dob}</p>
-                                    )}
-                                    {showSsn && ssn?.ein && (
-                                        <p className="text-xs text-muted-foreground mt-0.5">EIN: <span className='font-mono'>{ssn.ein}</span></p>
-                                    )}
+                        {!hasSsn && !hasBanking ? (
+                            <p className='text-sm text-muted-foreground'>No sensitive information is available for this employee.</p>
+                        ) : (
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between py-3 px-4 rounded-lg bg-muted/30">
+                                    <div>
+                                        <p className="text-sm font-medium">Social Security Number</p>
+                                        {showSsn && ssn ? (
+                                            <p className="text-sm font-mono mt-0.5">{ssn.ssn || '—'}</p>
+                                        ) : (
+                                            <p className="text-sm text-muted-foreground mt-0.5">••••••••••</p>
+                                        )}
+                                        {showSsn && ssn?.dob && (
+                                            <p className="text-xs text-muted-foreground mt-0.5">DOB: {ssn.dob}</p>
+                                        )}
+                                        {showSsn && ssn?.ein && (
+                                            <p className="text-xs text-muted-foreground mt-0.5">EIN: <span className='font-mono'>{ssn.ein}</span></p>
+                                        )}
+                                    </div>
+                                    <button
+                                        onClick={handleRevealSsn}
+                                        disabled={loadingSsn}
+                                        className="flex items-center gap-1.5 text-xs text-[#577C09] hover:underline disabled:opacity-50"
+                                    >
+                                        {loadingSsn ? (
+                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                        ) : showSsn ? (
+                                            <><EyeOff className="w-3.5 h-3.5" /> Hide</>
+                                        ) : (
+                                            <><Eye className="w-3.5 h-3.5" /> Reveal</>
+                                        )}
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={handleRevealSsn}
-                                    disabled={loadingSsn}
-                                    className="flex items-center gap-1.5 text-xs text-[#577C09] hover:underline disabled:opacity-50"
-                                >
-                                    {loadingSsn ? (
-                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                    ) : showSsn ? (
-                                        <><EyeOff className="w-3.5 h-3.5" /> Hide</>
-                                    ) : (
-                                        <><Eye className="w-3.5 h-3.5" /> Reveal</>
-                                    )}
-                                </button>
-                            </div>
 
-                            <div className="flex items-center justify-between py-3 px-4 rounded-lg bg-muted/30">
-                                <div>
-                                    <p className="text-sm font-medium">Direct Deposit</p>
-                                    {showBanking && banking ? (
-                                        <div className="mt-0.5 space-y-0.5">
-                                            <p className="text-sm">{banking.bank_name}</p>
-                                            <p className="text-sm font-mono">Routing: {banking.routing_number}</p>
-                                            <p className="text-sm font-mono">Account: {banking.account_number}</p>
-                                            <p className="text-xs text-muted-foreground capitalize">{banking.account_type}</p>
-                                        </div>
-                                    ) : (
-                                        <p className="text-sm text-muted-foreground mt-0.5">••••••••••</p>
-                                    )}
+                                <div className="flex items-center justify-between py-3 px-4 rounded-lg bg-muted/30">
+                                    <div>
+                                        <p className="text-sm font-medium">Direct Deposit</p>
+                                        {showBanking && banking ? (
+                                            <div className="mt-0.5 space-y-0.5">
+                                                <p className="text-sm">{banking.bank_name}</p>
+                                                <p className="text-sm font-mono">Routing: {banking.routing_number}</p>
+                                                <p className="text-sm font-mono">Account: {banking.account_number}</p>
+                                                <p className="text-xs text-muted-foreground capitalize">{banking.account_type}</p>
+                                            </div>
+                                        ) : (
+                                            <p className="text-sm text-muted-foreground mt-0.5">••••••••••</p>
+                                        )}
+                                    </div>
+                                    <button
+                                        onClick={handleRevealBanking}
+                                        disabled={loadingBanking}
+                                        className="flex items-center gap-1.5 text-xs text-[#577C09] hover:underline disabled:opacity-50"
+                                    >
+                                        {loadingBanking ? (
+                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                        ) : showBanking ? (
+                                            <><EyeOff className="w-3.5 h-3.5" /> Hide</>
+                                        ) : (
+                                            <><Eye className="w-3.5 h-3.5" /> Reveal</>
+                                        )}
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={handleRevealBanking}
-                                    disabled={loadingBanking}
-                                    className="flex items-center gap-1.5 text-xs text-[#577C09] hover:underline disabled:opacity-50"
-                                >
-                                    {loadingBanking ? (
-                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                    ) : showBanking ? (
-                                        <><EyeOff className="w-3.5 h-3.5" /> Hide</>
-                                    ) : (
-                                        <><Eye className="w-3.5 h-3.5" /> Reveal</>
-                                    )}
-                                </button>
-                            </div>
 
-                        </div>
+                            </div>
+                        )}
+
                     </div>
                     <button
                         onClick={() => setShowDeleteConfirm(true)}
@@ -1392,7 +1565,7 @@ export default function AdminCaregiverDetail() {
                             <div className="space-y-2">
                                 {progress.completed_steps?.length > 0 ? (
                                     [...progress.completed_steps].sort((a, b) => a - b).map((stepId, index, arr) => {
-                                        const isLatest = index === arr.length - 1
+                                        const isLatest = index === arr.length
                                         const roleSteps = stepsByRole[caregiver.role] || stepsByRole.caregiver
                                         const stepName = roleSteps.find(s => s.id === stepId)?.stepName || `Step ${stepId}`
                                         return (

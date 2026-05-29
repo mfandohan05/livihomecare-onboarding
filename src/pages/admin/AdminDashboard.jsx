@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { Users, Clock, CheckCircle, AlertCircle } from 'lucide-react'
+import { job_label } from '@/lib/labelUtils'
 
 export default function AdminDashboard() {
     const navigate = useNavigate()
@@ -110,7 +111,7 @@ export default function AdminDashboard() {
                                     </div>
                                     <div>
                                         <p className="font-medium text-sm">{caregiver.name}</p>
-                                        <p className="text-xs text-muted-foreground"><span className='capitalize'>{caregiver.role}</span> · {(caregiver.email).toLowerCase()}</p>
+                                        <p className="text-xs text-muted-foreground"><span className='capitalize'>{job_label(caregiver.role)}</span> · {(caregiver.email).toLowerCase()}</p>
                                     </div>
                                 </div>
                                 <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusColor(caregiver.status)}`}>

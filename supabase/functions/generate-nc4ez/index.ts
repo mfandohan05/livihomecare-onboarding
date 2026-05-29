@@ -60,6 +60,7 @@ Deno.serve(async (req) => {
       month: "2-digit",
       day: "2-digit",
       year: "numeric",
+      timeZone: 'America/New_York'
     });
 
     // Filing status checkboxes

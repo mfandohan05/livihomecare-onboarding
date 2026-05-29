@@ -11,6 +11,7 @@ const todayStr = () =>
     month: "2-digit",
     day: "2-digit",
     year: "numeric",
+    timeZone: 'America/New_York'
   });
 
 Deno.serve(async (req) => {
@@ -28,7 +29,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { caregiverId, documentType, adminName } = await req.json();
+    const { caregiverId, documentType, adminName, adminId, adminEmail } = await req.json();
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -154,7 +155,8 @@ Deno.serve(async (req) => {
       
 
     await supabase.from("audit_logs").insert({
-      admin_email: adminName,
+      admin_email: adminEmail,
+      admin_id: adminId,
       action: `signed_${documentType}`,
       caregiver_id: caregiverId,
       caregiver_name: caregiver.name,

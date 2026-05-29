@@ -16,12 +16,18 @@ const ACTION_LABELS = {
     signed_orientation_checklist_signed: 'Signed Orientation Checklist',
     opened_caregiver_view: 'Opened Caregiver View',
     completed_i9_section1: 'Completed I-9 Section 1',
+    regenerated_link: "Regenerated Onboarding Link",
+    created_employee: "Created Employee",
+    removed_step: "Removed Steps",
+    reset_all_progress: "Reset All Progress",
+    uploaded_doc_on_behalf: "Uploaded Document For Employee",
+    updated_employee_info: "Updated Employee Info"
 }
 
 const actionColor = (action) => {
-    if (action.includes('deleted')) return 'bg-red-50 text-red-700 border-red-200'
-    if (action.includes('viewed') || action.includes('opened')) return 'bg-amber-50 text-amber-700 border-amber-200'
-    if (action.includes('signed') || action.includes('completed')) return 'bg-[#E8F0D0] text-[#577C09] border-[#577C09]/20'
+    if (action.includes('deleted') || (action.includes('remove')) || (action.includes('reset'))) return 'bg-red-50 text-red-700 border-red-200'
+    if (action.includes('viewed') || action.includes('opened') || (action.includes('created')) || (action.includes('up'))) return 'bg-amber-50 text-amber-700 border-amber-200'
+    if (action.includes('signed') || action.includes('completed') || action.includes('regenerate')) return 'bg-[#E8F0D0] text-[#577C09] border-[#577C09]/20'
     return 'bg-muted text-muted-foreground border-border'
 }
 
@@ -57,7 +63,7 @@ export default function AdminLogs() {
 
             if (data?.role !== 'superadmin') {
                 navigate('/admin/dashboard')
-                return
+                return;
             }
             setAdminRole(data.role)
             setCheckingRole(false)
@@ -113,10 +119,14 @@ export default function AdminLogs() {
                 query = query.eq('admin_email', adminFilter)
             }
         }
-        if (dateFrom) query = query.gte('created_at', new Date(dateFrom).toISOString())
+        if (dateFrom) {
+            const [year, month, day] = dateFrom.split('-')
+            const start = new Date(year, month - 1, day, 0, 0, 0, 0)
+            query = query.gte('created_at', start.toISOString())
+        }
         if (dateTo) {
-            const end = new Date(dateTo)
-            end.setHours(23, 59, 59, 999)
+            const [year, month, day] = dateTo.split('-')
+            const end = new Date(year, month - 1, day, 23, 59, 59, 999)
             query = query.lte('created_at', end.toISOString())
         }
 
@@ -277,8 +287,13 @@ export default function AdminLogs() {
                                             <div className="space-y-0.5">
                                                 {Object.entries(log.metadata).map(([key, value]) => (
                                                     <p key={key} className="text-xs">
-                                                        <span className="font-medium capitalize">{key.replace(/_/g, ' ')}:</span>{' '}
-                                                        {String(value)}
+                                                        {!isNaN(key) ? (
+                                                            value
+                                                        ) : (
+                                                            <><span className="font-medium capitalize">{key.replace(/_/g, ' ')}:</span>{' '}
+                                                                {String(value)}</>
+                                                        )}
+
                                                     </p>
                                                 ))}
                                             </div>
