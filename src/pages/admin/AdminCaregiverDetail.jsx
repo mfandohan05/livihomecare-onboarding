@@ -119,6 +119,8 @@ export default function AdminCaregiverDetail() {
     const [i9Section2CompletedBy, setI9Section2CompletedBy] = useState(null)
     const [i9Section2CompletedAt, setI9Section2CompletedAt] = useState(null)
     const [resending, setResending] = useState(false);
+    const [hasSsn, setHasSsn] = useState(false);
+    const [hasBanking, setHasBanking] = useState(false);
 
     const { logAction } = logImportantAction(id, caregiver?.name);
 
@@ -141,7 +143,7 @@ export default function AdminCaregiverDetail() {
         ])
         const { data: taxData } = await supabase
             .from('caregiver_tax_forms')
-            .select('i9_section2_completed_at, i9_section2_completed_by')
+            .select('i9_section2_completed_at, i9_section2_completed_by, ssn_encrypted')
             .eq('caregiver_id', id)
             .maybeSingle();
         const { data: { session } } = await supabase.auth.getSession()
@@ -156,6 +158,12 @@ export default function AdminCaregiverDetail() {
             }
         }
 
+        const { data: bankingData } = await supabase
+            .from('caregiver_banking')
+            .select('id')
+            .eq('caregiver_id', id)
+            .maybeSingle();
+
         setI9Section2Completed(!!taxData?.i9_section2_completed_at)
         setI9Section2CompletedBy(taxData?.i9_section2_completed_by || null)
         setI9Section2CompletedAt(taxData?.i9_section2_completed_at || null)
@@ -166,6 +174,11 @@ export default function AdminCaregiverDetail() {
         setPersonalInfo(personalInfo)
         setTimeLog(timeData)
         setLoading(false)
+        hasSsn = !!taxData?.ssn_encrypted;
+        hasBanking = !!bankingData?.id;
+
+        setHasSsn(hasSsn);
+        setHasBanking(hasBanking);
     }
 
     const handleDownload = async (doc) => {
@@ -1219,68 +1232,72 @@ export default function AdminCaregiverDetail() {
 
                     <div className="bg-white rounded-xl border border-border p-6">
                         <h2 className="font-semibold mb-4">Sensitive Information</h2>
-                        <div className="space-y-4">
-
-                            <div className="flex items-center justify-between py-3 px-4 rounded-lg bg-muted/30">
-                                <div>
-                                    <p className="text-sm font-medium">Social Security Number</p>
-                                    {showSsn && ssn ? (
-                                        <p className="text-sm font-mono mt-0.5">{ssn.ssn || '—'}</p>
-                                    ) : (
-                                        <p className="text-sm text-muted-foreground mt-0.5">••••••••••</p>
-                                    )}
-                                    {showSsn && ssn?.dob && (
-                                        <p className="text-xs text-muted-foreground mt-0.5">DOB: {ssn.dob}</p>
-                                    )}
-                                    {showSsn && ssn?.ein && (
-                                        <p className="text-xs text-muted-foreground mt-0.5">EIN: <span className='font-mono'>{ssn.ein}</span></p>
-                                    )}
+                        {!hasSsn && !hasBanking ? (
+                            <p className='text-sm text-muted-foreground'>No sensitive information is available for this employee.</p>
+                        ) : (
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between py-3 px-4 rounded-lg bg-muted/30">
+                                    <div>
+                                        <p className="text-sm font-medium">Social Security Number</p>
+                                        {showSsn && ssn ? (
+                                            <p className="text-sm font-mono mt-0.5">{ssn.ssn || '—'}</p>
+                                        ) : (
+                                            <p className="text-sm text-muted-foreground mt-0.5">••••••••••</p>
+                                        )}
+                                        {showSsn && ssn?.dob && (
+                                            <p className="text-xs text-muted-foreground mt-0.5">DOB: {ssn.dob}</p>
+                                        )}
+                                        {showSsn && ssn?.ein && (
+                                            <p className="text-xs text-muted-foreground mt-0.5">EIN: <span className='font-mono'>{ssn.ein}</span></p>
+                                        )}
+                                    </div>
+                                    <button
+                                        onClick={handleRevealSsn}
+                                        disabled={loadingSsn}
+                                        className="flex items-center gap-1.5 text-xs text-[#577C09] hover:underline disabled:opacity-50"
+                                    >
+                                        {loadingSsn ? (
+                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                        ) : showSsn ? (
+                                            <><EyeOff className="w-3.5 h-3.5" /> Hide</>
+                                        ) : (
+                                            <><Eye className="w-3.5 h-3.5" /> Reveal</>
+                                        )}
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={handleRevealSsn}
-                                    disabled={loadingSsn}
-                                    className="flex items-center gap-1.5 text-xs text-[#577C09] hover:underline disabled:opacity-50"
-                                >
-                                    {loadingSsn ? (
-                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                    ) : showSsn ? (
-                                        <><EyeOff className="w-3.5 h-3.5" /> Hide</>
-                                    ) : (
-                                        <><Eye className="w-3.5 h-3.5" /> Reveal</>
-                                    )}
-                                </button>
-                            </div>
 
-                            <div className="flex items-center justify-between py-3 px-4 rounded-lg bg-muted/30">
-                                <div>
-                                    <p className="text-sm font-medium">Direct Deposit</p>
-                                    {showBanking && banking ? (
-                                        <div className="mt-0.5 space-y-0.5">
-                                            <p className="text-sm">{banking.bank_name}</p>
-                                            <p className="text-sm font-mono">Routing: {banking.routing_number}</p>
-                                            <p className="text-sm font-mono">Account: {banking.account_number}</p>
-                                            <p className="text-xs text-muted-foreground capitalize">{banking.account_type}</p>
-                                        </div>
-                                    ) : (
-                                        <p className="text-sm text-muted-foreground mt-0.5">••••••••••</p>
-                                    )}
+                                <div className="flex items-center justify-between py-3 px-4 rounded-lg bg-muted/30">
+                                    <div>
+                                        <p className="text-sm font-medium">Direct Deposit</p>
+                                        {showBanking && banking ? (
+                                            <div className="mt-0.5 space-y-0.5">
+                                                <p className="text-sm">{banking.bank_name}</p>
+                                                <p className="text-sm font-mono">Routing: {banking.routing_number}</p>
+                                                <p className="text-sm font-mono">Account: {banking.account_number}</p>
+                                                <p className="text-xs text-muted-foreground capitalize">{banking.account_type}</p>
+                                            </div>
+                                        ) : (
+                                            <p className="text-sm text-muted-foreground mt-0.5">••••••••••</p>
+                                        )}
+                                    </div>
+                                    <button
+                                        onClick={handleRevealBanking}
+                                        disabled={loadingBanking}
+                                        className="flex items-center gap-1.5 text-xs text-[#577C09] hover:underline disabled:opacity-50"
+                                    >
+                                        {loadingBanking ? (
+                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                        ) : showBanking ? (
+                                            <><EyeOff className="w-3.5 h-3.5" /> Hide</>
+                                        ) : (
+                                            <><Eye className="w-3.5 h-3.5" /> Reveal</>
+                                        )}
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={handleRevealBanking}
-                                    disabled={loadingBanking}
-                                    className="flex items-center gap-1.5 text-xs text-[#577C09] hover:underline disabled:opacity-50"
-                                >
-                                    {loadingBanking ? (
-                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                    ) : showBanking ? (
-                                        <><EyeOff className="w-3.5 h-3.5" /> Hide</>
-                                    ) : (
-                                        <><Eye className="w-3.5 h-3.5" /> Reveal</>
-                                    )}
-                                </button>
-                            </div>
 
-                        </div>
+                            </div>
+                        )}
+
                     </div>
                     <button
                         onClick={() => setShowDeleteConfirm(true)}
