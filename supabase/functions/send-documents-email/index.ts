@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
         'Authorization': `Bearer ${Deno.env.get('RESEND_API_KEY')}`,
       },
       body: JSON.stringify({
-        from: 'CareReady <noreply@livihomecare.com>',
+        from: 'Ready, Set, Onboard! <noreply@livihomecare.com>',
         to: Deno.env.get('ADMIN_NOTIFICATION_EMAIL'),
         subject: `📄 ${caregiver.name} has uploaded their documents`,
         html: `
@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
             </a>
 
             <hr style="border: none; border-top: 1px solid #eee; margin-bottom: 24px;" />
-            <p style="color: #888; font-size: 13px;">CareReady · Livi Home Care Onboarding System</p>
+            <p style="color: #888; font-size: 13px;">Ready, Set, Onboard! · Livi Home Care Onboarding System</p>
           </div>
         `
       })
