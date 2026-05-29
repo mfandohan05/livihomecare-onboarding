@@ -1068,7 +1068,12 @@ export default function AdminCaregiverDetail() {
 
                         {documents.length > 0 && (
                             <div className="space-y-2 mb-6">
-                                {documents.map((doc) => (
+                                {documents.filter(doc => {
+                                    if (doc.document_type === 'w4_completed') {
+                                        return caregiver.role !== 'nurse_prn' && caregiver.role !== 'nurse_director'
+                                    }
+                                    return true;
+                                }).map((doc) => (
                                     <div key={doc.id} className="flex items-center justify-between py-2 px-3 rounded-lg border border-border hover:bg-muted/30 transition-colors">
                                         <div>
                                             <p className="text-sm font-medium">{docLabel(doc.document_type)}</p>
