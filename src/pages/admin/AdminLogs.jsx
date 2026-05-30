@@ -31,6 +31,26 @@ const actionColor = (action) => {
     return 'bg-muted text-muted-foreground border-border'
 }
 
+const isTimestamp = (value) => {
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
+        const date = new Date(value);
+        if (!isNaN(date.getTime())) {
+            return date.toLocaleDateString('en-US', {
+                timeZone: 'America/New_York',
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            })
+        }
+    }
+    else {
+        return String(value);
+    }
+}
+
 export default function AdminLogs() {
     const [logs, setLogs] = useState([])
     const [loading, setLoading] = useState(true)
@@ -291,7 +311,7 @@ export default function AdminLogs() {
                                                             value
                                                         ) : (
                                                             <><span className="font-medium capitalize">{key.replace(/_/g, ' ')}:</span>{' '}
-                                                                {String(value)}</>
+                                                                {String(isTimestamp(value))}</>
                                                         )}
 
                                                     </p>
