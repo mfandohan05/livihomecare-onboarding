@@ -863,7 +863,7 @@ export default function AdminCaregiverDetail() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Edit Personal Information</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Update {caregiver?.name}'s employment information.
+                            Update {caregiver?.name}'s personal information.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <div className="grid grid-cols-2 gap-4 pt-2">

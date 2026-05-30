@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.1.1 - 2026-05-30
+- Fixed bug where audit logs show timestamps in incorrect time zone
+
 ## 1.1.0 - 2026-05-29
 
 - Added support for editing employee information post-creation

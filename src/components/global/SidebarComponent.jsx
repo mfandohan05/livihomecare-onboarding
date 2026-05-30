@@ -3,6 +3,7 @@ import { CircleCheck, Lock, Clock, PauseCircle } from 'lucide-react'
 import { Avatar, AvatarImage } from "../ui/avatar";
 import { Progress } from "../ui/progress";
 import companyLogo from '@/assets/logo.png';
+import { APP_VERSION } from "@/version";
 
 const getStatusIcon = (status) => {
     if (status === "completed") return <CircleCheck className="w-4 h-4 text-[#577C09]" />
@@ -20,7 +21,8 @@ function SidebarComponent({ steps, activeStep, setActiveStep, handleNext, caregi
             <SidebarHeader>
                 <div className="flex flex-row items-center">
                     <img src={companyLogo} alt="Livi Home Care logo" className="w-[80px]" />
-                    <span className="font-semibold">Onboarding System</span>
+                    <span className="font-semibold">Onboarding System<br /><span className="text-xs text-muted-foreground">v{APP_VERSION}</span></span>
+
                 </div>
                 <div className="px-4 py-2">
                     <div className="flex justify-between text-xs text-muted-foreground mb-1">
