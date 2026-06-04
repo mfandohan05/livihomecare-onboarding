@@ -125,6 +125,7 @@ export default function AdminCaregiverDetail() {
     const [adminId, setAdminId] = useState('')
     const [editingInfo, setEditingInfo] = useState(false);
     const [infoDraft, setInfoDraft] = useState({})
+    const [quizProgress, setQuizProgress] = useState(null);
     const updatedInfoFields = useRef(new Set());
 
     const handleSaveInfo = async () => {
@@ -151,6 +152,20 @@ export default function AdminCaregiverDetail() {
     useEffect(() => {
         fetchAll()
     }, [id])
+    // useEffect(() => {
+    //     if (!caregiver?.id) {
+    //         return
+    //     }
+    //     const getQuizProgress = async () => {
+    //         const {data, error} = await supabase.from('caregiver_progress').select('quiz_scores').eq('caregiver_id', caregiver.id).maybeSingle();
+    //         if (!error & data.quiz_scores) {
+    //             setQuizProgress(data.quiz_scores)
+    //         }
+    //     };
+    //     getQuizProgress();
+    //     console.log(quizProgress)
+    // }, [caregiver?.id])
+
 
     const fetchAll = async () => {
         const [
@@ -161,7 +176,7 @@ export default function AdminCaregiverDetail() {
         ] = await Promise.all([
             supabase.from('caregivers').select('*').eq('id', id).single(),
             supabase.from('caregiver_documents').select('*').eq('caregiver_id', id).order('created_at', { ascending: false }),
-            supabase.from('caregiver_progress').select('*').eq('caregiver_id', id).maybeSingle(),
+            supabase.from('caregiver_progress').select('*, quiz_scores').eq('caregiver_id', id).maybeSingle(),
             supabase.from('caregiver_time_logs').select('*').eq('caregiver_id', id).eq('completed', true).maybeSingle(),
         ])
         const { data: taxData } = await supabase
@@ -202,6 +217,7 @@ export default function AdminCaregiverDetail() {
 
         setHasSsn(!!taxData?.ssn_encrypted);
         setHasBanking(!!bankingData?.id);
+        setQuizProgress(progressData?.quiz_scores || {});
     }
 
     const handleDownload = async (doc) => {
@@ -380,8 +396,20 @@ export default function AdminCaregiverDetail() {
 
         let updatedFormData = { ...progress.form_data }
         if (formDataKey) updatedFormData[formDataKey] = {}
-
-        await supabase
+        if (stepName === 'New Hire Orientation') {
+            await supabase
+            .from('caregiver_progress')
+            .update({
+                completed_steps: updatedCompletedSteps,
+                active_step: newActiveStep,
+                form_data: updatedFormData,
+                quiz_scores: null,
+                last_saved: new Date().toISOString()
+            })
+            .eq('caregiver_id', id)
+        }
+        else {
+            await supabase
             .from('caregiver_progress')
             .update({
                 completed_steps: updatedCompletedSteps,
@@ -390,6 +418,8 @@ export default function AdminCaregiverDetail() {
                 last_saved: new Date().toISOString()
             })
             .eq('caregiver_id', id)
+        }
+        
         await supabase
             .from('caregivers')
             .update({ status: 'in_progress' })
@@ -552,6 +582,7 @@ export default function AdminCaregiverDetail() {
         await fetchAll()
         setRegenerating(false);
     }
+
     const ADMIN_SIGNABLE_DOCUMENTS = [
         {
             id: 'drug_test_policy_signed',
@@ -579,7 +610,7 @@ export default function AdminCaregiverDetail() {
         },
     ]
 
-    function AdminSignDialog({ open, onClose, documentId, caregiver, adminName, onComplete, logAction }) {
+    function AdminSignDialog({ open, onClose, documentId, caregiver, adminName, adminId, adminEmail, onComplete, logAction }) {
         const doc = ADMIN_SIGNABLE_DOCUMENTS.find(d => d.id === documentId)
         const [submitting, setSubmitting] = useState(false)
         const [error, setError] = useState(null)
@@ -618,7 +649,7 @@ export default function AdminCaregiverDetail() {
                         }
                     })
                     if (result.error) throw new Error(result.error.message)
-                    await logAction('completed_i9_section2', { firstDayOfEmployment: i9Form.firstDayOfEmployment })
+                    await logAction('completed_i9_section2')
                 } else {
                     const result = await supabase.functions.invoke('sign-admin-documents', {
                         body: {
@@ -809,6 +840,8 @@ export default function AdminCaregiverDetail() {
         )
     }
 
+
+
     return (
         <div>
             <AlertDialog open={showReauth} onOpenChange={setShowReauth}>
@@ -980,6 +1013,8 @@ export default function AdminCaregiverDetail() {
                 documentId={signDocumentId}
                 caregiver={caregiver}
                 adminName={adminName}
+                adminId={adminId}
+                adminEmail={adminEmail}
                 onComplete={fetchAll}
                 logAction={logAction}
             />
@@ -1653,6 +1688,34 @@ export default function AdminCaregiverDetail() {
                             </div>
                         ) : (
                             <p className="text-sm text-muted-foreground">No time logged yet</p>
+                        )}
+                    </div>
+                    <div className="bg-white rounded-xl border border-border p-6">
+                        <h2 className="font-semibold mb-4">Quiz Progress</h2>
+                        {quizProgress && quizProgress.length > 0 ? (
+                            <div className="space-y-2">
+                                {quizProgress.map((section, index) => (
+                                    <div key={index} className="flex items-center justify-between py-2 px-3 rounded-lg border border-border">
+                                        <div className="flex items-center gap-2">
+                                            {section.passedStatus
+                                                ? <CheckCircle className="w-4 h-4 text-[#577C09] shrink-0" />
+                                                : <div className="w-4 h-4 rounded-full border-2 border-muted-foreground shrink-0" />
+                                            }
+                                            <p className={`text-sm font-medium ${section.passedStatus ? 'text-[#577C09]' : 'text-foreground'}`}>
+                                                {section.sectionTitle}
+                                            </p>
+                                        </div>
+                                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${section.passedStatus
+                                                ? 'bg-[#E8F0D0] text-[#577C09]'
+                                                : 'bg-muted text-muted-foreground'
+                                            }`}>
+                                            {section.passedStatus ? 'Passed' : 'Not passed'}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-sm text-muted-foreground">No quiz progress recorded yet</p>
                         )}
                     </div>
                 </div>

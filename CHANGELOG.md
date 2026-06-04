@@ -1,6 +1,11 @@
 # Changelog
 
+## 1.2.0 - 2026-06-01
+- Added new documents to Forms & Agreements page
+- Added new documents to Tax Forms Page
+
 ## 1.1.1 - 2026-05-30
+
 - Fixed bug where audit logs show timestamps in incorrect time zone
 
 ## 1.1.0 - 2026-05-29

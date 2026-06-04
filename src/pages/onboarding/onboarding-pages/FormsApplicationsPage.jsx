@@ -547,6 +547,68 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
                 </>
             )
         },
+        {
+            id: 'form_8',
+            title: 'Confidential Employee Disclosure Form',
+            render: () => (
+                <>
+                    <FormContent>
+                        <p className="font-medium">Confidential Employee Disclosure Form</p>
+                        <p className="font-medium mt-2">Completed application includes:</p>
+                        <ul className="space-y-1 pl-4">
+                            {[
+                                'Resume',
+                                'Signed Job Description & Offer Letter',
+                                'NA Listing Verification / Health Care Personnel Registry Check',
+                                'Proof of TB Skin Test or Chest X-Ray',
+                                'Proof of Hepatitis B Immunization or Declination',
+                                'Proof of Blood Borne Pathogen Training',
+                                'Reference Check(s)',
+                                'Signed Consent for Criminal Background Check',
+                                'Drug Test Policy & Acknowledgment',
+                            ].map((item, i) => (
+                                <li key={i} className="flex items-start gap-2">
+                                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#577C09] shrink-0" />
+                                    {item}
+                                </li>
+                            ))}
+                        </ul>
+                        <p className="font-medium mt-3">The Orientation covers the following:</p>
+                        <ul className="space-y-1 pl-4">
+                            {[
+                                'Review of Livi Home Care Policies and Procedures',
+                                'Livi Home Care Vision, Mission and Values',
+                                'Infection and Exposure Control',
+                                'Universal Precautions',
+                                'Cleanup Procedures',
+                                'Hepatitis B and Tuberculosis Awareness and Procedures',
+                                'Safe Transfer of Clients (Back Safety)',
+                                'Home and Fire Safety',
+                                'Emergency Preparedness',
+                                'Abuse, Neglect, Injury of Unknown Source',
+                                'Client\'s Rights and Advance Directives',
+                                'HIPAA and Client Confidentiality',
+                                'Documentation',
+                                'Home Expectations',
+                            ].map((item, i) => (
+                                <li key={i} className="flex items-start gap-2">
+                                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#577C09] shrink-0" />
+                                    {item}
+                                </li>
+                            ))}
+                        </ul>
+                        <p className="mt-3">My signature below verifies that I have received all the required documents and have participated in the above orientation session.</p>
+                    </FormContent>
+                    <SignatureField formId="form_7" signatures={signatures} onSign={(formId, value) => updateSignature(formId, value)} caregiver={caregiver} label="Type your full name to confirm completion of pre-employment orientation" />
+                    <FormButton
+                        formId="form_7"
+                        disabled={!signatures['form_7']?.trim() || completed['form_7']}
+                        completed={completed}
+                        markComplete={markComplete}
+                    />
+                </>
+            )
+        },
     ]
 
     return (

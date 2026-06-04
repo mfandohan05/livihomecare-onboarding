@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { GraduationCap, ChevronLeft, ChevronRight, CheckCircle, XCircle } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
+import { supabase } from '@/lib/supabase'
 
 const sections = [
     {
@@ -1054,7 +1055,7 @@ const sections = [
 
 ]
 
-export default function NewHireOrientationPage({ stepLabel, onNext, initialData, onChange }) {
+export default function NewHireOrientationPage({ stepLabel, onNext, initialData, onChange, caregiverId }) {
     const [currentSection, setCurrentSection] = useState(initialData?.currentSection || 0)
     const [currentSlide, setCurrentSlide] = useState(initialData?.currentSlide || 0)
     const [showQuiz, setShowQuiz] = useState(initialData?.showQuiz || false)
@@ -1167,6 +1168,11 @@ export default function NewHireOrientationPage({ stepLabel, onNext, initialData,
 
     const handleSubmitQuiz = () => {
         setQuizSubmitted(true)
+        const payload = {
+            sectionTitle: section.title,
+            passedStatus: passed
+        }
+        pushProgress(payload)
     }
 
     const handleRetakeQuiz = () => {
@@ -1205,6 +1211,22 @@ export default function NewHireOrientationPage({ stepLabel, onNext, initialData,
                 quizSubmitted: false,
             })
         }
+    }
+
+    const pushProgress = async (sectionScoreData) => {
+        const { data } = await supabase
+            .from('caregiver_progress')
+            .select('quiz_scores')
+            .eq('caregiver_id', caregiverId)
+            .single()
+
+        const existing = data?.quiz_scores || []
+        const updated = [...existing, sectionScoreData]
+
+        await supabase
+            .from('caregiver_progress')
+            .update({ quiz_scores: updated })
+            .eq('caregiver_id', caregiverId)
     }
 
     return (
