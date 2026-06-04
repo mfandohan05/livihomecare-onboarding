@@ -44,7 +44,8 @@ const docLabel = (type) => {
         driversLicense: "Driver's License",
         carInsurance: 'Car Insurance',
         tbTest: 'TB Test',
-        socialSecurityCard: 'Social Security Card',
+        socialSecurityCard: 'Social Security Card / Other Supporting I-9 Documentation',
+        bloodbornePathogens: "Bloodborne Pathogens Training Certificate",
         badgePhoto: 'Badge Photo',
         certifications: 'Certifications',
         nursingLicense: 'Nursing License',
@@ -246,7 +247,7 @@ export default function AdminCaregiverDetail() {
         "w4_completed": "W-4",
         "w9_completed": "W-9",
         "i9_completed": "I-9",
-        "bloodborne_certificate": "Bloodborne Training Certification",
+        "bloodbornePathogens": "Bloodborne Pathogens Training Certification",
         "nursingLicense": "Nursing License",
         "badgePhoto": "Badge Photo",
         "socialSecurityCard": "Social Security Card / Other I-9 Documentation",
@@ -552,8 +553,8 @@ export default function AdminCaregiverDetail() {
     }
     const isNurse = caregiver.role === 'nurse_prn' || caregiver.role === 'nurse_director'
     const uploadableDocs = isNurse
-        ? ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'nursingLicense', 'certifications']
-        : ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'certifications']
+        ? ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'nursingLicense', 'bloodbornePathogens', 'certifications']
+        : ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'bloodbornePathogens', 'certifications']
     const groupedSkills = Object.entries(competency?.checked || {})
         .filter(([_, checked]) => checked)
         .reduce((acc, [key]) => {
