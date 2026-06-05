@@ -42,6 +42,7 @@ const roleLabel = (role) => {
 const docLabel = (type) => {
     const labels = {
         wotc_disclosure: 'WOTC Disclosure Form',
+        reference_check: "Reference Check",
         driversLicense: "Driver's License",
         carInsurance: 'Car Insurance',
         tbTest: 'TB Test',
@@ -63,7 +64,8 @@ const docLabel = (type) => {
         non_compete_signed: 'Non-Compete Agreement (Signed)',
         hep_b_declination_signed: 'Hep B Declination (Signed)',
         offer_letter_generated: "Generated Offer Letter",
-        direct_deposit_authorization: 'Direct Deposit Authorization'
+        direct_deposit_authorization: 'Direct Deposit Authorization',
+        job_description: "Job Description Form"
     }
     return labels[type] || type
 }
@@ -217,7 +219,8 @@ export default function AdminCaregiverDetail() {
             'i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed',
             'drug_test_policy_signed', 'criminal_background_check_signed',
             'new_hire_notification_signed', 'orientation_checklist_signed',
-            'non_compete_signed', 'hep_b_declination_signed', 'offer_letter_generated', "direct_deposit_authorization", 'wotc_disclosure',
+            'non_compete_signed', 'hep_b_declination_signed', 'offer_letter_generated', 
+            "direct_deposit_authorization", 'wotc_disclosure', "reference_check", "job_description"
         ]
 
         const bucket = generatedPdfTypes.includes(doc.document_type)
@@ -255,6 +258,8 @@ export default function AdminCaregiverDetail() {
         "offer_letter_generated": "Generated Employee Offer Letter",
         "direct_deposit_authorization": 'Direct Deposit Authorization',
         "wotc_disclosure": 'WOTC Disclosure Form',
+        "reference_check": 'Reference Check',
+        "job_description": "Job Description Form"
     }
 
     const handleUpload = async (documentType, file) => {
@@ -1502,7 +1507,7 @@ export default function AdminCaregiverDetail() {
 
                     <div className="bg-white rounded-xl border border-border p-6">
                         <h2 className="font-semibold mb-4">Onboarding Link Management</h2>
-                        {caregiver.token ? (
+                        {caregiver.token && new Date(caregiver.link_expires_at) > new Date() ? (
                             <>
                                 <div className="flex items-start gap-3 flex-col">
                                     <button

@@ -105,6 +105,14 @@ const SignatureField = ({ formId, label = 'Type your full name to sign', signatu
     </div>
 
 )
+const FormContent = ({ children, color = '#F9F9F9' }) => (
+        <div
+            className="rounded-lg p-5 mb-4 text-sm leading-relaxed space-y-3 border border-border"
+            style={{ background: color }}
+        >
+            {children}
+        </div>
+    )
 
 const FormButton = ({ formId, disabled, completed, markComplete }) => (
     <Button
@@ -115,6 +123,68 @@ const FormButton = ({ formId, disabled, completed, markComplete }) => (
         {completed[formId] ? 'Signed ✓' : 'Sign & Continue'}
     </Button>
 )
+const ReferenceForm = ({ references, setReferences }) => {
+    console.log("reference form rerendered")
+    const updateRef = (index, field, value) => {
+        setReferences(prev => prev.map((r, i) => i === index ? { ...r, [field]: value } : r))
+    }
+
+    return (
+        <>
+            <div className="border border-border rounded-lg p-4 space-y-3 mt-3">
+                <p className="text-sm font-medium">Reference 1 <span className="text-red-500">*</span></p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                        <Label htmlFor="ref1_name">Full Name <span className="text-red-500">*</span></Label>
+                        <Input id="ref1_name" placeholder="Jane Smith" value={references[0].name} onChange={(e) => updateRef(0, 'name', e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                        <Label htmlFor="ref1_company">Company / Organization <span className="text-red-500">*</span></Label>
+                        <Input id="ref1_company" placeholder="ABC Home Care" value={references[0].company} onChange={(e) => updateRef(0, 'company', e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                        <Label htmlFor="ref1_relationship">Professional Relationship <span className="text-red-500">*</span></Label>
+                        <Input id="ref1_relationship" placeholder="Former Supervisor" value={references[0].relationship} onChange={(e) => updateRef(0, 'relationship', e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                        <Label htmlFor="ref1_phone">Phone Number <span className="text-red-500">*</span></Label>
+                        <Input id="ref1_phone" placeholder="(555) 000-0000" value={references[0].phone} onChange={(e) => updateRef(0, 'phone', e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5 md:col-span-2">
+                        <Label htmlFor="ref1_email">Email Address</Label>
+                        <Input id="ref1_email" placeholder="jane@example.com" value={references[0].email} onChange={(e) => updateRef(0, 'email', e.target.value)} />
+                    </div>
+                </div>
+            </div>
+
+            <div className="border border-dashed border-border rounded-lg p-4 space-y-3 mt-3">
+                <p className="text-sm font-medium text-muted-foreground">Reference 2 <span className="text-xs">(optional)</span></p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                        <Label htmlFor="ref2_name">Full Name</Label>
+                        <Input id="ref2_name" placeholder="John Doe" value={references[1].name} onChange={(e) => updateRef(1, 'name', e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                        <Label htmlFor="ref2_company">Company / Organization</Label>
+                        <Input id="ref2_company" placeholder="XYZ Care Services" value={references[1].company} onChange={(e) => updateRef(1, 'company', e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                        <Label htmlFor="ref2_relationship">Professional Relationship</Label>
+                        <Input id="ref2_relationship" placeholder="Former Colleague" value={references[1].relationship} onChange={(e) => updateRef(1, 'relationship', e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                        <Label htmlFor="ref2_phone">Phone Number</Label>
+                        <Input id="ref2_phone" placeholder="(555) 000-0000" value={references[1].phone} onChange={(e) => updateRef(1, 'phone', e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5 md:col-span-2">
+                        <Label htmlFor="ref2_email">Email Address</Label>
+                        <Input id="ref2_email" placeholder="john@example.com" value={references[1].email} onChange={(e) => updateRef(1, 'email', e.target.value)} />
+                    </div>
+                </div>
+            </div>
+        </>
+    )
+}
 
 export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, initialData, onChange, onHepBChange, setSaving }) {
     const [expanded, setExpanded] = useState({ form_0: true })
@@ -147,7 +217,15 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
     }
 
     const markComplete = async (formId) => {
+        if (formId === 'form_1') {
+            setSaving(true);
+            await supabase.functions.invoke('generate-job-description', {
+                body: { caregiverId: caregiver.id }
+            })
+            setSaving(false);
+        }
         if (formId === 'form_8') {
+            setSaving(true)
             await supabase.functions.invoke('generate-wotc', {
                 body: {
                     caregiverId: caregiver.id,
@@ -155,6 +233,18 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
                     signature: signatures['form_8']
                 }
             })
+            setSaving(false)
+        }
+        if (formId === 'form_9') {
+            setSaving(true)
+            await supabase.functions.invoke('generate-reference-pdf', {
+                body: {
+                    caregiverId: caregiver.id,
+                    references,
+                    signature: signatures['form_9'],
+                }
+            })
+            setSaving(false)
         }
         const updated = { ...completed, [formId]: true }
         setCompleted(updated)
@@ -166,14 +256,7 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
     const allCompleted = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].every(i => completed[`form_${i}`])
 
 
-    const FormContent = ({ children, color = '#F9F9F9' }) => (
-        <div
-            className="rounded-lg p-5 mb-4 text-sm leading-relaxed space-y-3 border border-border"
-            style={{ background: color }}
-        >
-            {children}
-        </div>
-    )
+    
     const handleDirectDepositComplete = async (formId) => {
         setSaving(true);
         const { error } = await supabase.functions.invoke('save-banking-info', {
@@ -637,7 +720,7 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
                     />
                     <FormButton
                         formId="form_8"
-                        disabled={completed}
+                        disabled={!signatures['form_8']?.trim() || completed['form_8']}
                         completed={completed}
                         markComplete={markComplete}
                     />
@@ -655,100 +738,8 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
                             Please provide at least one professional reference. References should be former supervisors, managers, or colleagues who can speak to your work experience and character.
                         </p>
 
-                        {/* Reference 1 - Required */}
-                        <div className="border border-border rounded-lg p-4 space-y-3 mt-3">
-                            <p className="text-sm font-medium">Reference 1 <span className="text-red-500">*</span></p>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <div className="space-y-1.5">
-                                    <Label>Full Name <span className="text-red-500">*</span></Label>
-                                    <Input
-                                        placeholder="Jane Smith"
-                                        value={references[0].name}
-                                        onChange={(e) => setReferences(prev => prev.map((r, i) => i === 0 ? { ...r, name: e.target.value } : r))}
-                                    />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label>Company / Organization <span className="text-red-500">*</span></Label>
-                                    <Input
-                                        placeholder="ABC Home Care"
-                                        value={references[0].company}
-                                        onChange={(e) => setReferences(prev => prev.map((r, i) => i === 0 ? { ...r, company: e.target.value } : r))}
-                                    />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label>Professional Relationship <span className="text-red-500">*</span></Label>
-                                    <Input
-                                        placeholder="Former Supervisor"
-                                        value={references[0].relationship}
-                                        onChange={(e) => setReferences(prev => prev.map((r, i) => i === 0 ? { ...r, relationship: e.target.value } : r))}
-                                    />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label>Phone Number <span className="text-red-500">*</span></Label>
-                                    <Input
-                                        placeholder="(555) 000-0000"
-                                        value={references[0].phone}
-                                        onChange={(e) => setReferences(prev => prev.map((r, i) => i === 0 ? { ...r, phone: e.target.value } : r))}
-                                    />
-                                </div>
-                                <div className="space-y-1.5 md:col-span-2">
-                                    <Label>Email Address</Label>
-                                    <Input
-                                        placeholder="jane@example.com"
-                                        value={references[0].email}
-                                        onChange={(e) => setReferences(prev => prev.map((r, i) => i === 0 ? { ...r, email: e.target.value } : r))}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Reference 2 - Optional */}
-                        <div className="border border-dashed border-border rounded-lg p-4 space-y-3 mt-3">
-                            <p className="text-sm font-medium text-muted-foreground">Reference 2 <span className="text-xs">(optional)</span></p>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <div className="space-y-1.5">
-                                    <Label>Full Name</Label>
-                                    <Input
-                                        placeholder="John Doe"
-                                        value={references[1].name}
-                                        onChange={(e) => setReferences(prev => prev.map((r, i) => i === 1 ? { ...r, name: e.target.value } : r))}
-                                    />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label>Company / Organization</Label>
-                                    <Input
-                                        placeholder="XYZ Care Services"
-                                        value={references[1].company}
-                                        onChange={(e) => setReferences(prev => prev.map((r, i) => i === 1 ? { ...r, company: e.target.value } : r))}
-                                    />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label>Professional Relationship</Label>
-                                    <Input
-                                        placeholder="Former Colleague"
-                                        value={references[1].relationship}
-                                        onChange={(e) => setReferences(prev => prev.map((r, i) => i === 1 ? { ...r, relationship: e.target.value } : r))}
-                                    />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <Label>Phone Number</Label>
-                                    <Input
-                                        placeholder="(555) 000-0000"
-                                        value={references[1].phone}
-                                        onChange={(e) => setReferences(prev => prev.map((r, i) => i === 1 ? { ...r, phone: e.target.value } : r))}
-                                    />
-                                </div>
-                                <div className="space-y-1.5 md:col-span-2">
-                                    <Label>Email Address</Label>
-                                    <Input
-                                        placeholder="john@example.com"
-                                        value={references[1].email}
-                                        onChange={(e) => setReferences(prev => prev.map((r, i) => i === 1 ? { ...r, email: e.target.value } : r))}
-                                    />
-                                </div>
-                            </div>
-                        </div>
                     </FormContent>
+                    <ReferenceForm references={references} setReferences={setReferences} />
 
                     <SignatureField
                         formId="form_9"
