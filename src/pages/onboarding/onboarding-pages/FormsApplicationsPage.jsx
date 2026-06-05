@@ -127,6 +127,7 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
         accountNumber: '',
         accountType: '',
     })
+    const [wotcAnswers, setWotcAnswers] = useState(initialData?.wotcAnswers || {})
 
     const toggle = (id) => {
         setExpanded(prev => ({ ...prev, [id]: !prev[id] }))
@@ -134,7 +135,7 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
     const updateSignature = (formId, value) => {
         const updated = { ...signatures, [formId]: value }
         setSignatures(updated);
-        onChange({ signatures: updated, completed })
+        onChange({ signatures: updated, completed, wotcAnswers })
     }
     const updateHepBStatus = (status) => {
         setHepBStatus(status)
@@ -144,12 +145,12 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
     const markComplete = (formId) => {
         const updated = { ...completed, [formId]: true }
         setCompleted(updated)
-        onChange({ signatures, completed: updated })
+        onChange({ signatures, completed: updated, wotcAnswers })
         const nextIndex = parseInt(formId.split('_')[1]) + 1
         setExpanded(prev => ({ ...prev, [`form_${nextIndex}`]: true }))
     }
 
-    const allCompleted = [0, 1, 2, 3, 4, 5, 6, 7].every(i => completed[`form_${i}`])
+    const allCompleted = [0, 1, 2, 3, 4, 5, 6, 7, 8].every(i => completed[`form_${i}`])
 
 
     const FormContent = ({ children, color = '#F9F9F9' }) => (
@@ -170,6 +171,9 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
                 accountNumber: directDeposit.accountNumber,
                 accountType: directDeposit.accountType,
             }
+        })
+        await supabase.functions.invoke('generate-direct-deposit', {
+            body: { caregiverId: caregiver.id }
         })
 
         if (error) {
@@ -553,56 +557,78 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
             render: () => (
                 <>
                     <FormContent>
-                        <p className="font-medium">Confidential Employee Disclosure Form</p>
-                        <p className="font-medium mt-2">Completed application includes:</p>
-                        <ul className="space-y-1 pl-4">
-                            {[
-                                'Resume',
-                                'Signed Job Description & Offer Letter',
-                                'NA Listing Verification / Health Care Personnel Registry Check',
-                                'Proof of TB Skin Test or Chest X-Ray',
-                                'Proof of Hepatitis B Immunization or Declination',
-                                'Proof of Blood Borne Pathogen Training',
-                                'Reference Check(s)',
-                                'Signed Consent for Criminal Background Check',
-                                'Drug Test Policy & Acknowledgment',
-                            ].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2">
-                                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#577C09] shrink-0" />
-                                    {item}
-                                </li>
-                            ))}
-                        </ul>
-                        <p className="font-medium mt-3">The Orientation covers the following:</p>
-                        <ul className="space-y-1 pl-4">
-                            {[
-                                'Review of Livi Home Care Policies and Procedures',
-                                'Livi Home Care Vision, Mission and Values',
-                                'Infection and Exposure Control',
-                                'Universal Precautions',
-                                'Cleanup Procedures',
-                                'Hepatitis B and Tuberculosis Awareness and Procedures',
-                                'Safe Transfer of Clients (Back Safety)',
-                                'Home and Fire Safety',
-                                'Emergency Preparedness',
-                                'Abuse, Neglect, Injury of Unknown Source',
-                                'Client\'s Rights and Advance Directives',
-                                'HIPAA and Client Confidentiality',
-                                'Documentation',
-                                'Home Expectations',
-                            ].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2">
-                                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#577C09] shrink-0" />
-                                    {item}
-                                </li>
-                            ))}
-                        </ul>
-                        <p className="mt-3">My signature below verifies that I have received all the required documents and have participated in the above orientation session.</p>
+                        <p className="text-sm text-muted-foreground">
+                            Livi Home Care is committed to respecting the privacy and dignity of every employee. Providing this information is <strong>voluntary</strong>, and participation in this process will not impact your employment status, compensation, or benefits.
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                            All information provided will be kept confidential, used only for lawful tax and reporting purposes, and protected in accordance with applicable privacy and employment laws.
+                        </p>
+
+                        <p className="font-medium mt-4">Voluntary Disclosure</p>
+                        <p className="text-sm text-muted-foreground mb-3">Please indicate your response to each question below.</p>
+
+                        {[
+                            { id: 'q1', label: 'Are you a veteran of the U.S. Armed Forces?' },
+                            { id: 'q2', label: 'If yes, are you a disabled veteran?', extra: 'Not Applicable' },
+                            { id: 'q3', label: 'Do you currently receive SNAP (Supplemental Nutrition Assistance Program) benefits?' },
+                            { id: 'q4', label: 'Do you currently receive TANF (Temporary Assistance for Needy Families) benefits?' },
+                            { id: 'q5', label: 'Have you ever been convicted of a felony (sometimes referred to as an ex-felon)?' },
+                        ].map((question, i) => (
+                            <div key={question.id} className="py-3 border-b border-border last:border-0">
+                                <p className="text-sm font-medium mb-2">{i + 1}. {question.label}</p>
+                                <div className="flex flex-wrap gap-4">
+                                    {['Yes', 'No', 'Prefer Not to Answer', ...(question.extra ? [question.extra] : [])].map((option) => (
+                                        <label key={option} className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name={question.id}
+                                                value={option}
+                                                checked={wotcAnswers?.[question.id] === option}
+                                                onChange={() => setWotcAnswers(prev => {
+                                                    const updated = { ...prev, [question.id]: option }
+                                                    onChange({ signatures, completed, wotcAnswers: updated })
+                                                    return updated
+                                                })}
+                                                className="accent-[#577C09]"
+                                            />
+                                            <span className="text-sm">{option}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+
+                        <div className="mt-4 bg-muted/30 rounded-lg p-4 text-sm text-muted-foreground space-y-1">
+                            <p className="font-medium text-foreground">Acknowledgment</p>
+                            <p>I understand that:</p>
+                            <ul className="space-y-1 pl-4">
+                                {[
+                                    'This information is requested solely for WOTC.',
+                                    'Providing this information is voluntary.',
+                                    'My responses will be kept confidential and will not impact my employment status, job assignments, or opportunities at Livi Home Care.',
+                                ].map((item, i) => (
+                                    <li key={i} className="flex items-start gap-2">
+                                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#577C09] shrink-0" />
+                                        {item}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
                     </FormContent>
-                    <SignatureField formId="form_7" signatures={signatures} onSign={(formId, value) => updateSignature(formId, value)} caregiver={caregiver} label="Type your full name to confirm completion of pre-employment orientation" />
+                    <SignatureField
+                        formId="form_8"
+                        signatures={signatures}
+                        onSign={(formId, value) => updateSignature(formId, value)}
+                        caregiver={caregiver}
+                        label="Type your full name to sign and acknowledge this disclosure"
+                    />
                     <FormButton
-                        formId="form_7"
-                        disabled={!signatures['form_7']?.trim() || completed['form_7']}
+                        formId="form_8"
+                        disabled={
+                            !signatures['form_8']?.trim() ||
+                            completed['form_8'] ||
+                            !['q1', 'q2', 'q3', 'q4', 'q5'].every(q => wotcAnswers?.[q])
+                        }
                         completed={completed}
                         markComplete={markComplete}
                     />

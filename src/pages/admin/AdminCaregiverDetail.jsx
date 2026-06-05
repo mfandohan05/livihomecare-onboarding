@@ -61,6 +61,8 @@ const docLabel = (type) => {
         orientation_checklist_signed: 'Orientation Checklist (Signed)',
         non_compete_signed: 'Non-Compete Agreement (Signed)',
         hep_b_declination_signed: 'Hep B Declination (Signed)',
+        offer_letter_generated: "Generated Offer Letter",
+        direct_deposit_authorization: 'Direct Deposit Authorization'
     }
     return labels[type] || type
 }
@@ -153,19 +155,6 @@ export default function AdminCaregiverDetail() {
     useEffect(() => {
         fetchAll()
     }, [id])
-    // useEffect(() => {
-    //     if (!caregiver?.id) {
-    //         return
-    //     }
-    //     const getQuizProgress = async () => {
-    //         const {data, error} = await supabase.from('caregiver_progress').select('quiz_scores').eq('caregiver_id', caregiver.id).maybeSingle();
-    //         if (!error & data.quiz_scores) {
-    //             setQuizProgress(data.quiz_scores)
-    //         }
-    //     };
-    //     getQuizProgress();
-    //     console.log(quizProgress)
-    // }, [caregiver?.id])
 
 
     const fetchAll = async () => {
@@ -227,7 +216,7 @@ export default function AdminCaregiverDetail() {
             'i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed',
             'drug_test_policy_signed', 'criminal_background_check_signed',
             'new_hire_notification_signed', 'orientation_checklist_signed',
-            'non_compete_signed', 'hep_b_declination_signed'
+            'non_compete_signed', 'hep_b_declination_signed', 'offer_letter_generated', "direct_deposit_authorization",
         ]
 
         const bucket = generatedPdfTypes.includes(doc.document_type)
@@ -261,7 +250,9 @@ export default function AdminCaregiverDetail() {
         "drug_test_policy_signed": "Drug Test Policy (Signed)",
         "offer_letter_other": "Offer Letter",
         "nc4ez_completed": "NC-4EZ",
-        "certifications": "Certifications"
+        "certifications": "Certifications",
+        "offer_letter_generated": "Generated Employee Offer Letter",
+        "direct_deposit_authorization": 'Direct Deposit Authorization'
     }
 
     const handleUpload = async (documentType, file) => {
