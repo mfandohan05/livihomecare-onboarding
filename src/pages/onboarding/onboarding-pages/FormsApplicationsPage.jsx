@@ -128,6 +128,10 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
         accountType: '',
     })
     const [wotcAnswers, setWotcAnswers] = useState(initialData?.wotcAnswers || {})
+    const [references, setReferences] = useState(initialData?.references || [
+        { name: '', company: '', relationship: '', phone: '', email: '' },
+        { name: '', company: '', relationship: '', phone: '', email: '' },
+    ])
 
     const toggle = (id) => {
         setExpanded(prev => ({ ...prev, [id]: !prev[id] }))
@@ -135,22 +139,31 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
     const updateSignature = (formId, value) => {
         const updated = { ...signatures, [formId]: value }
         setSignatures(updated);
-        onChange({ signatures: updated, completed, wotcAnswers })
+        onChange({ signatures: updated, completed, wotcAnswers, references })
     }
     const updateHepBStatus = (status) => {
         setHepBStatus(status)
         onHepBChange(status)
     }
 
-    const markComplete = (formId) => {
+    const markComplete = async (formId) => {
+        if (formId === 'form_8') {
+            await supabase.functions.invoke('generate-wotc', {
+                body: {
+                    caregiverId: caregiver.id,
+                    wotcAnswers,
+                    signature: signatures['form_8']
+                }
+            })
+        }
         const updated = { ...completed, [formId]: true }
         setCompleted(updated)
-        onChange({ signatures, completed: updated, wotcAnswers })
+        onChange({ signatures, completed: updated, wotcAnswers, references })
         const nextIndex = parseInt(formId.split('_')[1]) + 1
         setExpanded(prev => ({ ...prev, [`form_${nextIndex}`]: true }))
     }
 
-    const allCompleted = [0, 1, 2, 3, 4, 5, 6, 7, 8].every(i => completed[`form_${i}`])
+    const allCompleted = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].every(i => completed[`form_${i}`])
 
 
     const FormContent = ({ children, color = '#F9F9F9' }) => (
@@ -624,10 +637,135 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
                     />
                     <FormButton
                         formId="form_8"
+                        disabled={completed}
+                        completed={completed}
+                        markComplete={markComplete}
+                    />
+                </>
+            )
+        },
+        {
+            id: 'form_9',
+            title: 'Reference Check',
+            render: () => (
+                <>
+                    <FormContent>
+                        <p className="font-medium">Professional References</p>
+                        <p className="text-sm text-muted-foreground">
+                            Please provide at least one professional reference. References should be former supervisors, managers, or colleagues who can speak to your work experience and character.
+                        </p>
+
+                        {/* Reference 1 - Required */}
+                        <div className="border border-border rounded-lg p-4 space-y-3 mt-3">
+                            <p className="text-sm font-medium">Reference 1 <span className="text-red-500">*</span></p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div className="space-y-1.5">
+                                    <Label>Full Name <span className="text-red-500">*</span></Label>
+                                    <Input
+                                        placeholder="Jane Smith"
+                                        value={references[0].name}
+                                        onChange={(e) => setReferences(prev => prev.map((r, i) => i === 0 ? { ...r, name: e.target.value } : r))}
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label>Company / Organization <span className="text-red-500">*</span></Label>
+                                    <Input
+                                        placeholder="ABC Home Care"
+                                        value={references[0].company}
+                                        onChange={(e) => setReferences(prev => prev.map((r, i) => i === 0 ? { ...r, company: e.target.value } : r))}
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label>Professional Relationship <span className="text-red-500">*</span></Label>
+                                    <Input
+                                        placeholder="Former Supervisor"
+                                        value={references[0].relationship}
+                                        onChange={(e) => setReferences(prev => prev.map((r, i) => i === 0 ? { ...r, relationship: e.target.value } : r))}
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label>Phone Number <span className="text-red-500">*</span></Label>
+                                    <Input
+                                        placeholder="(555) 000-0000"
+                                        value={references[0].phone}
+                                        onChange={(e) => setReferences(prev => prev.map((r, i) => i === 0 ? { ...r, phone: e.target.value } : r))}
+                                    />
+                                </div>
+                                <div className="space-y-1.5 md:col-span-2">
+                                    <Label>Email Address</Label>
+                                    <Input
+                                        placeholder="jane@example.com"
+                                        value={references[0].email}
+                                        onChange={(e) => setReferences(prev => prev.map((r, i) => i === 0 ? { ...r, email: e.target.value } : r))}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Reference 2 - Optional */}
+                        <div className="border border-dashed border-border rounded-lg p-4 space-y-3 mt-3">
+                            <p className="text-sm font-medium text-muted-foreground">Reference 2 <span className="text-xs">(optional)</span></p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div className="space-y-1.5">
+                                    <Label>Full Name</Label>
+                                    <Input
+                                        placeholder="John Doe"
+                                        value={references[1].name}
+                                        onChange={(e) => setReferences(prev => prev.map((r, i) => i === 1 ? { ...r, name: e.target.value } : r))}
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label>Company / Organization</Label>
+                                    <Input
+                                        placeholder="XYZ Care Services"
+                                        value={references[1].company}
+                                        onChange={(e) => setReferences(prev => prev.map((r, i) => i === 1 ? { ...r, company: e.target.value } : r))}
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label>Professional Relationship</Label>
+                                    <Input
+                                        placeholder="Former Colleague"
+                                        value={references[1].relationship}
+                                        onChange={(e) => setReferences(prev => prev.map((r, i) => i === 1 ? { ...r, relationship: e.target.value } : r))}
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label>Phone Number</Label>
+                                    <Input
+                                        placeholder="(555) 000-0000"
+                                        value={references[1].phone}
+                                        onChange={(e) => setReferences(prev => prev.map((r, i) => i === 1 ? { ...r, phone: e.target.value } : r))}
+                                    />
+                                </div>
+                                <div className="space-y-1.5 md:col-span-2">
+                                    <Label>Email Address</Label>
+                                    <Input
+                                        placeholder="john@example.com"
+                                        value={references[1].email}
+                                        onChange={(e) => setReferences(prev => prev.map((r, i) => i === 1 ? { ...r, email: e.target.value } : r))}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </FormContent>
+
+                    <SignatureField
+                        formId="form_9"
+                        signatures={signatures}
+                        onSign={(formId, value) => updateSignature(formId, value)}
+                        caregiver={caregiver}
+                        label="Type your full name to confirm these references are accurate"
+                    />
+                    <FormButton
+                        formId="form_9"
                         disabled={
-                            !signatures['form_8']?.trim() ||
-                            completed['form_8'] ||
-                            !['q1', 'q2', 'q3', 'q4', 'q5'].every(q => wotcAnswers?.[q])
+                            !signatures['form_9']?.trim() ||
+                            completed['form_9'] ||
+                            !references[0].name.trim() ||
+                            !references[0].company.trim() ||
+                            !references[0].relationship.trim() ||
+                            !references[0].phone.trim()
                         }
                         completed={completed}
                         markComplete={markComplete}
