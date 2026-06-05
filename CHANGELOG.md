@@ -1,8 +1,9 @@
 # Changelog
 
-## 1.2.0 - 2026-06-01
+## 1.2.0 - 2026-06-05
 - Added new documents to Forms & Agreements page
-- Added new documents to Tax Forms Page
+- Added support for uploading Bloodborne Pathogens Certificate on admin side
+- Fixed handling of sensitive information display
 
 ## 1.1.1 - 2026-05-30
 
