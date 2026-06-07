@@ -1,6 +1,14 @@
 # Changelog
 
+## 1.2.0 - 2026-06-05
+- Added new documents to Forms & Agreements page
+- Added support for viewing offer letter/direct deposit authorization form
+- Added new quiz progress tracker
+- Added support for uploading Bloodborne Pathogens Certificate on admin side
+- Fixed handling of sensitive information display
+
 ## 1.1.1 - 2026-05-30
+
 - Fixed bug where audit logs show timestamps in incorrect time zone
 
 ## 1.1.0 - 2026-05-29

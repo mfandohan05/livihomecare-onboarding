@@ -105,6 +105,14 @@ const SignatureField = ({ formId, label = 'Type your full name to sign', signatu
     </div>
 
 )
+const FormContent = ({ children, color = '#F9F9F9' }) => (
+        <div
+            className="rounded-lg p-5 mb-4 text-sm leading-relaxed space-y-3 border border-border"
+            style={{ background: color }}
+        >
+            {children}
+        </div>
+    )
 
 const FormButton = ({ formId, disabled, completed, markComplete }) => (
     <Button
@@ -115,6 +123,68 @@ const FormButton = ({ formId, disabled, completed, markComplete }) => (
         {completed[formId] ? 'Signed ✓' : 'Sign & Continue'}
     </Button>
 )
+const ReferenceForm = ({ references, setReferences }) => {
+    console.log("reference form rerendered")
+    const updateRef = (index, field, value) => {
+        setReferences(prev => prev.map((r, i) => i === index ? { ...r, [field]: value } : r))
+    }
+
+    return (
+        <>
+            <div className="border border-border rounded-lg p-4 space-y-3 mt-3">
+                <p className="text-sm font-medium">Reference 1 <span className="text-red-500">*</span></p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                        <Label htmlFor="ref1_name">Full Name <span className="text-red-500">*</span></Label>
+                        <Input id="ref1_name" placeholder="Jane Smith" value={references[0].name} onChange={(e) => updateRef(0, 'name', e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                        <Label htmlFor="ref1_company">Company / Organization <span className="text-red-500">*</span></Label>
+                        <Input id="ref1_company" placeholder="ABC Home Care" value={references[0].company} onChange={(e) => updateRef(0, 'company', e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                        <Label htmlFor="ref1_relationship">Professional Relationship <span className="text-red-500">*</span></Label>
+                        <Input id="ref1_relationship" placeholder="Former Supervisor" value={references[0].relationship} onChange={(e) => updateRef(0, 'relationship', e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                        <Label htmlFor="ref1_phone">Phone Number <span className="text-red-500">*</span></Label>
+                        <Input id="ref1_phone" placeholder="(555) 000-0000" value={references[0].phone} onChange={(e) => updateRef(0, 'phone', e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5 md:col-span-2">
+                        <Label htmlFor="ref1_email">Email Address</Label>
+                        <Input id="ref1_email" placeholder="jane@example.com" value={references[0].email} onChange={(e) => updateRef(0, 'email', e.target.value)} />
+                    </div>
+                </div>
+            </div>
+
+            <div className="border border-dashed border-border rounded-lg p-4 space-y-3 mt-3">
+                <p className="text-sm font-medium text-muted-foreground">Reference 2 <span className="text-xs">(optional)</span></p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                        <Label htmlFor="ref2_name">Full Name</Label>
+                        <Input id="ref2_name" placeholder="John Doe" value={references[1].name} onChange={(e) => updateRef(1, 'name', e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                        <Label htmlFor="ref2_company">Company / Organization</Label>
+                        <Input id="ref2_company" placeholder="XYZ Care Services" value={references[1].company} onChange={(e) => updateRef(1, 'company', e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                        <Label htmlFor="ref2_relationship">Professional Relationship</Label>
+                        <Input id="ref2_relationship" placeholder="Former Colleague" value={references[1].relationship} onChange={(e) => updateRef(1, 'relationship', e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                        <Label htmlFor="ref2_phone">Phone Number</Label>
+                        <Input id="ref2_phone" placeholder="(555) 000-0000" value={references[1].phone} onChange={(e) => updateRef(1, 'phone', e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5 md:col-span-2">
+                        <Label htmlFor="ref2_email">Email Address</Label>
+                        <Input id="ref2_email" placeholder="john@example.com" value={references[1].email} onChange={(e) => updateRef(1, 'email', e.target.value)} />
+                    </div>
+                </div>
+            </div>
+        </>
+    )
+}
 
 export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, initialData, onChange, onHepBChange, setSaving }) {
     const [expanded, setExpanded] = useState({ form_0: true })
@@ -127,6 +197,11 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
         accountNumber: '',
         accountType: '',
     })
+    const [wotcAnswers, setWotcAnswers] = useState(initialData?.wotcAnswers || {})
+    const [references, setReferences] = useState(initialData?.references || [
+        { name: '', company: '', relationship: '', phone: '', email: '' },
+        { name: '', company: '', relationship: '', phone: '', email: '' },
+    ])
 
     const toggle = (id) => {
         setExpanded(prev => ({ ...prev, [id]: !prev[id] }))
@@ -134,32 +209,54 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
     const updateSignature = (formId, value) => {
         const updated = { ...signatures, [formId]: value }
         setSignatures(updated);
-        onChange({ signatures: updated, completed })
+        onChange({ signatures: updated, completed, wotcAnswers, references })
     }
     const updateHepBStatus = (status) => {
         setHepBStatus(status)
         onHepBChange(status)
     }
 
-    const markComplete = (formId) => {
+    const markComplete = async (formId) => {
+        if (formId === 'form_1') {
+            setSaving(true);
+            await supabase.functions.invoke('generate-job-description', {
+                body: { caregiverId: caregiver.id }
+            })
+            setSaving(false);
+        }
+        if (formId === 'form_8') {
+            setSaving(true)
+            await supabase.functions.invoke('generate-wotc', {
+                body: {
+                    caregiverId: caregiver.id,
+                    wotcAnswers,
+                    signature: signatures['form_8']
+                }
+            })
+            setSaving(false)
+        }
+        if (formId === 'form_9') {
+            setSaving(true)
+            await supabase.functions.invoke('generate-reference-pdf', {
+                body: {
+                    caregiverId: caregiver.id,
+                    references,
+                    signature: signatures['form_9'],
+                }
+            })
+            setSaving(false)
+        }
         const updated = { ...completed, [formId]: true }
         setCompleted(updated)
-        onChange({ signatures, completed: updated })
+        onChange({ signatures, completed: updated, wotcAnswers, references })
         const nextIndex = parseInt(formId.split('_')[1]) + 1
         setExpanded(prev => ({ ...prev, [`form_${nextIndex}`]: true }))
     }
 
-    const allCompleted = [0, 1, 2, 3, 4, 5, 6, 7].every(i => completed[`form_${i}`])
+    const allCompleted = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].every(i => completed[`form_${i}`])
 
 
-    const FormContent = ({ children, color = '#F9F9F9' }) => (
-        <div
-            className="rounded-lg p-5 mb-4 text-sm leading-relaxed space-y-3 border border-border"
-            style={{ background: color }}
-        >
-            {children}
-        </div>
-    )
+    
     const handleDirectDepositComplete = async (formId) => {
         setSaving(true);
         const { error } = await supabase.functions.invoke('save-banking-info', {
@@ -170,6 +267,9 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
                 accountNumber: directDeposit.accountNumber,
                 accountType: directDeposit.accountType,
             }
+        })
+        await supabase.functions.invoke('generate-direct-deposit', {
+            body: { caregiverId: caregiver.id }
         })
 
         if (error) {
@@ -541,6 +641,123 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
                     <FormButton
                         formId="form_7"
                         disabled={!signatures['form_7']?.trim() || completed['form_7']}
+                        completed={completed}
+                        markComplete={markComplete}
+                    />
+                </>
+            )
+        },
+        {
+            id: 'form_8',
+            title: 'Confidential Employee Disclosure Form',
+            render: () => (
+                <>
+                    <FormContent>
+                        <p className="text-sm text-muted-foreground">
+                            Livi Home Care is committed to respecting the privacy and dignity of every employee. Providing this information is <strong>voluntary</strong>, and participation in this process will not impact your employment status, compensation, or benefits.
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                            All information provided will be kept confidential, used only for lawful tax and reporting purposes, and protected in accordance with applicable privacy and employment laws.
+                        </p>
+
+                        <p className="font-medium mt-4">Voluntary Disclosure</p>
+                        <p className="text-sm text-muted-foreground mb-3">Please indicate your response to each question below.</p>
+
+                        {[
+                            { id: 'q1', label: 'Are you a veteran of the U.S. Armed Forces?' },
+                            { id: 'q2', label: 'If yes, are you a disabled veteran?', extra: 'Not Applicable' },
+                            { id: 'q3', label: 'Do you currently receive SNAP (Supplemental Nutrition Assistance Program) benefits?' },
+                            { id: 'q4', label: 'Do you currently receive TANF (Temporary Assistance for Needy Families) benefits?' },
+                            { id: 'q5', label: 'Have you ever been convicted of a felony (sometimes referred to as an ex-felon)?' },
+                        ].map((question, i) => (
+                            <div key={question.id} className="py-3 border-b border-border last:border-0">
+                                <p className="text-sm font-medium mb-2">{i + 1}. {question.label}</p>
+                                <div className="flex flex-wrap gap-4">
+                                    {['Yes', 'No', 'Prefer Not to Answer', ...(question.extra ? [question.extra] : [])].map((option) => (
+                                        <label key={option} className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name={question.id}
+                                                value={option}
+                                                checked={wotcAnswers?.[question.id] === option}
+                                                onChange={() => setWotcAnswers(prev => {
+                                                    const updated = { ...prev, [question.id]: option }
+                                                    onChange({ signatures, completed, wotcAnswers: updated })
+                                                    return updated
+                                                })}
+                                                className="accent-[#577C09]"
+                                            />
+                                            <span className="text-sm">{option}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+
+                        <div className="mt-4 bg-muted/30 rounded-lg p-4 text-sm text-muted-foreground space-y-1">
+                            <p className="font-medium text-foreground">Acknowledgment</p>
+                            <p>I understand that:</p>
+                            <ul className="space-y-1 pl-4">
+                                {[
+                                    'This information is requested solely for WOTC.',
+                                    'Providing this information is voluntary.',
+                                    'My responses will be kept confidential and will not impact my employment status, job assignments, or opportunities at Livi Home Care.',
+                                ].map((item, i) => (
+                                    <li key={i} className="flex items-start gap-2">
+                                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#577C09] shrink-0" />
+                                        {item}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    </FormContent>
+                    <SignatureField
+                        formId="form_8"
+                        signatures={signatures}
+                        onSign={(formId, value) => updateSignature(formId, value)}
+                        caregiver={caregiver}
+                        label="Type your full name to sign and acknowledge this disclosure"
+                    />
+                    <FormButton
+                        formId="form_8"
+                        disabled={!signatures['form_8']?.trim() || completed['form_8']}
+                        completed={completed}
+                        markComplete={markComplete}
+                    />
+                </>
+            )
+        },
+        {
+            id: 'form_9',
+            title: 'Reference Check',
+            render: () => (
+                <>
+                    <FormContent>
+                        <p className="font-medium">Professional References</p>
+                        <p className="text-sm text-muted-foreground">
+                            Please provide at least one professional reference. References should be former supervisors, managers, or colleagues who can speak to your work experience and character.
+                        </p>
+
+                    </FormContent>
+                    <ReferenceForm references={references} setReferences={setReferences} />
+
+                    <SignatureField
+                        formId="form_9"
+                        signatures={signatures}
+                        onSign={(formId, value) => updateSignature(formId, value)}
+                        caregiver={caregiver}
+                        label="Type your full name to confirm these references are accurate"
+                    />
+                    <FormButton
+                        formId="form_9"
+                        disabled={
+                            !signatures['form_9']?.trim() ||
+                            completed['form_9'] ||
+                            !references[0].name.trim() ||
+                            !references[0].company.trim() ||
+                            !references[0].relationship.trim() ||
+                            !references[0].phone.trim()
+                        }
                         completed={completed}
                         markComplete={markComplete}
                     />

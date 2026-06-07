@@ -7,7 +7,6 @@ import SidebarComponent from '@/components/global/SidebarComponent'
 import WelcomePage from '@/pages/onboarding/onboarding-pages/WelcomePage'
 import UploadDocumentsPage from '@/pages/onboarding/onboarding-pages/UploadDocumentsPage'
 import PersonalInformationPage from './onboarding-pages/PersonalInformationPage'
-import ERSPApplicationPage from './onboarding-pages/ERSPApplicationPage'
 import NewHireOrientationPage from './onboarding-pages/NewHireOrientationPage'
 import SkillsCompetencyPage from './onboarding-pages/SkillsCompetencyPage'
 import ERSPGuidePage from './onboarding-pages/ERSPGuidePage'
@@ -273,13 +272,23 @@ export default function OnboardingPortal() {
         setFormData(prev => ({ ...prev, [key]: data }))
     }
 
+    const handleOfferLetter = async () => {
+        await supabase.functions.invoke('generate-offer-letter', {
+            body: { caregiverId: caregiver.id}
+        })  
+    }
     const handleNext = async () => {
         setSaving(true);
+        
         const updatedSteps = steps.map(step => {
-            if (step.id === activeStep) return { ...step, status: 'completed' }
+            if (step.id === activeStep) {
+                handleOfferLetter();
+                return { ...step, status: 'completed' }
+            }
             if (step.id === activeStep + 1) return { ...step, status: 'active' }
             return step
         })
+
 
         const completedStepIds = updatedSteps
             .filter(s => s.status === 'completed')
@@ -312,7 +321,7 @@ export default function OnboardingPortal() {
             case 'Personal Information':
                 return <PersonalInformationPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.personalInfo} onChange={(data) => updateFormData('personalInfo', data)} isPreview={isPreview} />
             case 'New Hire Orientation':
-                return <NewHireOrientationPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.orientationQuiz} onChange={async (data) => {
+                return <NewHireOrientationPage caregiverId={caregiver.id} stepLabel={stepLabel} onNext={handleNext} initialData={formData.orientationQuiz} onChange={async (data) => {
                     updateFormData('orientationQuiz', data)
                     await saveProgress(caregiver.id, activeStep, steps.filter(s => s.status === 'completed').map(s => s.id), { ...formData, orientationQuiz: data })
                 }} />
