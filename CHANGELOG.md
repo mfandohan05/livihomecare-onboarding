@@ -2,6 +2,8 @@
 
 ## 1.2.1 - 2026-06-05
 - Removed part about onboarding time being recorded on welcome screen
+- Fixed bug where onboarding time counter would not update after progress has been reset
+
 
 ## 1.2.0 - 2026-06-04
 - Added new documents to Forms & Agreements page
