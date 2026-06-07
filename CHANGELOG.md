@@ -1,6 +1,9 @@
 # Changelog
 
-## 1.2.0 - 2026-06-05
+## 1.2.1 - 2026-06-05
+- Removed part about onboarding time being recorded on welcome screen
+
+## 1.2.0 - 2026-06-04
 - Added new documents to Forms & Agreements page
 - Added support for viewing offer letter/direct deposit authorization form
 - Added new quiz progress tracker
