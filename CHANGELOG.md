@@ -2,6 +2,8 @@
 
 ## 1.2.0 - 2026-06-05
 - Added new documents to Forms & Agreements page
+- Added support for viewing offer letter/direct deposit authorization form
+- Added new quiz progress tracker
 - Added support for uploading Bloodborne Pathogens Certificate on admin side
 - Fixed handling of sensitive information display
 
