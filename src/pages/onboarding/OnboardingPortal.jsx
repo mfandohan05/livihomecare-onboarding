@@ -182,6 +182,7 @@ export default function OnboardingPortal() {
                 step.id === lastStep.id ? { ...step, status: 'completed' } : step
             ))
             updateCaregiverStatus(caregiver.id, 'completed')
+            handleOfferLetter();
 
             const saveLog = async () => {
                 const { data } = await supabase
@@ -307,7 +308,9 @@ export default function OnboardingPortal() {
 
         const updatedSteps = steps.map(step => {
             if (step.id === activeStep) {
-                handleOfferLetter();
+                // if (caregiver.status === 'completed') {
+                //     handleOfferLetter();
+                // }
                 return { ...step, status: 'completed' }
             }
             if (step.id === activeStep + 1) return { ...step, status: 'active' }
