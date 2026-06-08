@@ -114,8 +114,6 @@ export default function OnboardingPortal() {
         fetchCaregiver()
     }, [token])
 
-
-    // update status to in_progress
     useEffect(() => {
         if (!caregiver) {
             return
