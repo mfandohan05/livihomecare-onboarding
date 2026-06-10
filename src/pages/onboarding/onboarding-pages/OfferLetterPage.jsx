@@ -12,6 +12,16 @@ const today = new Date().toLocaleDateString('en-US', {
   timeZone: 'America/New_York'
 })
 
+const getFormattedDate = (caregiver) => {
+  const date = new Date(caregiver.start_date);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'UTC'
+  })
+}
+
 function CaregiverOfferLetter({ caregiver }) {
   return (
     <div className="space-y-5 text-sm leading-relaxed">
@@ -141,6 +151,7 @@ function CaregiverOfferLetter({ caregiver }) {
 }
 
 function NurseContractorAgreement({ caregiver }) {
+  const startDate = getFormattedDate(caregiver);
   return (
     <div className="space-y-5 text-sm leading-relaxed">
       <p className="text-lg font-semibold">Independent Contractor Employment Agreement</p>
@@ -155,7 +166,7 @@ function NurseContractorAgreement({ caregiver }) {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <p className="font-medium">Start Date:</p>
-          <p className="text-muted-foreground">{caregiver.start_date || '________________'}</p>
+          <p className="text-muted-foreground">{startDate || '________________'}</p>
         </div>
         <div>
           <p className="font-medium">Pay Rate:</p>
@@ -285,6 +296,7 @@ function NurseContractorAgreement({ caregiver }) {
 }
 
 function NurseDirectorAgreement({ caregiver }) {
+  const startDate = getFormattedDate(caregiver);
   return (
     <div className="space-y-5 text-sm leading-relaxed">
       <p className="text-lg font-semibold">Agency Director Agreement</p>
@@ -299,8 +311,8 @@ function NurseDirectorAgreement({ caregiver }) {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <p className="font-medium">Start Date:</p>
-          <p className="text-muted-foreground">{caregiver.start_date || '________________'}</p>
-          <p className='text-muted-foreground'>Effective from {caregiver.start_date || '___________________'} until either party terminates this Agreement in accordance
+          <p className="text-muted-foreground">{startDate || '________________'}</p>
+          <p className='text-muted-foreground'>Effective from {startDate || '___________________'} until either party terminates this Agreement in accordance
             with the terms outlined herein.
           </p>
         </div>

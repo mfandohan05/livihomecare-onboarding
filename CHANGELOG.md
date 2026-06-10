@@ -1,8 +1,8 @@
 # Changelog
 
-## 1.2.1 - 2026-06-05
+## 1.2.1 - 2026-06-10
 - Removed part about onboarding time being recorded on welcome screen
-- Fixed bug where onboarding time counter would not update after progress has been reset
+- Fixed bug where start date on detail screen appeared to be a day behind
 
 
 ## 1.2.0 - 2026-06-04
