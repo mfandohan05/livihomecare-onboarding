@@ -1068,7 +1068,7 @@ export default function AdminCaregiverDetail() {
                                 <p className="text-muted-foreground">Start Date</p>
                                 <p className="font-medium">
                                     {caregiver.start_date
-                                        ? new Date(caregiver.start_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+                                        ? new Date(caregiver.start_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
                                         : '—'}
                                 </p>
                             </div>
