@@ -39,6 +39,7 @@ Deno.serve(async (req) => {
       : null
 
     const adminLink = `https://app.livihomecare.com/admin/employees/${caregiverId}`
+    const adminEmails = Deno
 
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',

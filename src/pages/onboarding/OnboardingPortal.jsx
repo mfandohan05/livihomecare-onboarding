@@ -81,20 +81,6 @@ export default function OnboardingPortal() {
             if (data) {
                 const roleSteps = stepsByRole[data.role]
 
-                if (data.status === 'in_progress') {
-                    const { data: existingLog } = await supabase
-                        .from('caregiver_time_logs')
-                        .select('id')
-                        .eq('caregiver_id', data.id)
-                        .eq('completed', true)
-                        .maybeSingle()
-
-                    if (existingLog) {
-                        localStorage.removeItem(`livi_session_start_${token}`)
-                        localStorage.setItem(`livi_session_start_${token}`, new Date().toISOString())
-                    }
-                }
-
                 if (data.status === 'completed') {
                     setSteps(roleSteps.map(step => ({ ...step, status: 'completed' })))
                     setActiveStep(roleSteps[roleSteps.length - 1].id)
@@ -187,15 +173,13 @@ export default function OnboardingPortal() {
             const saveLog = async () => {
                 const { data } = await supabase
                     .from('caregiver_time_logs')
-                    .select('id, active_seconds')
+                    .select('id')
                     .eq('caregiver_id', caregiver.id)
                     .eq('completed', true)
                     .maybeSingle();
 
                 await saveCoordinates(caregiver.id, formData.personalInfo)
 
-                const actualStart = localStorage.getItem(`livi_session_start_${token}`);
-                const currentSeconds = getHoursWorked() * 3600;
 
                 if (!data) {
                     saveTimeLog(caregiver.id, getHoursWorked(), actualStart);
@@ -203,16 +187,6 @@ export default function OnboardingPortal() {
                     supabase.functions.invoke('send-completion-email', {
                         body: { caregiverId: caregiver.id }
                     })
-                }
-                else {
-                    const totalSeconds = data.active_seconds + currentSeconds;
-                    await supabase.from('caregiver_time_logs')
-                        .update({
-                            active_seconds: totalSeconds,
-                            session_end: new Date().toISOString(),
-                            completed: true
-                        })
-                        .eq('caregiver_id', caregiver.id)
                 }
             }
 

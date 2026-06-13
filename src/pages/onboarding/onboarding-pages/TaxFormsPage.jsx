@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { FileText, ChevronLeft, ChevronRight, CheckCircle, Upload, Download, AlertCircle, AlertTriangle } from 'lucide-react'
+import { FileText, ChevronLeft, ChevronRight, CheckCircle, AlertCircle, AlertTriangle } from 'lucide-react'
 import { saveTaxFormData } from '@/lib/caregiver'
 import { supabase } from '@/lib/supabase'
 import { formatPhone, formatDOB } from '@/lib/formUtils'
@@ -778,7 +778,8 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver, setSa
                     caregiverId: caregiver.id,
                     w4Data: {
                         ...w4Data,
-                        ssn: w4Data.ssn?.replace(/-/g, '') || ''
+                        ssn: w4Data.ssn?.replace(/-/g, '') || '',
+                        employerEIN: "0987654321"
                     }
                 }
             })
