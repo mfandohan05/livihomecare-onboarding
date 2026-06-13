@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         from: 'Ready, Set, Onboard! <onboarding@livihomecare.com>',
-        to: Deno.env.get('ADMIN_NOTIFICATION_EMAIL'),
+        to: ['office@livihomecare.com', 'e.fandohan@livihomecare.com'],
         subject: `✅ ${caregiver.name} has completed onboarding`,
         html: `
           <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
