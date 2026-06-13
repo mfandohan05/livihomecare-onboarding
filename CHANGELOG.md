@@ -1,11 +1,19 @@
 # Changelog
 
+## 1.2.2 - 2026-06-13
+
+- Fixed bug causing the offer letter for caregivers/nurses to be generated too early
+- Fixed bug with active time counter not incrementing when progress was reset
+
+
 ## 1.2.1 - 2026-06-10
+
 - Removed part about onboarding time being recorded on welcome screen
 - Fixed bug where start date on detail screen appeared to be a day behind
 
 
 ## 1.2.0 - 2026-06-04
+
 - Added new documents to Forms & Agreements page
 - Added support for viewing offer letter/direct deposit authorization form
 - Added new quiz progress tracker

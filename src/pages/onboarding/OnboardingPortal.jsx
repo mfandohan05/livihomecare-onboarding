@@ -135,6 +135,23 @@ export default function OnboardingPortal() {
         if (!localStorage.getItem(key)) {
             localStorage.setItem(key, new Date().toISOString())
         }
+        
+        const restoreTimeFromDB = async () => {
+            const sessionStart = localStorage.getItem(key);
+            const { data: existingLog } = await supabase
+                .from('caregiver_time_logs')
+                .select('active_seconds')
+                .eq('caregiver_id', caregiver.id)
+                .eq('session_start', sessionStart)
+                .maybeSingle();
+            
+            if (existingLog && existingLog.active_seconds) {
+                const milliseconds = existingLog.active_seconds * 1000;
+                localStorage.setItem(`livi_time_${token}`, milliseconds);
+            }
+        }
+        
+        restoreTimeFromDB();
     }, [caregiver?.id])
 
     const isNurse = caregiver?.role === 'nurse_prn' || caregiver?.role === "nurse_director";
@@ -168,25 +185,33 @@ export default function OnboardingPortal() {
                 step.id === lastStep.id ? { ...step, status: 'completed' } : step
             ))
             updateCaregiverStatus(caregiver.id, 'completed')
-            handleOfferLetter();
 
             const saveLog = async () => {
-                const { data } = await supabase
+                const sessionStart = localStorage.getItem(`livi_session_start_${token}`);
+                const currentHours = getHoursWorked();
+                const totalSeconds = Math.round(currentHours * 3600);
+                
+                const { data: existingLog } = await supabase
                     .from('caregiver_time_logs')
                     .select('id')
                     .eq('caregiver_id', caregiver.id)
-                    .eq('completed', true)
+                    .eq('session_start', sessionStart)
                     .maybeSingle();
 
                 await saveCoordinates(caregiver.id, formData.personalInfo)
 
-
-                if (!data) {
-                    saveTimeLog(caregiver.id, getHoursWorked(), actualStart);
-
-                    supabase.functions.invoke('send-completion-email', {
-                        body: { caregiverId: caregiver.id }
-                    })
+                if (existingLog) {
+                    await supabase
+                        .from('caregiver_time_logs')
+                        .update({
+                            active_seconds: totalSeconds,
+                            session_end: new Date().toISOString(),
+                            completed: true
+                        })
+                        .eq('caregiver_id', caregiver.id)
+                        .eq('session_start', sessionStart);
+                } else {
+                    saveTimeLog(caregiver.id, currentHours, sessionStart);
                 }
             }
 
@@ -248,7 +273,6 @@ export default function OnboardingPortal() {
 
     const resetFormData = () => {
         localStorage.removeItem(`onboarding_${token}`)
-        localStorage.removeItem(`livi_time_${token}`)
         setFormData({
             personalInfo: {},
             competency: { checked: {}, lunch: '', dinner: '' },
@@ -282,9 +306,6 @@ export default function OnboardingPortal() {
 
         const updatedSteps = steps.map(step => {
             if (step.id === activeStep) {
-                // if (caregiver.status === 'completed') {
-                //     handleOfferLetter();
-                // }
                 return { ...step, status: 'completed' }
             }
             if (step.id === activeStep + 1) return { ...step, status: 'active' }
@@ -399,7 +420,7 @@ export default function OnboardingPortal() {
                     )
                 }} />
             case 'Completed!':
-                return <CompletedPage stepLabel={stepLabel} caregiver={caregiver} getHoursWorked={getHoursWorked} updateCaregiverStatus={updateCaregiverStatus} />
+                return <CompletedPage stepLabel={stepLabel} caregiver={caregiver} getHoursWorked={getHoursWorked} updateCaregiverStatus={updateCaregiverStatus} handleOfferLetter={handleOfferLetter} />
             default:
                 return null
         }

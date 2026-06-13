@@ -131,12 +131,13 @@ const nextSteps = {
     ]
 }
 
-export default function CompletedPage({ caregiver, getHoursWorked, updateCaregiverStatus }) {
+export default function CompletedPage({ caregiver, getHoursWorked, updateCaregiverStatus, handleOfferLetter }) {
 
     const [certificateUrl, setCertificateUrl] = useState(null);
 
     useEffect(() => {
         generateCertificate();
+        handleOfferLetter();
         return() => {
             if (certificateUrl) {
                 URL.revokeObjectURL(certificateUrl)
