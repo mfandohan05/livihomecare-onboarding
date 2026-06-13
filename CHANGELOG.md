@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.3 - 2026-06-13
+- Added password verification before accessing tax documents
+- Added support for dynamically adding EIN to W-4 documents
+
 ## 1.2.2 - 2026-06-13
 
 - Fixed bug causing the offer letter for caregivers/nurses to be generated too early

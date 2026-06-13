@@ -133,6 +133,7 @@ export default function AdminCaregiverDetail() {
     const [infoDraft, setInfoDraft] = useState({})
     const [quizProgress, setQuizProgress] = useState(null);
     const updatedInfoFields = useRef(new Set());
+    const [pendingDownloadDoc, setPendingDownloadDoc] = useState(null);
 
     const handleSaveInfo = async () => {
         await supabase
@@ -214,12 +215,19 @@ export default function AdminCaregiverDetail() {
     }
 
     const handleDownload = async (doc) => {
+        const taxDocTypes = ['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed']
+        if (taxDocTypes.includes(doc.document_type)) {
+            setReauthTarget('tax')
+            setShowReauth(true)
+            setPendingDownloadDoc(doc)
+            return
+        }
         await logAction('viewed_document', { document_type: documentTypeToName[doc.document_type] })
         const generatedPdfTypes = [
             'i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed',
             'drug_test_policy_signed', 'criminal_background_check_signed',
             'new_hire_notification_signed', 'orientation_checklist_signed',
-            'non_compete_signed', 'hep_b_declination_signed', 'offer_letter_generated', 
+            'non_compete_signed', 'hep_b_declination_signed', 'offer_letter_generated',
             "direct_deposit_authorization", 'wotc_disclosure', "reference_check", "job_description"
         ]
 
@@ -234,6 +242,13 @@ export default function AdminCaregiverDetail() {
         if (data?.signedUrl) {
             window.open(data.signedUrl, '_blank')
         }
+    }
+    const downloadDoc = async (doc) => {
+        await logAction('viewed_document', { document_type: documentTypeToName[doc.document_type] })
+        const { data } = await supabase.storage
+            .from('generated-pdfs')
+            .createSignedUrl(doc.file_path, 3600)
+        if (data?.signedUrl) window.open(data.signedUrl, '_blank')
     }
     const documentTypeToName = {
         "tbTest": "TB Test",
@@ -324,6 +339,10 @@ export default function AdminCaregiverDetail() {
         }
         else if (reauthTarget === 'reset') {
             await handleResetProgress();
+        }
+        else if (reauthTarget === 'tax') {
+            await downloadDoc(pendingDownloadDoc);
+            setPendingDownloadDoc(null)
         }
     }
     const fetchSsn = async () => {
