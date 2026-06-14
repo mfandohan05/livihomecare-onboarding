@@ -615,7 +615,7 @@ export default function AdminCaregivers() {
                                         <td className="px-6 py-4 text-sm text-muted-foreground">{caregiver.employment_type || '—'}</td>
                                         <td className="px-6 py-4 text-sm text-muted-foreground">{formatPhone(caregiver.phone) || '—'}</td>
                                         <td className="px-6 py-4 text-sm text-muted-foreground">
-                                            {caregiver.start_date ? new Date(caregiver.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                                            {caregiver.start_date ? new Date(caregiver.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }) : '—'}
                                         </td>
                                         <td className="px-6 py-4 text-sm text-muted-foreground">{activeTime}</td>
                                         <td className="px-6 py-4">
