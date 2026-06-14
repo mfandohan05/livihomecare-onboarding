@@ -8,7 +8,7 @@ const corsHeaders = {
 
 function buildOfferLetterHtml(caregiver: any): string {
   const role = caregiver.role;
-  const date = new Date().toLocaleDateString();
+  const date = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 
   if (role === 'nurse_prn') {
     return `

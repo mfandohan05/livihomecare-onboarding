@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.4 - 2026-06-14
+- Fixed bug where start date on table appeared one day behind
+- Fixed bug where start date on offer letter would appear one day behind
+- Added reauthentication requirement when viewing Social Security Card / Other I-9 Supporting Documentation
+
 ## 1.2.3 - 2026-06-13
 - Added password verification before accessing tax documents
 - Added support for dynamically adding EIN to W-4 documents

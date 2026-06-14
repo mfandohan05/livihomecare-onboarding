@@ -224,6 +224,12 @@ export default function AdminCaregiverDetail() {
             setPendingDownloadDoc(doc)
             return
         }
+        else if (doc.document_type === 'socialSecurityCard') {
+            setReauthTarget('socialSecurityCard')
+            setShowReauth(true);
+            setPendingDownloadDoc(doc);
+            return;
+        }
         await logAction('viewed_document', { document_type: documentTypeToName[doc.document_type] })
         const generatedPdfTypes = [
             'i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed',
@@ -247,8 +253,10 @@ export default function AdminCaregiverDetail() {
     }
     const downloadDoc = async (doc) => {
         await logAction('viewed_document', { document_type: documentTypeToName[doc.document_type] })
+        const taxDocTypes = ['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'];
+        const bucket = taxDocTypes.includes(doc.document_type) ? 'generated-pdfs' : 'documents'
         const { data } = await supabase.storage
-            .from('generated-pdfs')
+            .from(bucket)
             .createSignedUrl(doc.file_path, 3600)
         if (data?.signedUrl) window.open(data.signedUrl, '_blank')
     }
@@ -345,6 +353,10 @@ export default function AdminCaregiverDetail() {
         else if (reauthTarget === 'tax') {
             await downloadDoc(pendingDownloadDoc);
             setPendingDownloadDoc(null)
+        }
+        else if (reauthTarget === 'socialSecurityCard') {
+            await downloadDoc(pendingDownloadDoc);
+            setPendingDownloadDoc(null);
         }
     }
     const fetchSsn = async () => {
