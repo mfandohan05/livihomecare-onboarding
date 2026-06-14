@@ -3,6 +3,10 @@
 ## 1.2.3 - 2026-06-13
 - Added password verification before accessing tax documents
 - Added support for dynamically adding EIN to W-4 documents
+- Added notice to remind admin to use Sign/Complete Documents feature for I-9
+- Added position of admin to I-9 field
+- Reorganized ordering of steps
+- Added new step, "How to Use SurePayroll"
 
 ## 1.2.2 - 2026-06-13
 
@@ -24,9 +28,11 @@
 - Added support for uploading Bloodborne Pathogens Certificate on admin side
 - Fixed handling of sensitive information display
 
+
 ## 1.1.1 - 2026-05-30
 
 - Fixed bug where audit logs show timestamps in incorrect time zone
+
 
 ## 1.1.0 - 2026-05-29
 

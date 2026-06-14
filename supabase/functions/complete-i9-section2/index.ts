@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { caregiverId, section2Data, adminName } = await req.json();
+    const { caregiverId, section2Data, adminName, adminPosition } = await req.json();
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
     setText("FirstDayEmployed mmddyyyy", section2Data.firstDayOfEmployment);
     setText(
       "Last Name First Name and Title of Employer or Authorized Representative",
-      adminName,
+      adminName + ", " + adminPosition,
     );
     setText("Signature of Employer or AR", adminName);
     setText("S2 Todays Date mmddyyyy", today);

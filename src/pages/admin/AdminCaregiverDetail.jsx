@@ -134,6 +134,7 @@ export default function AdminCaregiverDetail() {
     const [quizProgress, setQuizProgress] = useState(null);
     const updatedInfoFields = useRef(new Set());
     const [pendingDownloadDoc, setPendingDownloadDoc] = useState(null);
+    const [adminPosition, setAdminPosition] = useState('');
 
     const handleSaveInfo = async () => {
         await supabase
@@ -182,13 +183,14 @@ export default function AdminCaregiverDetail() {
         if (session) {
             const { data: adminData } = await supabase
                 .from('admin_users')
-                .select('name, email, id')
+                .select('name, email, id, position')
                 .eq('id', session.user.id)
                 .single()
             if (adminData) {
                 setAdminName(adminData.name);
                 setAdminEmail(adminData.email);
                 setAdminId(adminData.id);
+                setAdminPosition(adminData.position);
             }
         }
 
@@ -628,7 +630,7 @@ export default function AdminCaregiverDetail() {
         },
     ]
 
-    function AdminSignDialog({ open, onClose, documentId, caregiver, adminName, adminId, adminEmail, onComplete, logAction }) {
+    function AdminSignDialog({ open, onClose, documentId, caregiver, adminName, adminPosition, adminId, adminEmail, onComplete, logAction }) {
         const doc = ADMIN_SIGNABLE_DOCUMENTS.find(d => d.id === documentId)
         const [submitting, setSubmitting] = useState(false)
         const [error, setError] = useState(null)
@@ -663,7 +665,8 @@ export default function AdminCaregiverDetail() {
                         body: {
                             caregiverId: caregiver.id,
                             section2Data: { ...i9Form, docType },
-                            adminName
+                            adminName: adminName,
+                            adminPosition: adminPosition
                         }
                     })
                     if (result.error) throw new Error(result.error.message)
@@ -1031,6 +1034,7 @@ export default function AdminCaregiverDetail() {
                 documentId={signDocumentId}
                 caregiver={caregiver}
                 adminName={adminName}
+                adminPosition={adminPosition}
                 adminId={adminId}
                 adminEmail={adminEmail}
                 onComplete={fetchAll}
@@ -1296,7 +1300,7 @@ export default function AdminCaregiverDetail() {
                                             )}
                                             {doc.document_type === 'i9_completed' && !i9Section2Completed && (
                                                 <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
-                                                    Notice: Section 2 required
+                                                    Notice: Please use the Sign/Complete feature to complete Section 2.
                                                 </span>
                                             )}
                                             {doc.document_type === 'i9_completed' && i9Section2Completed && (

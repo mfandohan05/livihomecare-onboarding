@@ -23,6 +23,7 @@ import { getCaregiverByToken, updateCaregiverStatus, saveProgress, loadProgress,
 import { supabase } from '@/lib/supabase'
 
 import { toast } from 'sonner'
+import SurePayrollGuidePage from './onboarding-pages/SurePayrollGuidePage'
 
 export default function OnboardingPortal() {
     const { token } = useParams()
@@ -377,6 +378,8 @@ export default function OnboardingPortal() {
                 }} />
             case 'How to Use eRSP':
                 return <ERSPGuidePage stepLabel={stepLabel} onNext={handleNext} initialData={formData.erspGuide} onChange={(data) => updateFormData('erspGuide', data)} />
+            case 'How to Use SurePayroll':
+                return <SurePayrollGuidePage stepLabel={stepLabel} onNext={handleNext} initialData={formData.surePayroll} onChange={(data) => updateFormData('surePayroll', data)} />
             case 'Forms & Agreements':
                 return <FormsApplicationsPage stepLabel={stepLabel} caregiver={caregiver} setSaving={setSaving} onNext={async () => {
                     setSaving(true)
