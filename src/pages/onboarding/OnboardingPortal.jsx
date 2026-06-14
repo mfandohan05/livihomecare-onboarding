@@ -23,6 +23,7 @@ import { getCaregiverByToken, updateCaregiverStatus, saveProgress, loadProgress,
 import { supabase } from '@/lib/supabase'
 
 import { toast } from 'sonner'
+import SurePayrollGuidePage from './onboarding-pages/SurePayrollGuidePage'
 
 export default function OnboardingPortal() {
     const { token } = useParams()
@@ -123,7 +124,6 @@ export default function OnboardingPortal() {
         }
         if (!isPreview) {
             updateCaregiverStatus(caregiver.id, 'in_progress')
-            console.log(`${caregiver.name} is now in progress.`)
         }
 
     }, [caregiver?.id])
@@ -134,6 +134,23 @@ export default function OnboardingPortal() {
         if (!localStorage.getItem(key)) {
             localStorage.setItem(key, new Date().toISOString())
         }
+        
+        const restoreTimeFromDB = async () => {
+            const sessionStart = localStorage.getItem(key);
+            const { data: existingLog } = await supabase
+                .from('caregiver_time_logs')
+                .select('active_seconds')
+                .eq('caregiver_id', caregiver.id)
+                .eq('session_start', sessionStart)
+                .maybeSingle();
+            
+            if (existingLog && existingLog.active_seconds) {
+                const milliseconds = existingLog.active_seconds * 1000;
+                localStorage.setItem(`livi_time_${token}`, milliseconds);
+            }
+        }
+        
+        restoreTimeFromDB();
     }, [caregiver?.id])
 
     const isNurse = caregiver?.role === 'nurse_prn' || caregiver?.role === "nurse_director";
@@ -169,27 +186,36 @@ export default function OnboardingPortal() {
             updateCaregiverStatus(caregiver.id, 'completed')
 
             const saveLog = async () => {
-                const { data } = await supabase
+                const sessionStart = localStorage.getItem(`livi_session_start_${token}`);
+                const currentHours = getHoursWorked();
+                const totalSeconds = Math.round(currentHours * 3600);
+                
+                const { data: existingLog } = await supabase
                     .from('caregiver_time_logs')
                     .select('id')
                     .eq('caregiver_id', caregiver.id)
-                    .eq('completed', true)
+                    .eq('session_start', sessionStart)
                     .maybeSingle();
 
-                    await saveCoordinates(caregiver.id, formData.personalInfo)
+                await saveCoordinates(caregiver.id, formData.personalInfo)
 
-                if (!data) {
-                    const actualStart = localStorage.getItem(`livi_session_start_${token}`)
-                    saveTimeLog(caregiver.id, getHoursWorked(), actualStart);
-
-                    supabase.functions.invoke('send-completion-email', {
-                        body: { caregiverId: caregiver.id }
-                    })
+                if (existingLog) {
+                    await supabase
+                        .from('caregiver_time_logs')
+                        .update({
+                            active_seconds: totalSeconds,
+                            session_end: new Date().toISOString(),
+                            completed: true
+                        })
+                        .eq('caregiver_id', caregiver.id)
+                        .eq('session_start', sessionStart);
+                } else {
+                    saveTimeLog(caregiver.id, currentHours, sessionStart);
                 }
             }
 
             saveLog();
-            
+
         }
     }, [activeStep])
     const prevIsIdle = useRef(isIdle);
@@ -246,7 +272,6 @@ export default function OnboardingPortal() {
 
     const resetFormData = () => {
         localStorage.removeItem(`onboarding_${token}`)
-        localStorage.removeItem(`livi_time_${token}`)
         setFormData({
             personalInfo: {},
             competency: { checked: {}, lunch: '', dinner: '' },
@@ -272,15 +297,14 @@ export default function OnboardingPortal() {
 
     const handleOfferLetter = async () => {
         await supabase.functions.invoke('generate-offer-letter', {
-            body: { caregiverId: caregiver.id}
-        })  
+            body: { caregiverId: caregiver.id }
+        })
     }
     const handleNext = async () => {
         setSaving(true);
-        
+
         const updatedSteps = steps.map(step => {
             if (step.id === activeStep) {
-                handleOfferLetter();
                 return { ...step, status: 'completed' }
             }
             if (step.id === activeStep + 1) return { ...step, status: 'active' }
@@ -352,6 +376,8 @@ export default function OnboardingPortal() {
                 }} />
             case 'How to Use eRSP':
                 return <ERSPGuidePage stepLabel={stepLabel} onNext={handleNext} initialData={formData.erspGuide} onChange={(data) => updateFormData('erspGuide', data)} />
+            case 'How to Use SurePayroll':
+                return <SurePayrollGuidePage stepLabel={stepLabel} onNext={handleNext} initialData={formData.surePayroll} onChange={(data) => updateFormData('surePayroll', data)} />
             case 'Forms & Agreements':
                 return <FormsApplicationsPage stepLabel={stepLabel} caregiver={caregiver} setSaving={setSaving} onNext={async () => {
                     setSaving(true)
@@ -395,7 +421,7 @@ export default function OnboardingPortal() {
                     )
                 }} />
             case 'Completed!':
-                return <CompletedPage stepLabel={stepLabel} caregiver={caregiver} getHoursWorked={getHoursWorked} updateCaregiverStatus={updateCaregiverStatus} />
+                return <CompletedPage stepLabel={stepLabel} caregiver={caregiver} getHoursWorked={getHoursWorked} updateCaregiverStatus={updateCaregiverStatus} handleOfferLetter={handleOfferLetter} />
             default:
                 return null
         }

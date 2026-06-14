@@ -55,7 +55,7 @@ export default function AdminLogin() {
 
                 <div className="bg-white rounded-xl border border-border p-8 shadow-sm">
                     <h1 className="text-xl font-semibold mb-1">Admin Portal</h1>
-                    <p className="text-sm text-muted-foreground mb-6">Sign in to manage caregivers</p>
+                    <p className="text-sm text-muted-foreground mb-6">Sign in to manage employees</p>
 
                     <form onSubmit={handleLogin} className="space-y-4">
                         <div className="space-y-1.5">

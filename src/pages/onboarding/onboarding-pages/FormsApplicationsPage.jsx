@@ -124,7 +124,6 @@ const FormButton = ({ formId, disabled, completed, markComplete }) => (
     </Button>
 )
 const ReferenceForm = ({ references, setReferences }) => {
-    console.log("reference form rerendered")
     const updateRef = (index, field, value) => {
         setReferences(prev => prev.map((r, i) => i === index ? { ...r, [field]: value } : r))
     }

@@ -58,9 +58,6 @@ function WelcomePage({ caregiver, onNext, welcomeSteps }) {
                         </li>
                     ))}
                 </ul>
-                <p className="text-xs text-[#577C09] mt-4 pt-3 border-t border-[#577C09]/20">
-                    All sections must be completed before your first shift. Your onboarding time is recorded for payroll purposes and pauses automatically after 5 seconds of inactivity.
-                </p>
             </div>
 
             <p className="text-sm text-muted-foreground mb-8">

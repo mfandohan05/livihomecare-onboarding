@@ -1,15 +1,38 @@
 # Changelog
 
-## 1.2.0 - 2026-06-05
+## 1.2.3 - 2026-06-13
+- Added password verification before accessing tax documents
+- Added support for dynamically adding EIN to W-4 documents
+- Added notice to remind admin to use Sign/Complete Documents feature for I-9
+- Added position of admin to I-9 field
+- Reorganized ordering of steps
+- Added new step, "How to Use SurePayroll"
+
+## 1.2.2 - 2026-06-13
+
+- Fixed bug causing the offer letter for caregivers/nurses to be generated too early
+- Fixed bug with active time counter not incrementing when progress was reset
+
+
+## 1.2.1 - 2026-06-10
+
+- Removed part about onboarding time being recorded on welcome screen
+- Fixed bug where start date on detail screen appeared to be a day behind
+
+
+## 1.2.0 - 2026-06-04
+
 - Added new documents to Forms & Agreements page
 - Added support for viewing offer letter/direct deposit authorization form
 - Added new quiz progress tracker
 - Added support for uploading Bloodborne Pathogens Certificate on admin side
 - Fixed handling of sensitive information display
 
+
 ## 1.1.1 - 2026-05-30
 
 - Fixed bug where audit logs show timestamps in incorrect time zone
+
 
 ## 1.1.0 - 2026-05-29
 

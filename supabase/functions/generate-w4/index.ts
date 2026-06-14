@@ -20,6 +20,13 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    const companyEncryptionKey = Deno.env.get("COMPANY_ENCRYPTION_KEY");
+
+    const { data: companyEIN, error: einError } = await supabase.rpc("get_company_ein", {
+      p_encryption_key: companyEncryptionKey,
+    });
+
+
     const { data: templateFile, error: templateError } = await supabase.storage
       .from("generated-pdfs")
       .download("templates/W4.pdf");
@@ -37,7 +44,7 @@ Deno.serve(async (req) => {
       month: "2-digit",
       day: "2-digit",
       year: "numeric",
-      timeZone: 'America/New_York'
+      timeZone: "America/New_York",
     });
 
     const setText = (fieldId: string, value: string | undefined) => {
@@ -128,7 +135,7 @@ Deno.serve(async (req) => {
       "MDC Global Care Solutions dba Livi Home Care\n179 Gasoline Alley Dr. Suite 203, Mooresville NC 28117",
     );
     setText("topmostSubform[0].Page1[0].f1_13[0]", w4Data.startDate || "");
-    setText("topmostSubform[0].Page1[0].f1_14[0]", w4Data.employerEIN || "");
+    setText("topmostSubform[0].Page1[0].f1_14[0]", companyEIN || "No EIN Provided");
 
     const page = pdfDoc.getPage(0);
     const signatureName =
