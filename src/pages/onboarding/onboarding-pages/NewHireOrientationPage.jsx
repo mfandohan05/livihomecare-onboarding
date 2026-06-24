@@ -1167,6 +1167,10 @@ export default function NewHireOrientationPage({ stepLabel, onNext, initialData,
     const passed = score >= Math.ceil(section.quiz.length * 0.7)
 
     const handleSubmitQuiz = () => {
+        if (!passed) {
+            setQuizSubmitted(true);
+            return;
+        }
         setQuizSubmitted(true)
         const payload = {
             sectionTitle: section.title,

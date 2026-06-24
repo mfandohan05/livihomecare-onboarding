@@ -19,12 +19,14 @@ import { logImportantAction } from '@/lib/logAction'
 const statusColor = (status) => {
     if (status === 'completed') return 'text-[#577C09] bg-[#E8F0D0]'
     if (status === 'in_progress') return 'text-amber-700 bg-amber-50'
+    if (status === 'cancelled') return 'text-red-700 bg-red-50'
     return 'text-muted-foreground bg-muted'
 }
 
 const statusLabel = (status) => {
     if (status === 'completed') return 'Completed'
     if (status === 'in_progress') return 'In Progress'
+    if (status === 'cancelled') return 'Cancelled'
     return 'Pending'
 }
 
@@ -100,7 +102,6 @@ export default function AdminCaregiverDetail() {
     const [showBanking, setShowBanking] = useState(false)
     const [loadingSsn, setLoadingSsn] = useState(false)
     const [loadingBanking, setLoadingBanking] = useState(false)
-    const [copied, setCopied] = useState(false)
     const [uploadingDoc, setUploadingDoc] = useState(null)
     const [showReauth, setShowReauth] = useState(false)
     const [reauthPassword, setReauthPassword] = useState('')
@@ -112,7 +113,6 @@ export default function AdminCaregiverDetail() {
     const [deletingStep, setDeletingStep] = useState(null)
     const [resetting, setResetting] = useState(false)
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-    const [showResetConfirm, setShowResetConfirm] = useState(false);
     const [deletePassword, setDeletePassword] = useState('')
     const [deleteError, setDeleteError] = useState(null)
     const [deleteLoading, setDeleteLoading] = useState(false)
@@ -135,12 +135,18 @@ export default function AdminCaregiverDetail() {
     const updatedInfoFields = useRef(new Set());
     const [pendingDownloadDoc, setPendingDownloadDoc] = useState(null);
     const [adminPosition, setAdminPosition] = useState('');
+    const [showCancelOnboardingConfirm, setShowCancelOnboardingConfirm] = useState(false);
+    const [cancelPassword, setCancelPassword] = useState('');
+    const [cancelError, setCancelError] = useState(null)
+    const [cancelLoading, setCancelLoading] = useState(false)
 
     const handleSaveInfo = async () => {
         await supabase
             .from('caregivers')
             .update({
                 email: infoDraft.email,
+                gender: infoDraft.gender,
+                employee_id: infoDraft.employee_id || null,
                 phone: infoDraft.phone,
                 employment_type: infoDraft.employment_type,
                 start_date: infoDraft.start_date || null,
@@ -559,6 +565,27 @@ export default function AdminCaregiverDetail() {
 
         navigate('/admin/employees')
     }
+    const handleCancelOnboarding = async () => {
+        setCancelLoading(true)
+        setCancelError(null)
+
+        const { data: { session } } = await supabase.auth.getSession()
+        const { error: authError } = await supabase.auth.signInWithPassword({
+            email: session.user.email,
+            password: cancelPassword
+        })
+
+        if (authError) {
+            setCancelError('Incorrect password')
+            setCancelLoading(false)
+            return
+        }
+
+        await supabase.from('caregivers').update({ status: 'cancelled' }).eq('id', id)
+        await supabase.from('caregivers').update({ token: null, link_expires_at: null }).eq('id', id)
+        await logAction('cancelled_onboarding')
+        navigate('/admin/employees')
+    }
     const activeTime = timeLog
         ? `${Math.floor(timeLog.active_seconds / 3600)}h ${Math.floor((timeLog.active_seconds % 3600) / 60)}m`
         : null
@@ -583,6 +610,7 @@ export default function AdminCaregiverDetail() {
         )
     }
     const isNurse = caregiver.role === 'nurse_prn' || caregiver.role === 'nurse_director'
+    const isCancelled = caregiver.status === 'cancelled'
     const uploadableDocs = isNurse
         ? ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'nursingLicense', 'bloodbornePathogens', 'certifications']
         : ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'bloodbornePathogens', 'certifications']
@@ -602,6 +630,7 @@ export default function AdminCaregiverDetail() {
         await supabase
             .from('caregivers')
             .update({
+                status: 'pending',
                 token: newToken,
                 link_expires_at: newExpiry,
             })
@@ -949,6 +978,31 @@ export default function AdminCaregiverDetail() {
                             }} />
                         </div>
                         <div className="space-y-1.5">
+                            <Label>Gender</Label>
+                            <select
+                                value={infoDraft.gender || ''}
+                                onChange={(e) => {
+                                    setInfoDraft(prev => ({ ...prev, gender: e.target.value }))
+                                    updatedInfoFields.current.add("Gender");
+                                }}
+                                className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white"
+                            >
+                                <option value="">Select gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Non-binary">Non-binary</option>
+                                <option value="Prefer not to say">Prefer not to say</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label>Employee ID</Label>
+                            <Input value={infoDraft.employee_id || ''} onChange={(e) => {
+                                setInfoDraft(prev => ({ ...prev, employee_id: e.target.value }))
+                                updatedInfoFields.current.add("Employee ID");
+                            }} />
+                        </div>
+                        <div className="space-y-1.5">
                             <Label>Employment Type</Label>
                             <select
                                 value={infoDraft.employment_type || ''}
@@ -993,6 +1047,50 @@ export default function AdminCaregiverDetail() {
                         <Button variant="outline" onClick={() => setEditingInfo(false)}>
                             Cancel
                         </Button>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialog>
+            <AlertDialog open={showCancelOnboardingConfirm} onOpenChange={setShowCancelOnboardingConfirm}>
+                <AlertDialogContent className="max-w-sm">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Cancel {caregiver?.name}'s onboarding?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will cancel {caregiver?.name}'s onboarding process and archive their onboarding data. This will preserve their data for compliance purposes; this will also hide their profile on the employees page.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="space-y-4 pt-2">
+                        <div className="space-y-1.5">
+                            <Label htmlFor="cancel_password">Enter your password to confirm</Label>
+                            <Input
+                                id="cancel_password"
+                                type="password"
+                                value={cancelPassword}
+                                onChange={(e) => setCancelPassword(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleCancelOnboarding()}
+                                placeholder="••••••••"
+                                autoFocus
+                            />
+                        </div>
+                        {cancelError && <p className="text-sm text-red-500">{cancelError}</p>}
+                        <div className="flex gap-3">
+                            <Button
+                                onClick={handleCancelOnboarding}
+                                disabled={!cancelPassword || cancelLoading}
+                                className="bg-red-500 hover:bg-red-600 text-white disabled:opacity-50"
+                            >
+                                {cancelLoading ? 'Archiving...' : 'Cancel Onboarding & Archive Data'}
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setShowCancelOnboardingConfirm(false)
+                                    setCancelPassword('')
+                                    setCancelError(null)
+                                }}
+                            >
+                                Cancel
+                            </Button>
+                        </div>
                     </div>
                 </AlertDialogContent>
             </AlertDialog>
@@ -1096,8 +1194,16 @@ export default function AdminCaregiverDetail() {
                                 <p className="font-medium">{formatPhone(caregiver.phone) || '—'}</p>
                             </div>
                             <div>
+                                <p className="text-muted-foreground">Gender</p>
+                                <p className="font-medium">{caregiver.gender || '—'}</p>
+                            </div>
+                            <div>
                                 <p className="text-muted-foreground">Employment Type</p>
                                 <p className="font-medium">{caregiver.employment_type || '—'}</p>
+                            </div>
+                            <div>
+                                <p className="text-muted-foreground">Employee ID</p>
+                                <p className="font-medium">{caregiver.employee_id || '—'}</p>
                             </div>
                             <div>
                                 <p className="text-muted-foreground">Start Date</p>
@@ -1124,6 +1230,8 @@ export default function AdminCaregiverDetail() {
                                     setInfoDraft({
                                         email: caregiver.email,
                                         phone: caregiver.phone || '',
+                                        gender: caregiver.gender || '',
+                                        employee_id: caregiver.employee_id || '',
                                         employment_type: caregiver.employment_type || '',
                                         start_date: caregiver.start_date || '',
                                         pay_rate: caregiver.pay_rate,
@@ -1530,12 +1638,23 @@ export default function AdminCaregiverDetail() {
                         )}
 
                     </div>
-                    <button
-                        onClick={() => setShowDeleteConfirm(true)}
-                        className="text-sm text-red-500 hover:text-red-600 hover:underline transition-colors"
-                    >
-                        Delete employee profile
-                    </button>
+                    <div className="bg-white rounded-xl border border-border p-6 flex flex-col items-start gap-4">
+                        {!isCancelled && caregiver.status !== 'completed' && (
+                            <button
+                                onClick={() => setShowCancelOnboardingConfirm(true)}
+                                className="text-sm text-red-500 hover:text-red-600 hover:underline transition-colors"
+                            >
+                                Cancel onboarding
+                            </button>
+                        )}
+                        <button
+                            onClick={() => setShowDeleteConfirm(true)}
+                            className="text-sm text-red-500 hover:text-red-600 hover:underline transition-colors"
+                        >
+                            Delete employee profile
+                        </button>
+                    </div>
+
                 </div>
 
                 <div className="space-y-6">
