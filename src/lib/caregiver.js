@@ -47,7 +47,7 @@ export async function loadProgress(caregiverId) {
   return data
 }
 
-export async function uploadDocument(caregiverId, caregiverName, documentType, file) {
+export async function uploadDocument(caregiverId, caregiverName, documentType, file, expirationDate = null) {
   const fileExt = file.name.split('.').pop()
   const sanitizedName = caregiverName.replace(/[^a-zA-Z0-9]/g, '_')
   const filePath = `${caregiverId}/${sanitizedName}_${documentType}.${fileExt}`
@@ -70,6 +70,7 @@ export async function uploadDocument(caregiverId, caregiverName, documentType, f
       file_path: filePath,
       file_size: file.size,
       mime_type: file.type,
+      expiration_date: expirationDate || null,
     }, {
       onConflict: 'caregiver_id, document_type'
     })
@@ -80,6 +81,18 @@ export async function uploadDocument(caregiverId, caregiverName, documentType, f
   }
 
   return filePath
+}
+
+export async function updateDocumentExpiration(caregiverId, documentType, expirationDate) {
+  const { error } = await supabase
+    .from('caregiver_documents')
+    .update({ expiration_date: expirationDate || null })
+    .eq('caregiver_id', caregiverId)
+    .eq('document_type', documentType)
+
+  if (error) {
+    console.error('Error updating document expiration:', error)
+  }
 }
 
 export async function getDocuments(caregiverId) {

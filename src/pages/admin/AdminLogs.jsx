@@ -21,13 +21,14 @@ const ACTION_LABELS = {
     removed_step: "Removed Steps",
     reset_all_progress: "Reset All Progress",
     uploaded_doc_on_behalf: "Uploaded Document For Employee",
-    updated_employee_info: "Updated Employee Info"
+    updated_employee_info: "Updated Employee Info",
+    cancelled_onboarding: "Cancelled Onboarding",
 }
 
 const actionColor = (action) => {
-    if (action.includes('deleted') || (action.includes('remove')) || (action.includes('reset'))) return 'bg-red-50 text-red-700 border-red-200'
+    if (action.includes('deleted') || (action.includes('remove')) || (action.includes('reset')) || action.includes('cancelled')) return 'bg-red-50 text-red-700 border-red-200'
     if (action.includes('viewed') || action.includes('opened') || (action.includes('created')) || (action.includes('up'))) return 'bg-amber-50 text-amber-700 border-amber-200'
-    if (action.includes('signed') || action.includes('completed') || action.includes('regenerate')) return 'bg-[#E8F0D0] text-[#577C09] border-[#577C09]/20'
+    if (action.includes('signed') || action.includes('completed') || action.includes('Completed') || action.includes('Started') || action.includes('regenerate')) return 'bg-[#E8F0D0] text-[#577C09] border-[#577C09]/20'
     return 'bg-muted text-muted-foreground border-border'
 }
 

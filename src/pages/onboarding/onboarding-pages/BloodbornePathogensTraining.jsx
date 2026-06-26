@@ -11,14 +11,12 @@ export default function BloodbornePathogensPage({ stepLabel, onNext, initialData
     const isMobile = !window.matchMedia('(hover: hover)').matches || window.matchMedia('(max-width: 768px)').matches
 
     const handleOpenTraining = () => {
-        setPopupOpen(true)
 
         if (isMobile) {
             window.open('https://www.cpr.io/courses/bloodborne-pathogens/', '_blank')
 
             const handleVisibility = () => {
                 if (document.visibilityState === 'visible') {
-                    setPopupOpen(false)
                     document.removeEventListener('visibilitychange', handleVisibility)
                 }
             }
@@ -29,13 +27,6 @@ export default function BloodbornePathogensPage({ stepLabel, onNext, initialData
                 'BloodborneTraining',
                 'width=1100,height=700,scrollbars=yes,resizable=yes'
             )
-
-            const interval = setInterval(() => {
-                if (popup?.closed) {
-                    setPopupOpen(false)
-                    clearInterval(interval)
-                }
-            }, 500)
         }
     }
 

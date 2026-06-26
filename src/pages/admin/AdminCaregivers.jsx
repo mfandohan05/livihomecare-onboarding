@@ -5,6 +5,7 @@ import { Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
     Dialog,
     DialogContent,
@@ -43,6 +44,8 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
         pay_rate: '',
         companion_pay_rate: '',
         job_description: '',
+        gender: '',
+        employee_id: '',
     })
     useEffect(() => {
         fetchAdminData();
@@ -64,9 +67,10 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
     }
 
 
-    const set = (key) => (e) => setForm(prev => ({ ...prev, [key]: e.target.value }))
+    const set = (key) => (e) => setForm(prev => ({ ...prev, [key]: e.target.value }));
+    const setSelect = (key) => (value) => setForm(prev => ({ ...prev, [key]: value }));
 
-    const canSave = form.name && form.email && form.role &&
+    const canSave = form.name && form.email && form.role && form.gender && form.phone &&
         form.position_title && form.employment_type && form.pay_rate && (form.role !== 'other' || offerLetterFile) && form.job_description
 
     const handleSubmit = async () => {
@@ -85,6 +89,8 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
                 pay_rate: parseFloat(form.pay_rate),
                 companion_pay_rate: form.companion_pay_rate ? parseFloat(form.companion_pay_rate) : null,
                 status: 'pending',
+                gender: form.gender,
+                employee_id: form.employee_id || null,
                 job_description: form.job_description,
                 job_duties: form.role === 'other' ? jobDutiesDraft : null,
                 link_expires_at: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString()
@@ -169,6 +175,23 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
                                 <Field label="Phone" id="phone" required>
                                     <Input id="phone" value={form.phone} onChange={(e) => setForm(prev => ({ ...prev, phone: formatPhone(e.target.value) }))} placeholder="(704) 555-0123" />
                                 </Field>
+                                <Field label="Gender" id="gender" required>
+                                    <Select id="gender" className="w-full" value={form.gender} onValueChange={setSelect('gender')} placeholder="Female/Male/Other/etc.">
+                                        <SelectTrigger id="gender" className="w-full">
+                                            <SelectValue placeholder="Select gender..."></SelectValue>
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Female">Female</SelectItem>
+                                            <SelectItem value="Male">Male</SelectItem>
+                                            <SelectItem value="Non-binary">Non-binary</SelectItem>
+                                            <SelectItem value="Other">Other</SelectItem>
+                                            <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </Field>
+                                <Field label="Employee ID (Optional)" id="employee_id">
+                                    <Input id="employee_id" value={form.employee_id} onChange={set('employee_id')} placeholder="EMP001" />
+                                </Field>
                             </div>
                         </div>
                     </div>
@@ -177,43 +200,40 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
                         <h3 className="text-sm font-medium mb-4 pb-2 border-b">Position Details</h3>
                         <div className="space-y-4">
                             <Field label="Role" id="role" required>
-                                <select
-                                    id="role"
-                                    value={form.role}
-                                    onChange={set('role')}
-                                    className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white"
-                                >
-                                    <option value="caregiver">Caregiver</option>
-                                    <option value="nurse_prn">Nurse (PRN)</option>
-                                    <option value="nurse_director">Nurse (Director)</option>
-                                    <option value="other">Other</option>
-                                </select>
+                                <Select id="role" className="w-full" value={form.role} onValueChange={setSelect('role')}>
+                                    <SelectTrigger id='role' className="w-full">
+                                        <SelectValue placeholder="Select role..."/>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                            <SelectItem value="caregiver">Caregiver</SelectItem>
+                                            <SelectItem value="nurse_prn">Nurse (PRN)</SelectItem>
+                                            <SelectItem value="nurse_director">Nurse (Director)</SelectItem>
+                                            <SelectItem value="other">Other</SelectItem>
+                                        </SelectContent>
+                                </Select>
                             </Field>
                             <Field label="Position title" id="position_title" required>
                                 <Input id="position_title" value={form.position_title} onChange={set('position_title')} placeholder="PCA-Caregiver" />
                             </Field>
                             <Field label="Job description" id="job_description" required>
-                                <input
+                                <Input
                                     id="job_description"
                                     value={form.job_description}
                                     onChange={set('job_description')}
                                     placeholder="In-Home Aide"
-                                    rows={4}
-                                    className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#577C09]/20 focus:border-[#577C09] resize-none"
                                 />
                             </Field>
                             <Field label="Employment type" id="employment_type" required>
-                                <select
-                                    id="employment_type"
-                                    value={form.employment_type}
-                                    onChange={set('employment_type')}
-                                    className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-white"
-                                >
-                                    <option value="">Select type</option>
-                                    <option value="Hourly, Part-Time">Hourly, Part-Time</option>
-                                    <option value="Hourly, Full-Time">Hourly, Full-Time</option>
-                                    <option value="Independent Contractor">Independent Contractor</option>
-                                </select>
+                                <Select id="employment_type" value={form.employment_type} onValueChange={setSelect('employment_type')} placeholder="Select type...">
+                                    <SelectTrigger id='employment_type' className="w-full">
+                                        <SelectValue placeholder="Select type..."/>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Hourly, Part-Time">Hourly, Part-Time</SelectItem>
+                                        <SelectItem value="Hourly, Full-Time">Hourly, Full-Time</SelectItem>
+                                        <SelectItem value="Independent Contractor">Independent Contractor</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </Field>
                             <Field label="Start date" id="start_date" required>
                                 <Input id="start_date" type="date" value={form.start_date} onChange={set('start_date')}  />
@@ -225,10 +245,10 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
                         <h3 className="text-sm font-medium mb-4 pb-2 border-b">Compensation</h3>
                         <div className="grid grid-cols-2 gap-4">
                             <Field label="Pay rate ($/hr)" id="pay_rate" required>
-                                <Input id="pay_rate" type="number" value={form.pay_rate} onChange={set('pay_rate')} placeholder="16.00" />
+                                <Input id="pay_rate" type="number" value={form.pay_rate} onChange={set('pay_rate')} placeholder="16.00" onWheel={(e) => e.target.blur()} />
                             </Field>
                             <Field label="Companion pay rate ($/hr)" id="companion_pay_rate">
-                                <Input id="companion_pay_rate" type="number" value={form.companion_pay_rate} onChange={set('companion_pay_rate')} placeholder="14.00" />
+                                <Input id="companion_pay_rate" type="number" value={form.companion_pay_rate} onChange={set('companion_pay_rate')} placeholder="14.00" onWheel={(e) => e.target.blur()} />
                             </Field>
                         </div>
                     </div>
@@ -360,7 +380,11 @@ export default function AdminCaregivers() {
             .order('created_at', { ascending: false })
 
         if (debouncedSearch) query = query.or(`name.ilike.%${debouncedSearch}%,email.ilike.%${debouncedSearch}%`)
-        if (statusFilter !== 'all') query = query.eq('status', statusFilter)
+        if (statusFilter === 'all') {
+            query = query.neq('status', 'cancelled')
+        } else {
+            query = query.eq('status', statusFilter)
+        }
         if (roleFilter !== 'all') query = query.eq('role', roleFilter)
 
         if (skillFilters.length > 0) {
@@ -400,12 +424,14 @@ export default function AdminCaregivers() {
     const statusColor = (status) => {
         if (status === 'completed') return 'text-[#577C09] bg-[#E8F0D0]'
         if (status === 'in_progress') return 'text-amber-700 bg-amber-50'
+        if (status === 'cancelled') return 'text-red-700 bg-red-50'
         return 'text-muted-foreground bg-muted'
     }
 
     const statusLabel = (status) => {
         if (status === 'completed') return 'Completed'
         if (status === 'in_progress') return 'In Progress'
+        if (status === 'cancelled') return 'Cancelled'
         return 'Pending'
     }
 
@@ -441,7 +467,7 @@ export default function AdminCaregivers() {
             <div className="flex items-center justify-between mb-8">
                 <div>
                     <h1 className="text-2xl font-bold">Employees</h1>
-                    <p className="text-muted-foreground">{totalCount} total employees enrolled</p>
+                    <p className="text-muted-foreground">{totalCount} total employees</p>
                 </div>
                 <Button
                     onClick={() => setShowNewDialog(true)}
@@ -470,6 +496,7 @@ export default function AdminCaregivers() {
                     <option value="pending">Pending</option>
                     <option value="in_progress">In Progress</option>
                     <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
                 </select>
                 <select
                     value={roleFilter}

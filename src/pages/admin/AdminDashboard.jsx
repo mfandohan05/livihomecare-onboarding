@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import { Users, Clock, CheckCircle, AlertCircle } from 'lucide-react'
+import { Users, Clock, CheckCircle, AlertCircle, XCircle } from 'lucide-react'
 import { job_label } from '@/lib/labelUtils'
 
 export default function AdminDashboard() {
@@ -10,7 +10,8 @@ export default function AdminDashboard() {
         total: 0,
         pending: 0,
         inProgress: 0,
-        completed: 0
+        completed: 0,
+        cancelled: 0
     })
     const [recentCaregivers, setRecentCaregivers] = useState([])
     const [loading, setLoading] = useState(true)
@@ -28,8 +29,10 @@ export default function AdminDashboard() {
                     pending: caregivers.filter(c => c.status === 'pending').length,
                     inProgress: caregivers.filter(c => c.status === 'in_progress').length,
                     completed: caregivers.filter(c => c.status === 'completed').length,
+                    cancelled: caregivers.filter(c => c.status === 'cancelled').length,
                 })
-                setRecentCaregivers(caregivers.slice(0, 5))
+                const nonCancelledCaregivers = caregivers.filter(c => c.status !== 'cancelled')
+                setRecentCaregivers(nonCancelledCaregivers.slice(0, 5))
             }
 
             setLoading(false)
@@ -66,12 +69,13 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-5 gap-4 mb-8">
                 {[
                     { label: 'Total Employees Enrolled', value: stats.total, icon: Users, color: 'text-blue-600 bg-blue-50' },
                     { label: 'Pending', value: stats.pending, icon: AlertCircle, color: 'text-muted-foreground bg-muted' },
                     { label: 'In Progress', value: stats.inProgress, icon: Clock, color: 'text-amber-600 bg-amber-50' },
                     { label: 'Completed', value: stats.completed, icon: CheckCircle, color: 'text-[#577C09] bg-[#E8F0D0]' },
+                    { label: 'Cancelled', value: stats.cancelled, icon: XCircle, color: 'text-red-600 bg-red-50' },
                 ].map((stat) => (
                     <div key={stat.label} className="bg-white rounded-xl border border-border p-6">
                         <div className={`w-10 h-10 rounded-lg ${stat.color} flex items-center justify-center mb-3`}>
