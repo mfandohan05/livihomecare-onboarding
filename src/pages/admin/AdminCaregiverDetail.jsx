@@ -160,7 +160,7 @@ export default function AdminCaregiverDetail() {
         await logAction('updated_employee_info', changedFields)
     }
 
-    const { logAction } = logImportantAction(id, caregiver?.name);
+    const { logAction } = logImportantAction(id, caregiver?.name, true);
 
 
     useEffect(() => {
@@ -912,7 +912,7 @@ export default function AdminCaregiverDetail() {
                         <AlertDialogTitle>{reauthTarget === 'reset' ? `Reset ${caregiver?.name}'s progress?` : 'Confirm your identity'}</AlertDialogTitle>
                         <AlertDialogDescription>
                             {reauthTarget === 'reset'
-                                ? 'This will clear all completed steps, documents, time logs, and return the caregiver to the beginning of onboarding. Enter your password to confirm.'
+                                ? 'This will clear all completed steps, documents, (excluding tax forms if they are already submitted), and return the caregiver to the beginning of onboarding. Enter your password to confirm.'
                                 : 'Enter your password to view sensitive information.'
                             }
                         </AlertDialogDescription>
@@ -1797,7 +1797,7 @@ export default function AdminCaregiverDetail() {
                             {managingProgress && (
                                 <div className="mt-4 pt-4 border-t">
                                     <p className="text-xs text-muted-foreground mb-3">
-                                        Resetting progress will clear all completed steps, documents, time logs, and return the caregiver to the beginning of onboarding.
+                                        Resetting progress will clear all completed steps, documents, (excluding tax forms if they are already submitted), and return the caregiver to the beginning of onboarding.
                                     </p>
                                     <button
                                         onClick={() => {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { FolderUp, CreditCard, Car, Stethoscope, IdCard, Camera, CheckCircle, Upload, Award, Loader2 } from 'lucide-react'
-import { uploadDocument, getDocuments } from '@/lib/caregiver'
+import { uploadDocument, updateDocumentExpiration, getDocuments } from '@/lib/caregiver'
 
 export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver }) {
 
@@ -64,6 +64,7 @@ export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver
     : [...baseDocs, optionalDocs]
 
   const [uploads, setUploads] = useState({})
+  const [documentExpirations, setDocumentExpirations] = useState({})
   const [uploading, setUploading] = useState({}) 
   const [errors, setErrors] = useState({}) 
   const [loadingDocs, setLoadingDocs] = useState(true);
@@ -72,13 +73,16 @@ export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver
     const fetchDocs = async () => {
       const docs = await getDocuments(caregiver.id)
       const restored = {}
+      const expirations = {}
       docs.forEach(doc => {
         restored[doc.document_type] = {
           name: doc.file_name,
           path: doc.file_path
         }
+        expirations[doc.document_type] = doc.expiration_date ? doc.expiration_date.slice(0, 10) : ''
       })
       setUploads(restored)
+      setDocumentExpirations(expirations)
       setLoadingDocs(false)
     }
     fetchDocs()
@@ -99,7 +103,7 @@ export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver
     setUploading(prev => ({ ...prev, [docId]: true }))
     setErrors(prev => ({ ...prev, [docId]: null }))
 
-    const filePath = await uploadDocument(caregiver.id, caregiver.name, docId, file)
+    const filePath = await uploadDocument(caregiver.id, caregiver.name, docId, file, documentExpirations[docId] || null)
 
     if (filePath) {
       setUploads(prev => ({ ...prev, [docId]: { name: file.name, path: filePath } }))
@@ -110,8 +114,20 @@ export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver
     setUploading(prev => ({ ...prev, [docId]: false }))
   }
 
+  const handleExpirationChange = async (docId, value) => {
+    setDocumentExpirations(prev => ({ ...prev, [docId]: value }))
+    if (uploads[docId]) {
+      await updateDocumentExpiration(caregiver.id, docId, value || null)
+    }
+  }
+
   const handleRemove = (docId) => {
     setUploads(prev => {
+      const updated = { ...prev }
+      delete updated[docId]
+      return updated
+    })
+    setDocumentExpirations(prev => {
       const updated = { ...prev }
       delete updated[docId]
       return updated
@@ -212,6 +228,23 @@ export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver
                         <p className="text-xs text-red-600 mt-1">{error}</p>
                       )}
                     </>
+                  )}
+
+                  {['driversLicense', 'carInsurance', 'socialSecurityCard', 'nursingLicense', 'certifications'].includes(doc.id) && (
+                    <div className="mt-4">
+                      <label htmlFor={`${doc.id}-expiration`} className="text-xs font-semibold mb-1 block text-[#3D5906]">
+                        Expiration Date{doc.id === 'socialSecurityCard' || doc.id === 'certifications' ? ' (optional)' : ''}
+                      </label>
+                      <input
+                        id={`${doc.id}-expiration`}
+                        type="date"
+                        value={documentExpirations[doc.id] || ''}
+                        onChange={(e) => handleExpirationChange(doc.id, e.target.value)}
+                        className={
+                          `w-full rounded-lg px-3 py-2 text-sm bg-white text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-[#577C09]/40 focus:border-[#577C09] ${uploaded ? 'border-[#577C09]' : 'border-border'}`
+                        }
+                      />
+                    </div>
                   )}
                 </div>
               </div>

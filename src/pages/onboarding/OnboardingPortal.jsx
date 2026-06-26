@@ -16,6 +16,7 @@ import OfferLetterPage from './onboarding-pages/OfferLetterPage'
 import CompletedPage from './onboarding-pages/CompletedPage'
 import BloodbornePathogensTraining from './onboarding-pages/BloodbornePathogensTraining'
 import { useOnboardingTimer } from '@/hooks/useOnboardingTimer'
+import { logImportantAction } from '@/lib/logAction'
 
 import { useSaveProgress, loadProgress as loadLocalProgress } from '@/hooks/useOnboardingProgress'
 
@@ -30,7 +31,7 @@ export default function OnboardingPortal() {
     const [searchParams] = useSearchParams();
     const isPreview = searchParams.get('preview') === 'true'
     const { isIdle, getHoursWorked, isActiveTab, setPopupOpen } = useOnboardingTimer(token)
-
+    
     const [caregiver, setCaregiver] = useState(null)
     const [loading, setLoading] = useState(true)
     const [steps, setSteps] = useState([])
@@ -55,7 +56,6 @@ export default function OnboardingPortal() {
         erspApplication: { popupOpened: false, popupClosed: false },
         erspGuide: { confirmed: false }
     })
-    const [timeLogSaved, setTimeLogSaved] = useState(false);
     const [saving, setSaving] = useState(false)
     useSaveProgress(token, activeStep, steps, formData)
 
@@ -115,7 +115,7 @@ export default function OnboardingPortal() {
         fetchCaregiver()
     }, [token])
 
-
+    const { logAction } = logImportantAction(caregiver?.id, caregiver?.name, false);
     // update status to in_progress
     useEffect(() => {
         if (!caregiver) {
@@ -156,7 +156,7 @@ export default function OnboardingPortal() {
     }, [caregiver?.id])
 
     const isNurse = caregiver?.role === 'nurse_prn' || caregiver?.role === "nurse_director";
-
+    
     const saveCoordinates = async (caregiverId, personalInfo) => {
         if (!personalInfo?.streetAddress) return
 
@@ -303,6 +303,13 @@ export default function OnboardingPortal() {
         })
     }
     const handleNext = async () => {
+        if (activeStep == 1) {
+            await logAction('Started Onboarding')
+        }
+        else if (activeStep == steps.length - 1) {
+            await logAction('Completed Onboarding')
+        }
+        await logAction(`Completed Step ${activeStep}`)
         setSaving(true);
 
         const updatedSteps = steps.map(step => {

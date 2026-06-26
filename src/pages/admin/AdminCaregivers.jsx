@@ -467,7 +467,7 @@ export default function AdminCaregivers() {
             <div className="flex items-center justify-between mb-8">
                 <div>
                     <h1 className="text-2xl font-bold">Employees</h1>
-                    <p className="text-muted-foreground">{totalCount} total employees enrolled</p>
+                    <p className="text-muted-foreground">{totalCount} total employees</p>
                 </div>
                 <Button
                     onClick={() => setShowNewDialog(true)}

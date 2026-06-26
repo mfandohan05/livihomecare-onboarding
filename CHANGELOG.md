@@ -1,12 +1,17 @@
 # Changelog
 
-## 1.2.5 - 2026-06-24
+## 1.2.5 - 2026-06-26
 - Added gender marker to employee personal information
 - Added employee ID field to employee personal information
 - Updated dropdowns in New Employee dialog to use Select component
 - Removed some unused state
 - Added ability to cancel onboarding for employees (this will remove the employee from view, but preserve all data)
 - Fixed bug where reattempting quiz after failure would push results twice
+- Added cancelled onboarding count to dashboard
+- Removed time tracking for bloodborne pathogens popup
+- Added logging to audit logs for when caregivers/employees complete a step
+- Added field to support storing expiration dates for caregiver documents in the database
+
 
 ## 1.2.4 - 2026-06-14
 - Fixed bug where start date on table appeared one day behind
