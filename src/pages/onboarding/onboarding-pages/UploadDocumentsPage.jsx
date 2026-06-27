@@ -241,7 +241,7 @@ export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver
                         value={documentExpirations[doc.id] || ''}
                         onChange={(e) => handleExpirationChange(doc.id, e.target.value)}
                         className={
-                          `w-full rounded-lg px-3 py-2 text-sm bg-white text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-[#577C09]/40 focus:border-[#577C09] ${uploaded ? 'border-[#577C09]' : 'border-border'}`
+                          `rounded-lg px-3 py-2 text-sm bg-white text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-[#577C09]/40 focus:border-[#577C09] md:w-full ${uploaded ? 'border-[#577C09]' : 'border-border'}`
                         }
                       />
                     </div>

@@ -33,30 +33,32 @@ function SidebarComponent({ steps, activeStep, setActiveStep, handleNext, caregi
                 </div>
             </SidebarHeader>
             <SidebarContent>
-                {steps.map((step) => (
-                    <SidebarMenuItem key={step.id}>
-                        <SidebarMenuButton
-                            disabled={step.status === 'locked' || isCompleted}
-                            onClick={() => {
-                                if (isCompleted) return
-                                if (step.status !== 'locked') setActiveStep(step.id)
-                            }}
-                            className={
-                                step.id === activeStep
-                                    ? 'bg-[#E8F0D0] text-[#577C09] font-medium'
-                                    : step.status === 'locked'
-                                        ? 'opacity-50 cursor-not-allowed'
-                                        : isCompleted
-                                            ? 'cursor-default'
-                                            : ''
-                            }
-                        >
-                            <step.logo className="w-4 h-4" />
-                            <span className="flex-1">{step.stepName}</span>
-                            {getStatusIcon(step.status)}
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                ))}
+                <SidebarMenu>
+                    {steps.map((step) => (
+                        <SidebarMenuItem key={step.id}>
+                            <SidebarMenuButton
+                                disabled={step.status === 'locked' || isCompleted}
+                                onClick={() => {
+                                    if (isCompleted) return
+                                    if (step.status !== 'locked') setActiveStep(step.id)
+                                }}
+                                className={
+                                    step.id === activeStep
+                                        ? 'bg-[#E8F0D0] text-[#577C09] font-medium'
+                                        : step.status === 'locked'
+                                            ? 'opacity-50 cursor-not-allowed'
+                                            : isCompleted
+                                                ? 'cursor-default'
+                                                : ''
+                                }
+                            >
+                                <step.logo className="w-4 h-4" />
+                                <span className="flex-1">{step.stepName}</span>
+                                {getStatusIcon(step.status)}
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    ))}
+                </SidebarMenu>
             </SidebarContent>
             <SidebarFooter>
                 <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 text-xs text-muted-foreground">
