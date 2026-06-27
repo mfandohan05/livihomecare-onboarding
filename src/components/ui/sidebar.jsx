@@ -426,7 +426,7 @@ function SidebarMenu({
     <ul
       data-slot="sidebar-menu"
       data-sidebar="menu"
-      className={cn("flex w-full min-w-0 flex-col gap-1", className)}
+      className={cn("m-0 flex w-full min-w-0 flex-col gap-3 p-0 list-none", className)}
       {...props} />
   );
 }
@@ -439,7 +439,7 @@ function SidebarMenuItem({
     <li
       data-slot="sidebar-menu-item"
       data-sidebar="menu-item"
-      className={cn("group/menu-item relative", className)}
+      className={cn("group/menu-item relative m-0 list-none", className)}
       {...props} />
   );
 }
