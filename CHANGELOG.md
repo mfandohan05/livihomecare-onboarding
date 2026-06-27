@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.6 - 2026-06-27
+- Fixed bug where completion email was not being sent to admin team
+
 ## 1.2.5 - 2026-06-26
 - Added gender marker to employee personal information
 - Added employee ID field to employee personal information

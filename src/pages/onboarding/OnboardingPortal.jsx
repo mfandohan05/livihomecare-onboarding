@@ -214,6 +214,10 @@ export default function OnboardingPortal() {
                 } else {
                     saveTimeLog(caregiver.id, currentHours, sessionStart);
                 }
+
+                await supabase.functions.invoke('send-completion-email', {
+                    body: { caregiverId: caregiver.id }
+                });
             }
 
             saveLog();
