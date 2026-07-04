@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { Users, Clock, CheckCircle, AlertCircle, XCircle } from 'lucide-react'
 import { job_label } from '@/lib/labelUtils'
+import { useCompany } from '@/context/CompanyContext'
 
-export default function AdminDashboard(primaryColor) {
+export default function AdminDashboard() {
     const navigate = useNavigate()
     const [stats, setStats] = useState({
         total: 0,
@@ -15,12 +16,14 @@ export default function AdminDashboard(primaryColor) {
     })
     const [recentCaregivers, setRecentCaregivers] = useState([])
     const [loading, setLoading] = useState(true)
+    const { companyId } = useCompany();
 
     useEffect(() => {
         const fetchData = async () => {
             const { data: caregivers } = await supabase
                 .from('caregivers')
                 .select('*')
+                .eq('company_id', companyId)
                 .order('created_at', { ascending: false })
 
             if (caregivers) {

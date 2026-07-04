@@ -14,19 +14,15 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { LayoutDashboard, Users, LogOut, ChevronDown, Map, Logs } from 'lucide-react'
-import companyLogo from '@/assets/logo.png'
 import { APP_VERSION } from '@/version'
+import { useCompany } from '@/context/CompanyContext'
 
 export default function AdminLayout({ children }) {
     const navigate = useNavigate()
     const location = useLocation()
     const [adminName, setAdminName] = useState('');
     const [adminRole, setAdminRole] = useState('');
-    const [companyId, setCompanyId] = useState('');
-    const [companyLogoUrl, setCompanyLogoUrl] = useState(null);
-    const [companyName, setCompanyName] = useState('');
-    const [primaryColor, setPrimaryColor] = useState("");
-    const [secondaryColor, setSecondaryColor] = useState("");
+    const { companyName, primaryColor, secondaryColor, logoUrl } = useCompany();
 
     useEffect(() => {
         const fetchAdmin = async () => {
@@ -42,53 +38,10 @@ export default function AdminLayout({ children }) {
             if (data) {
                 setAdminName(data.name);
                 setAdminRole(data.role);
-                setCompanyId(data.company_id);
             }
         }
         fetchAdmin();
     }, [])
-
-    useEffect(() => {
-        if (!companyId) {
-            return;
-        }
-        let cancelled = false;
-
-        const fetchBranding = async () => {
-            const { data, error } = await supabase
-            .from('company_data')
-            .select('logo_path, company_name, primary_color, secondary_bg_color')
-            .eq('company_id', companyId)
-            .single();
-
-            if (cancelled) {
-                return;
-            }
-
-            if (error || !data) {
-                setCompanyLogoUrl(null);
-                setCompanyName("Ready, Set, Onboard!")
-            }
-
-            setCompanyName(data.company_name);
-
-            if (data) {
-                const { data: urlData } = supabase.storage
-                .from('company_assets')
-                .getPublicUrl(data.logo_path);
-                setCompanyLogoUrl(urlData.publicUrl);
-                setPrimaryColor(data.primary_color);
-                setSecondaryColor(data.secondary_bg_color);
-            }
-            else {
-                setCompanyLogoUrl(null);
-            }
-        }
-
-        fetchBranding();
-
-        return () => { cancelled = true}
-    }, [companyId])
 
     useEffect(() => {
         let timeout
@@ -129,11 +82,11 @@ export default function AdminLayout({ children }) {
     const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/')
 
     return (
-        <div className="min-h-screen bg-muted/30" style={{"--primary-color": primaryColor, "--secondary-bg": secondaryColor}}>
+        <div className="min-h-screen bg-muted/30">
             <div className="bg-white border-b border-border px-8 py-3 flex items-center justify-between sticky top-0 z-50">
                 <div className="flex items-center gap-8">
                     <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => navigate('/admin/dashboard')}>
-                        <img src={companyLogoUrl || companyLogo} alt={companyName + " logo"} className="w-[50px]" />
+                        <img src={logoUrl} alt={companyName + " logo"} className="w-[50px] h-[50px] object-contain" />
                         <div>
                             <p className="font-semibold text-sm leading-none">{companyName}</p>
                             <p className="text-xs text-muted-foreground leading-none mt-0.5">Admin Portal v.{APP_VERSION}</p>
@@ -162,7 +115,7 @@ export default function AdminLayout({ children }) {
 
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-md hover:bg-muted">
+                        <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-md hover:bg-muted outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-color)]">
                             <div className="w-7 h-7 rounded-full bg-[var(--primary-color)] flex items-center justify-center text-white text-xs font-medium">
                                 {adminName ? adminName.split(' ').map(n => n[0]).join('').slice(0, 2) : '?'}
                             </div>
@@ -173,7 +126,7 @@ export default function AdminLayout({ children }) {
                     <DropdownMenuContent align="end" className="w-48">
                         <DropdownMenuItem
                             onClick={handleSignOut}
-                            className="flex items-center gap-2 text-red-600 cursor-pointer"
+                            className="flex items-center gap-2 text-red-600 focus:bg-[var(--primary-color)] cursor-pointer"
                         >
                             <LogOut className="w-4 h-4" />
                             Sign out

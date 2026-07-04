@@ -12,13 +12,16 @@ import { Toaster } from './components/ui/sonner';
 import { Navigate } from 'react-router-dom';
 
 import { Outlet } from 'react-router-dom'
+import { CompanyProvider } from './context/CompanyContext';
 
 function AdminLayoutWrapper() {
     return (
         <AdminRoute>
-            <AdminLayout>
-                <Outlet />
-            </AdminLayout>
+            <CompanyProvider>
+                <AdminLayout>
+                    <Outlet />
+                </AdminLayout>
+            </CompanyProvider>
         </AdminRoute>
     )
 }

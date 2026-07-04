@@ -1,7 +1,7 @@
 # Changelog
 
 ## 2.0.0 - 2026-07-03
-- Major update: support for multiple companies added
+- MAJOR UPDATE: support for multiple companies added
 - Updated login screen with new app logo & color scheme
 
 
