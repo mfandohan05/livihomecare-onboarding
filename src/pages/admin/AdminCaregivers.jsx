@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog'
 import { Upload, ChevronDown } from 'lucide-react'
 import { formatPhone } from '@/lib/formUtils'
+import { useCompany } from '@/context/CompanyContext'
 
 const Field = ({ label, id, children, required }) => (
     <div className="space-y-1.5">
@@ -329,6 +330,7 @@ export default function AdminCaregivers() {
     const [loading, setLoading] = useState(true)
     const [page, setPage] = useState(1);
     const [totalCount, setTotalCount] = useState(0)
+    const { companyId } = useCompany();
     const PER_PAGE = 20;
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const SKILL_SECTIONS = [
@@ -377,6 +379,7 @@ export default function AdminCaregivers() {
         let query = supabase
             .from('caregivers')
             .select(`*, caregiver_progress(active_step, completed_steps), caregiver_time_logs(active_seconds, completed)`, { count: 'exact' })
+            .eq('company_id', companyId)
             .order('created_at', { ascending: false })
 
         if (debouncedSearch) query = query.or(`name.ilike.%${debouncedSearch}%,email.ilike.%${debouncedSearch}%`)
@@ -471,7 +474,7 @@ export default function AdminCaregivers() {
                 </div>
                 <Button
                     onClick={() => setShowNewDialog(true)}
-                    className="bg-[#577C09] hover:bg-[#3D5906] text-white"
+                    className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white"
                 >
                     + New Employee
                 </Button>

@@ -8,6 +8,7 @@ export function CompanyProvider({ children }) {
     const [companyName, setCompanyName] = useState('')
     const [primaryColor, setPrimaryColor] = useState(null)
     const [secondaryColor, setSecondaryColor] = useState(null)
+    const [hoverColor, setHoverColor] = useState(null);
     const [logoUrl, setLogoUrl] = useState(null)
     const [loading, setLoading] = useState(true)
 
@@ -38,7 +39,7 @@ export function CompanyProvider({ children }) {
 
             const { data: company, error: companyError } = await supabase
                 .from('company_data')
-                .select('logo_path, company_name, primary_color, secondary_bg_color')
+                .select('logo_path, company_name, primary_color, secondary_bg_color, hover_color')
                 .eq('company_id', admin.company_id)
                 .maybeSingle()
 
@@ -48,6 +49,7 @@ export function CompanyProvider({ children }) {
                 setCompanyName(company.company_name || '')
                 setPrimaryColor(company.primary_color || '#577C09')
                 setSecondaryColor(company.secondary_bg_color || '#E8F0D0')
+                setHoverColor(company.hover_color || '#3D5906')
 
                 if (company.logo_path) {
                     const { data: urlData } = supabase.storage
@@ -67,7 +69,9 @@ export function CompanyProvider({ children }) {
     useEffect(() => {
         if (primaryColor) {
             document.documentElement.style.setProperty('--primary-color', primaryColor);
-            document.documentElement.style.setProperty('--outline', primaryColor);
+        }
+        if (hoverColor) {
+            document.documentElement.style.setProperty('--hover-color', hoverColor);
         }
         if (secondaryColor) {
             document.documentElement.style.setProperty('--secondary-bg', secondaryColor)

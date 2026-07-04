@@ -19,6 +19,9 @@ export default function AdminDashboard() {
     const { companyId } = useCompany();
 
     useEffect(() => {
+        if (!companyId) {
+            return;
+        }
         const fetchData = async () => {
             const { data: caregivers } = await supabase
                 .from('caregivers')
@@ -41,7 +44,7 @@ export default function AdminDashboard() {
             setLoading(false)
         }
         fetchData()
-    }, [])
+    }, [companyId])
 
     const statusColor = (status) => {
         if (status === 'completed') return 'text-[#577C09] bg-[#E8F0D0]'
