@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { useCompany } from '@/context/CompanyContext'
 
 const ACTION_LABELS = {
     viewed_ssn: 'Viewed SSN',
@@ -70,6 +71,7 @@ export default function AdminLogs() {
     const [adminRole, setAdminRole] = useState(null)
     const [checkingRole, setCheckingRole] = useState(true)
     const navigate = useNavigate()
+    const { companyId } = useCompany();
 
     useEffect(() => {
         const checkRole = async () => {
@@ -125,6 +127,7 @@ export default function AdminLogs() {
         let query = supabase
             .from('audit_logs')
             .select('*, admin_users(name)', { count: 'exact' })
+            .eq('company_id', companyId)
             .order('created_at', { ascending: false })
             .range(from, to)
 
@@ -295,7 +298,7 @@ export default function AdminLogs() {
                                         {log.caregiver_name ? (
                                             <button
                                                 onClick={() => log.caregiver_id && window.open(`/admin/employees/${log.caregiver_id}`, '_blank')}
-                                                className="text-[#577C09] hover:underline font-medium"
+                                                className="text-[var(--primary-color)] hover:underline font-medium"
                                             >
                                                 {log.caregiver_name}
                                             </button>

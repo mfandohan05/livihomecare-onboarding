@@ -26,7 +26,7 @@ const Field = ({ label, id, children, required }) => (
     </div>
 )
 
-function NewCaregiverDialog({ open, onClose, onCreated }) {
+function NewCaregiverDialog({ open, onClose, onCreated, companyId }) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
     const [offerLetterFile, setOfferLetterFile] = useState(null)
@@ -94,7 +94,8 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
                 employee_id: form.employee_id || null,
                 job_description: form.job_description,
                 job_duties: form.role === 'other' ? jobDutiesDraft : null,
-                link_expires_at: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString()
+                link_expires_at: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString(),
+                company_id: companyId
             })
             .select()
             .single()
@@ -109,6 +110,7 @@ function NewCaregiverDialog({ open, onClose, onCreated }) {
             admin_id: adminId,
             action: 'created_employee',
             caregiver_name: form.name, 
+            company_id: companyId,
         })
         if (form.role === 'other' && offerLetterFile) {
             const fileExt = offerLetterFile.name.split('.').pop()
@@ -296,7 +298,7 @@ Light housekeeping"
                         <Button
                             onClick={handleSubmit}
                             disabled={!canSave || loading}
-                            className="bg-[#577C09] hover:bg-[#3D5906] text-white disabled:opacity-50"
+                            className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white disabled:opacity-50"
                         >
                             {loading ? 'Creating...' : 'Create Employee'}
                         </Button>
@@ -465,6 +467,7 @@ export default function AdminCaregivers() {
                     setShowNewDialog(false)
                     navigate(`/admin/employees/${newCaregiver.id}`)
                 }}
+                companyId={companyId}
             />
 
             <div className="flex items-center justify-between mb-8">
@@ -493,7 +496,7 @@ export default function AdminCaregivers() {
                 <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="border border-border rounded-lg px-3 py-2 text-sm bg-white"
+                    className="border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[var(--primary-color)]"
                 >
                     <option value="all">All statuses</option>
                     <option value="pending">Pending</option>
@@ -504,7 +507,7 @@ export default function AdminCaregivers() {
                 <select
                     value={roleFilter}
                     onChange={(e) => setRoleFilter(e.target.value)}
-                    className="border border-border rounded-lg px-3 py-2 text-sm bg-white"
+                    className="border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[var(--primary-color)]"
                 >
                     <option value="all">All roles</option>
                     <option value="caregiver">Caregiver</option>
@@ -515,11 +518,11 @@ export default function AdminCaregivers() {
                 <div className="relative" ref={skillDropdownRef}>
                     <button
                         onClick={() => setShowSkillDropdown(prev => !prev)}
-                        className={`flex items-center gap-2 border rounded-lg px-3 py-2 text-sm bg-white transition-colors ${skillFilters.length > 0 ? 'border-[#577C09] text-[#577C09]' : 'border-border text-foreground'}`}
+                        className={`flex items-center gap-2 border rounded-lg px-3 py-2 text-sm bg-white transition-colors ${skillFilters.length > 0 ? 'border-[var(--primary-color)] text-[var(--primary-color)]' : 'border-border text-foreground'}`}
                     >
                         Skills
                         {skillFilters.length > 0 && (
-                            <span className="bg-[#577C09] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                            <span className="bg-[var(--primary-color)] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                                 {skillFilters.length}
                             </span>
                         )}
@@ -560,9 +563,9 @@ export default function AdminCaregivers() {
                                                                 : [...prev, key]
                                                         )
                                                     }}
-                                                    className={`w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors ${isSelected ? 'bg-[#E8F0D0] text-[#577C09]' : 'hover:bg-muted/50'}`}
+                                                    className={`w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors ${isSelected ? 'bg-[var(--secondary-bg-color)] text-[var(--primary-color)]' : 'hover:bg-muted/50'}`}
                                                 >
-                                                    <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${isSelected ? 'bg-[#577C09] border-[#577C09]' : 'border-muted-foreground'}`}>
+                                                    <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${isSelected ? 'bg-[var(--primary-color)] border-[var(--primary-color)]' : 'border-muted-foreground'}`}>
                                                         {isSelected && (
                                                             <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -584,7 +587,7 @@ export default function AdminCaregivers() {
                                         setShowSkillDropdown(false)
                                         setPage(1)
                                     }}
-                                    className="w-full py-2 bg-[#577C09] hover:bg-[#3D5906] text-white rounded-lg text-sm font-medium transition-colors"
+                                    className="w-full py-2 bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white rounded-lg text-sm font-medium transition-colors"
                                 >
                                     Apply {pendingSkills.length > 0 ? `(${pendingSkills.length} skills)` : ''}
                                 </button>
@@ -632,7 +635,7 @@ export default function AdminCaregivers() {
                                     >
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-full bg-[#577C09] flex items-center justify-center text-white text-xs font-medium shrink-0">
+                                                <div className="w-8 h-8 rounded-full bg-[var(--primary-color)] flex items-center justify-center text-white text-xs font-medium shrink-0">
                                                     {caregiver.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                                                 </div>
                                                 <div>

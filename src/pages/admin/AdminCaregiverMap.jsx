@@ -6,6 +6,7 @@ import { Search, MapPin, Navigation, X, ExternalLink } from 'lucide-react'
 import { formatPhone } from '@/lib/formUtils'
 import { job_label } from '@/lib/labelUtils'
 import 'mapbox-gl/dist/mapbox-gl.css'
+import { useCompany } from '@/context/CompanyContext'
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN
 
@@ -54,6 +55,7 @@ export default function AdminCaregiverMap() {
     const PER_PAGE = 10;
     const [driveTime, setDriveTime] = useState(null);
     const [loadingDriveTime, setLoadingDriveTime] = useState(false);
+    const { companyId } = useCompany();
 
     useEffect(() => {
         fetchCaregivers()
@@ -74,6 +76,7 @@ export default function AdminCaregiverMap() {
             .from('caregivers')
             .select('id, name, role, position_title, phone, email, lat, lng')
             .eq('status', 'completed')
+            .eq('company_id', companyId)
 
         if (!caregiverData) { setLoading(false); return }
 
@@ -229,7 +232,7 @@ export default function AdminCaregiverMap() {
                         }}
                         onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
                         placeholder="Enter a client address to find nearest caregivers..."
-                        className="w-full pl-9 pr-4 py-2 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#577C09]/20 focus:border-[#577C09]"
+                        className="w-full pl-9 pr-4 py-2 border border-border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]/20 focus:border-[var(--primary-color)]"
                     />
                     {showSuggestions && suggestions.length > 0 && (
                         <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-border rounded-lg shadow-lg z-50 overflow-hidden">
@@ -249,7 +252,7 @@ export default function AdminCaregiverMap() {
                 <button
                     onClick={handleSearch}
                     disabled={!searchQuery.trim() || searching}
-                    className="px-4 py-2 bg-[#577C09] hover:bg-[#3D5906] text-white rounded-lg text-sm font-medium disabled:opacity-50 transition-colors"
+                    className="px-4 py-2 bg-[var(--primary-color)] hover:bg-[#3D5906] text-white rounded-lg text-sm font-medium disabled:opacity-50 transition-colors"
                 >
                     {searching ? 'Searching...' : 'Search'}
                 </button>
@@ -288,20 +291,20 @@ export default function AdminCaregiverMap() {
                                             zoom: 13
                                         }))
                                     }}
-                                    className={`bg-white rounded-xl border p-4 cursor-pointer transition-colors hover:border-[#577C09] ${selectedCaregiver?.id === caregiver.id
-                                        ? 'border-[#577C09] bg-[#E8F0D0]/50'
+                                    className={`bg-white rounded-xl border p-4 cursor-pointer transition-colors hover:border-[var(--primary-color)] ${selectedCaregiver?.id === caregiver.id
+                                        ? 'border-[var(--primary-color)] bg-[#E8F0D0]/50'
                                         : 'border-border'
                                         }`}
                                 >
                                     <div className="flex items-start gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-[#577C09] flex items-center justify-center text-white text-xs font-medium shrink-0">
+                                        <div className="w-8 h-8 rounded-full bg-[var(--primary-color)] flex items-center justify-center text-white text-xs font-medium shrink-0">
                                             {caregiver.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center justify-between gap-2">
                                                 <p className="font-medium text-sm truncate">{caregiver.name}</p>
                                                 {clientLocation && caregiver.distance !== undefined && (
-                                                    <span className="text-xs font-medium text-[#577C09] shrink-0">
+                                                    <span className="text-xs font-medium text-[var(--primary-color)] shrink-0">
                                                         {caregiver.distance.toFixed(1)} mi
                                                     </span>
                                                 )}
@@ -311,7 +314,7 @@ export default function AdminCaregiverMap() {
                                         </div>
                                     </div>
                                     {clientLocation && index === 0 && page === 1 && (
-                                        <div className="mt-2 text-xs font-medium text-[#577C09] flex items-center gap-1">
+                                        <div className="mt-2 text-xs font-medium text-[var(--primary-color)] flex items-center gap-1">
                                             <Navigation className="w-3 h-3" />
                                             Closest caregiver
                                         </div>
@@ -327,7 +330,7 @@ export default function AdminCaregiverMap() {
                             <button
                                 onClick={() => setPage(prev => prev - 1)}
                                 disabled={page === 1}
-                                className="text-xs text-[#577C09] hover:underline disabled:opacity-30 disabled:no-underline"
+                                className="text-xs text-[var(--primary-color)] hover:underline disabled:opacity-30 disabled:no-underline"
                             >
                                 ← Previous
                             </button>
@@ -337,7 +340,7 @@ export default function AdminCaregiverMap() {
                             <button
                                 onClick={() => setPage(prev => prev + 1)}
                                 disabled={page * PER_PAGE >= sortedCaregivers.length}
-                                className="text-xs text-[#577C09] hover:underline disabled:opacity-30 disabled:no-underline"
+                                className="text-xs text-[var(--primary-color)] hover:underline disabled:opacity-30 disabled:no-underline"
                             >
                                 Next →
                             </button>
@@ -381,8 +384,8 @@ export default function AdminCaregiverMap() {
                                     <div className={`w-8 h-8 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-white text-xs font-bold transition-transform hover:scale-110 ${selectedCaregiver?.id === caregiver.id
                                         ? 'bg-[#3D5906] scale-110'
                                         : clientLocation && index === 0
-                                            ? 'bg-[#577C09]'
-                                            : 'bg-[#577C09]/70'
+                                            ? 'bg-[var(--primary-color)]'
+                                            : 'bg-[var(--primary-color)]/70'
                                         }`}>
                                         {caregiver.name.split(' ')[0][0]}
                                     </div>
@@ -408,7 +411,7 @@ export default function AdminCaregiverMap() {
                                     <p className="text-xs text-muted-foreground capitalize mb-1">{selectedCaregiver.role}</p>
                                     <p className="text-xs text-muted-foreground mb-1">{formatPhone(selectedCaregiver.phone) || '—'}</p>
                                     {clientLocation && (
-                                        <p className="text-xs font-medium text-[#577C09] mb-2">
+                                        <p className="text-xs font-medium text-[var(--primary-color)] mb-2">
                                             {loadingDriveTime ? 'Calculating...' : driveTime
                                                 ? `${driveTime.minutes} min · ${driveTime.miles} mi`
                                                 : selectedCaregiver.distance !== undefined
@@ -419,7 +422,7 @@ export default function AdminCaregiverMap() {
                                     )}
                                     <button
                                         onClick={() => navigate(`/admin/employees/${selectedCaregiver.id}`)}
-                                        className="flex items-center gap-1.5 text-xs text-[#577C09] hover:underline"
+                                        className="flex items-center gap-1.5 text-xs text-[var(--primary-color)] hover:underline"
                                     >
                                         <ExternalLink className="w-3 h-3" />
                                         View profile
