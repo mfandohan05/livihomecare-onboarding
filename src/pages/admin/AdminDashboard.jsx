@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { Users, Clock, CheckCircle, AlertCircle, XCircle } from 'lucide-react'
 import { job_label } from '@/lib/labelUtils'
 
-export default function AdminDashboard() {
+export default function AdminDashboard(primaryColor) {
     const navigate = useNavigate()
     const [stats, setStats] = useState({
         total: 0,

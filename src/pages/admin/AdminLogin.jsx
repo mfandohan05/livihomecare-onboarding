@@ -50,7 +50,7 @@ export default function AdminLogin() {
         <div className="min-h-screen flex items-center justify-center bg-muted/30">
             <div className="w-full max-w-sm">
                 <div className="flex justify-center mb-8">
-                    <img src={companyLogo} alt="Livi Home Care" className="w-[120px]" />
+                    <img src={companyLogo} alt="Ready, Set, Onboard!" className="w-[200px]" />
                 </div>
 
                 <div className="bg-white rounded-xl border border-border p-8 shadow-sm">
@@ -65,7 +65,8 @@ export default function AdminLogin() {
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                placeholder="example@livihomecare.com"
+                                placeholder="example@readysetonboard.com"
+                                className="focus-visible:border-[#08265D] focus-visible:ring-[#08265D]/40"
                                 required
                             />
                         </div>
@@ -77,6 +78,7 @@ export default function AdminLogin() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="••••••••"
+                                className="focus-visible:border-[#08265D] focus-visible:ring-[#08265D]/40"
                                 required
                             />
                         </div>
@@ -88,7 +90,7 @@ export default function AdminLogin() {
                         <Button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-[#577C09] hover:bg-[#3D5906] text-white"
+                            className="w-full bg-[#0A2E73] hover:bg-[#14449C] text-white"
                         >
                             {loading ? 'Signing in...' : 'Sign in'}
                         </Button>
