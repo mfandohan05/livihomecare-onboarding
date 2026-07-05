@@ -360,8 +360,11 @@ export default function AdminCaregivers() {
     }, [search])
 
     useEffect(() => {
+        if (!companyId) {
+            return;
+        }
         fetchCaregivers()
-    }, [page, debouncedSearch, statusFilter, roleFilter, skillFilters])
+    }, [page, debouncedSearch, statusFilter, roleFilter, skillFilters, companyId])
     
     useEffect(() => {
         const handleClickOutside = (e) => {

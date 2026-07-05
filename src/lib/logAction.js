@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
+import { useCompany } from "@/context/CompanyContext";
 
-export function logImportantAction(caregiverId, caregiverName, isAdmin) {
+export function logImportantAction(caregiverId, caregiverName, isAdmin, companyId) {
   const logAction = async (action, metadata = {}) => {
     const {
       data: { session },
@@ -15,6 +16,7 @@ export function logImportantAction(caregiverId, caregiverName, isAdmin) {
         action,
         caregiver_id: caregiverId,
         caregiver_name: caregiverName,
+        company_id: companyId,
         metadata,
       });
     }
@@ -23,6 +25,7 @@ export function logImportantAction(caregiverId, caregiverName, isAdmin) {
             action,
             caregiver_id: caregiverId,
             caregiver_name: caregiverName,
+            company_id: companyId,
             metadata
         })
     }

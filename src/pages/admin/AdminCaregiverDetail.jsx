@@ -15,9 +15,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { formatPhone } from '@/lib/formUtils'
 import { logImportantAction } from '@/lib/logAction'
+import { useCompany } from '@/context/CompanyContext'
 
 const statusColor = (status) => {
-    if (status === 'completed') return 'text-[#577C09] bg-[#E8F0D0]'
+    if (status === 'completed') return 'text-[#577C09] bg-[var(--secondary-bg-color)]'
     if (status === 'in_progress') return 'text-amber-700 bg-amber-50'
     if (status === 'cancelled') return 'text-red-700 bg-red-50'
     return 'text-muted-foreground bg-muted'
@@ -139,6 +140,7 @@ export default function AdminCaregiverDetail() {
     const [cancelPassword, setCancelPassword] = useState('');
     const [cancelError, setCancelError] = useState(null)
     const [cancelLoading, setCancelLoading] = useState(false)
+    const { companyId } = useCompany();
 
     const handleSaveInfo = async () => {
         await supabase
@@ -160,12 +162,15 @@ export default function AdminCaregiverDetail() {
         await logAction('updated_employee_info', changedFields)
     }
 
-    const { logAction } = logImportantAction(id, caregiver?.name, true);
+    const { logAction } = logImportantAction(id, caregiver?.name, true, companyId);
 
 
     useEffect(() => {
+        if (!companyId) {
+            return;
+        }
         fetchAll()
-    }, [id])
+    }, [id, companyId])
 
 
     const fetchAll = async () => {
@@ -175,15 +180,16 @@ export default function AdminCaregiverDetail() {
             { data: progressData },
             { data: timeData },
         ] = await Promise.all([
-            supabase.from('caregivers').select('*').eq('id', id).single(),
-            supabase.from('caregiver_documents').select('*').eq('caregiver_id', id).order('created_at', { ascending: false }),
-            supabase.from('caregiver_progress').select('*, quiz_scores').eq('caregiver_id', id).maybeSingle(),
-            supabase.from('caregiver_time_logs').select('*').eq('caregiver_id', id).eq('completed', true).maybeSingle(),
+            supabase.from('caregivers').select('*').eq('id', id).eq('company_id', companyId).single(),
+            supabase.from('caregiver_documents').select('*').eq('caregiver_id', id).eq('company_id', companyId).order('created_at', { ascending: false }),
+            supabase.from('caregiver_progress').select('*, quiz_scores').eq('caregiver_id', id).eq('company_id', companyId).maybeSingle(),
+            supabase.from('caregiver_time_logs').select('*').eq('caregiver_id', id).eq('company_id', companyId).eq('completed', true).maybeSingle(),
         ])
         const { data: taxData } = await supabase
             .from('caregiver_tax_forms')
             .select('i9_section2_completed_at, i9_section2_completed_by, ssn_encrypted')
             .eq('caregiver_id', id)
+            .eq('company_id', companyId)
             .maybeSingle();
         const { data: { session } } = await supabase.auth.getSession()
         if (session) {
@@ -204,6 +210,7 @@ export default function AdminCaregiverDetail() {
             .from('caregiver_banking')
             .select('id')
             .eq('caregiver_id', id)
+            .eq('company_id', companyId)
             .maybeSingle();
 
         setI9Section2Completed(!!taxData?.i9_section2_completed_at)
@@ -314,12 +321,14 @@ export default function AdminCaregiverDetail() {
                     file_size: file.size,
                     mime_type: file.type,
                 }, { onConflict: 'caregiver_id, document_type' })
+                .eq('company_id', companyId)
             await supabase.from('audit_logs').insert({
                 admin_email: adminEmail,
                 admin_id: adminId,
                 action: 'uploaded_doc_on_behalf',
                 caregiver_id: caregiver.id,
                 caregiver_name: caregiver.name,
+                company_id: companyId,
                 metadata: { "document_type": documentTypeToName[documentType] }
             })
             await fetchAll()
@@ -445,6 +454,7 @@ export default function AdminCaregiverDetail() {
                     last_saved: new Date().toISOString()
                 })
                 .eq('caregiver_id', id)
+                .eq('company_id', companyId)
         }
         else {
             await supabase
@@ -456,12 +466,14 @@ export default function AdminCaregiverDetail() {
                     last_saved: new Date().toISOString()
                 })
                 .eq('caregiver_id', id)
+                .eq('company_id', companyId)
         }
 
         await supabase
             .from('caregivers')
             .update({ status: 'in_progress' })
             .eq('id', id)
+            .eq('company_id', companyId)
         if (stepName === 'Tax Forms' || stepName === 'Tax Forms (W-9)') {
             await supabase.from('caregiver_tax_forms').delete().eq('caregiver_id', id)
             await supabase
@@ -469,6 +481,7 @@ export default function AdminCaregiverDetail() {
                 .delete()
                 .eq('caregiver_id', id)
                 .in('document_type', ['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'])
+                .eq('company_id', companyId)
 
             const taxFiles = documents
                 .filter(d => ['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'].includes(d.document_type))
@@ -486,6 +499,7 @@ export default function AdminCaregiverDetail() {
                 .from('caregiver_documents')
                 .delete()
                 .eq('caregiver_id', id)
+                .eq('company_id', companyId)
                 .not('document_type', 'in', '("i9_completed","w4_completed","w9_completed","nc4ez_completed")')
         }
 
@@ -498,10 +512,10 @@ export default function AdminCaregiverDetail() {
     const handleResetProgress = async () => {
         setResetting(true)
 
-        await supabase.from('caregiver_progress').delete().eq('caregiver_id', id)
-        await supabase.from('caregivers').update({ status: 'pending', link_expires_at: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString() }).eq('id', id)
-        await supabase.from('caregiver_time_logs').delete().eq('caregiver_id', id)
-        await supabase.from('caregiver_tax_forms').delete().eq('caregiver_id', id)
+        await supabase.from('caregiver_progress').delete().eq('caregiver_id', id).eq('company_id', companyId)
+        await supabase.from('caregivers').update({ status: 'pending', link_expires_at: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString() }).eq('id', id).eq('company_id', companyId)
+        await supabase.from('caregiver_time_logs').delete().eq('caregiver_id', id).eq('company_id', companyId)
+        await supabase.from('caregiver_tax_forms').delete().eq('caregiver_id', id).eq('company_id', companyId)
 
         const allDocFiles = documents
             .filter(d => !['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'].includes(d.document_type))
@@ -513,7 +527,7 @@ export default function AdminCaregiverDetail() {
         if (allDocFiles.length > 0) await supabase.storage.from('documents').remove(allDocFiles)
         if (taxPdfFiles.length > 0) await supabase.storage.from('generated-pdfs').remove(taxPdfFiles)
 
-        await supabase.from('caregiver_documents').delete().eq('caregiver_id', id)
+        await supabase.from('caregiver_documents').delete().eq('caregiver_id', id).eq('company_id', companyId)
 
         await logAction('reset_all_progress')
 
@@ -553,13 +567,14 @@ export default function AdminCaregiverDetail() {
             .from('caregiver_documents')
             .delete()
             .eq('caregiver_id', id)
+            .eq('company_id', companyId)
             .not('document_type', 'in', '("i9_completed","w4_completed","w9_completed","nc4ez_completed")')
 
-        await supabase.from('caregiver_progress').delete().eq('caregiver_id', id)
-        await supabase.from('caregiver_time_logs').delete().eq('caregiver_id', id)
-        await supabase.from('caregiver_tax_forms').delete().eq('caregiver_id', id)
-        await supabase.from('caregiver_banking').delete().eq('caregiver_id', id)
-        await supabase.from('caregivers').delete().eq('id', id)
+        await supabase.from('caregiver_progress').delete().eq('caregiver_id', id).eq('company_id', companyId)
+        await supabase.from('caregiver_time_logs').delete().eq('caregiver_id', id).eq('company_id', companyId)
+        await supabase.from('caregiver_tax_forms').delete().eq('caregiver_id', id).eq('company_id', companyId)
+        await supabase.from('caregiver_banking').delete().eq('caregiver_id', id).eq('company_id', companyId)
+        await supabase.from('caregivers').delete().eq('id', id).eq('company_id', companyId)
 
         await logAction('deleted_employee')
 
@@ -767,7 +782,7 @@ export default function AdminCaregiverDetail() {
                                                 key={opt.value}
                                                 onClick={() => setDocType(opt.value)}
                                                 className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${docType === opt.value
-                                                    ? 'bg-[#577C09] text-white border-[#577C09]'
+                                                    ? 'bg-[var(--primary-color)] text-white border-[#577C09]'
                                                     : 'border-border hover:bg-muted'
                                                     }`}
                                             >
@@ -861,7 +876,7 @@ export default function AdminCaregiverDetail() {
                                     <button
                                         type="button"
                                         onClick={() => setI9Form(prev => ({ ...prev, alternativeProcedure: !prev.alternativeProcedure }))}
-                                        className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${i9Form.alternativeProcedure ? 'bg-[#577C09] border-[#577C09]' : 'border-muted-foreground'}`}
+                                        className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${i9Form.alternativeProcedure ? 'bg-[var(--primary-color)] border-[var(--primary-color)]' : 'border-muted-foreground'}`}
                                     >
                                         {i9Form.alternativeProcedure && (
                                             <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -885,7 +900,7 @@ export default function AdminCaregiverDetail() {
                             <Button
                                 onClick={handleSubmit}
                                 disabled={!canSubmit || submitting}
-                                className="bg-[#577C09] hover:bg-[#3D5906] text-white disabled:opacity-50"
+                                className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white disabled:opacity-50"
                             >
                                 {submitting
                                     ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Processing...</>
@@ -935,7 +950,7 @@ export default function AdminCaregiverDetail() {
                             <Button
                                 onClick={handleReauth}
                                 disabled={!reauthPassword || reauthLoading}
-                                className={`${reauthTarget === 'reset' ? 'bg-red-500 hover:bg-red-600' : 'bg-[#577C09] hover:bg-[#3D5906]'} text-white disabled:opacity-50`}
+                                className={`${reauthTarget === 'reset' ? 'bg-red-500 hover:bg-red-600' : 'bg-[var(--primary-color)] hover:bg-[var(--hover-color)]'} text-white disabled:opacity-50`}
                             >
                                 {reauthLoading ? 'Verifying...' : 'Confirm'}
                             </Button>
@@ -1041,7 +1056,7 @@ export default function AdminCaregiverDetail() {
                         </div>
                     </div>
                     <div className="flex gap-3 pt-4">
-                        <Button onClick={handleSaveInfo} className="bg-[#577C09] hover:bg-[#3D5906] text-white">
+                        <Button onClick={handleSaveInfo} className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white">
                             Save Changes
                         </Button>
                         <Button variant="outline" onClick={() => setEditingInfo(false)}>
@@ -1160,7 +1175,7 @@ export default function AdminCaregiverDetail() {
 
             <div className="flex items-start justify-between mb-8">
                 <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-full bg-[#577C09] flex items-center justify-center text-white text-lg font-semibold">
+                    <div className="w-14 h-14 rounded-full bg-[var(--primary-color)] flex items-center justify-center text-white text-lg font-semibold">
                         {caregiver.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                     </div>
                     <div>
@@ -1239,7 +1254,7 @@ export default function AdminCaregiverDetail() {
                                     })
                                     setEditingInfo(true)
                                 }}
-                                className="text-md text-[#577C09] hover:underline"
+                                className="text-md text-[var(--primary-color)] hover:underline"
                             >
                                 <Button variant="outline" size="sm">
                                     <Pencil className="h-4 w-4 mr-2" />
@@ -1362,7 +1377,7 @@ export default function AdminCaregiverDetail() {
                                     </p>
                                     <div className="flex flex-wrap gap-2">
                                         {skills.map(skill => (
-                                            <span key={skill} className="text-xs font-medium px-2.5 py-1 rounded-full bg-[#E8F0D0] text-[#577C09]">
+                                            <span key={skill} className="text-xs font-medium px-2.5 py-1 rounded-full bg-[var(--secondary-bg-color)] text-[var(--primary-color)]">
                                                 {skill}
                                             </span>
                                         ))}
@@ -1414,7 +1429,7 @@ export default function AdminCaregiverDetail() {
                                                 </span>
                                             )}
                                             {['drug_test_policy_signed', 'non_compete_signed', 'orientation_checklist_signed'].includes(doc.document_type) && doc.admin_signed_at && (
-                                                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#E8F0D0] text-[#577C09] shrink-0">
+                                                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--secondary-bg-color)] text-[var(--primary-color)] shrink-0">
                                                     Admin signed
                                                 </span>
                                             )}
@@ -1424,14 +1439,14 @@ export default function AdminCaregiverDetail() {
                                                 </span>
                                             )}
                                             {doc.document_type === 'i9_completed' && i9Section2Completed && (
-                                                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#E8F0D0] text-[#577C09] shrink-0">
+                                                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--secondary-bg-color)] text-[var(--primary-color)] shrink-0">
                                                     Section 2 complete
                                                 </span>
                                             )}
                                         </div>
                                         <button
                                             onClick={() => handleDownload(doc)}
-                                            className="flex items-center gap-1.5 text-xs text-[#577C09] hover:underline"
+                                            className="flex items-center gap-1.5 text-xs text-[var(--primary-color)] hover:underline"
                                         >
                                             <Eye className="w-3.5 h-3.5" />
                                             View Document
@@ -1465,7 +1480,7 @@ export default function AdminCaregiverDetail() {
                                                         Uploading...
                                                     </span>
                                                 ) : (
-                                                    <span className="flex items-center gap-1.5 text-xs text-[#577C09] hover:underline">
+                                                    <span className="flex items-center gap-1.5 text-xs text-[var(--primary-color)] hover:underline">
                                                         <Upload className="w-3.5 h-3.5" />
                                                         {existing ? 'Replace' : 'Upload'}
                                                     </span>
@@ -1498,7 +1513,7 @@ export default function AdminCaregiverDetail() {
                                                         Uploading...
                                                     </span>
                                                 ) : (
-                                                    <span className="flex items-center gap-1.5 text-xs text-[#577C09] hover:underline">
+                                                    <span className="flex items-center gap-1.5 text-xs text-[var(--primary-color)] hover:underline">
                                                         <Upload className="w-3.5 h-3.5" />
                                                         {documents.find(d => d.document_type === 'offer_letter_other') ? 'Replace' : 'Upload'}
                                                     </span>
@@ -1531,7 +1546,7 @@ export default function AdminCaregiverDetail() {
                                                 : <div className="w-4 h-4 rounded-full border-2 border-muted-foreground shrink-0" />
                                             }
                                             <div className="min-w-0">
-                                                <p className={`text-sm font-medium truncate ${isCompleted ? 'text-[#577C09]' : ''}`}>
+                                                <p className={`text-sm font-medium truncate ${isCompleted ? 'text-[var(--primary-color)]' : ''}`}>
                                                     {doc.label}
                                                 </p>
                                                 {isCompleted && doc.id !== 'i9_section2' && (
@@ -1549,7 +1564,7 @@ export default function AdminCaregiverDetail() {
                                         {!isCompleted && caregiverDocExists && (
                                             <button
                                                 onClick={() => { setSignDocumentId(doc.id); setSignDialogOpen(true) }}
-                                                className="text-xs text-[#577C09] hover:underline shrink-0 ml-2"
+                                                className="text-xs text-[var(--primary-color)] hover:underline shrink-0 ml-2"
                                             >
                                                 Sign →
                                             </button>
@@ -1589,7 +1604,7 @@ export default function AdminCaregiverDetail() {
                                         <button
                                             onClick={handleRevealSsn}
                                             disabled={loadingSsn}
-                                            className="flex items-center gap-1.5 text-xs text-[#577C09] hover:underline disabled:opacity-50"
+                                            className="flex items-center gap-1.5 text-xs text-[var(--primary-color)] hover:underline disabled:opacity-50"
                                         >
                                             {loadingSsn ? (
                                                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -1621,7 +1636,7 @@ export default function AdminCaregiverDetail() {
                                     <button
                                         onClick={handleRevealBanking}
                                         disabled={loadingBanking}
-                                        className="flex items-center gap-1.5 text-xs text-[#577C09] hover:underline disabled:opacity-50"
+                                        className="flex items-center gap-1.5 text-xs text-[var(--primary-color)] hover:underline disabled:opacity-50"
                                     >
                                         {loadingBanking ? (
                                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -1667,7 +1682,7 @@ export default function AdminCaregiverDetail() {
                                     <button
                                         onClick={handleResendInvite}
                                         disabled={resending}
-                                        className="flex items-center gap-2 text-sm text-[#577C09] hover:underline disabled:opacity-50"
+                                        className="flex items-center gap-2 text-sm text-[var(--primary-color)] hover:underline disabled:opacity-50"
                                     >
                                         {resending ? (
                                             <><Loader2 className="w-4 h-4 animate-spin" />Sending...</>
@@ -1677,7 +1692,7 @@ export default function AdminCaregiverDetail() {
                                     </button>
                                     {caregiver.token && <button
                                         onClick={openCaregiverView}
-                                        className='flex items-center gap-2 text-sm text-[#577C09] hover:underline'>
+                                        className='flex items-center gap-2 text-sm text-[var(--primary-color)] hover:underline'>
                                         Open Caregiver View
                                     </button>}
                                 </div>
@@ -1695,7 +1710,7 @@ export default function AdminCaregiverDetail() {
                                 <p className="text-sm text-muted-foreground mb-3">Link expired</p>
                                 <button
                                     onClick={handleRegenerateLink}
-                                    className="flex items-center gap-2 text-sm text-[#577C09] hover:underline"
+                                    className="flex items-center gap-2 text-sm text-[var(--primary-color)] hover:underline"
                                     disabled={regenerating}
                                 >
                                     {regenerating ? (
@@ -1750,7 +1765,7 @@ export default function AdminCaregiverDetail() {
                                 <h2 className="font-semibold">Manage Progress</h2>
                                 <button
                                     onClick={() => setManagingProgress(prev => !prev)}
-                                    className="text-xs text-[#577C09] hover:underline"
+                                    className="text-xs text-[var(--primary-color)] hover:underline"
                                 >
                                     {managingProgress ? 'Done' : 'Manage'}
                                 </button>
@@ -1765,7 +1780,7 @@ export default function AdminCaregiverDetail() {
                                         return (
                                             <div
                                                 key={stepId}
-                                                className={`flex items-center justify-between py-2 px-3 rounded-lg ${isLatest && caregiver.status !== 'completed' ? 'bg-[#577C09] text-white' : 'bg-[#E8F0D0]'}`}
+                                                className={`flex items-center justify-between py-2 px-3 rounded-lg ${isLatest && caregiver.status !== 'completed' ? 'bg-[#577C09] text-white' : 'bg-[var(--secondary-bg-color)]'}`}
                                             >
                                                 <div className="flex items-center gap-2">
                                                     <CheckCircle className={`w-4 h-4 ${isLatest && caregiver.status !== 'completed' ? 'text-white' : 'text-[#577C09]'}`} />
@@ -1824,7 +1839,7 @@ export default function AdminCaregiverDetail() {
                                 </div>
                                 <div>
                                     <p className="text-xs text-muted-foreground">Suggested orientation pay</p>
-                                    <p className="text-2xl font-bold text-[#577C09]">${orientationPay}</p>
+                                    <p className="text-2xl font-bold text-[var(--primary-color)]">${orientationPay}</p>
                                 </div>
                                 <div>
                                     <p className="text-xs text-muted-foreground">Started</p>
@@ -1865,7 +1880,7 @@ export default function AdminCaregiverDetail() {
                                             </p>
                                         </div>
                                         <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${section.passedStatus
-                                            ? 'bg-[#E8F0D0] text-[#577C09]'
+                                            ? 'bg-[var(--secondary-bg-color)] text-[#577C09]'
                                             : 'bg-muted text-muted-foreground'
                                             }`}>
                                             {section.passedStatus ? 'Passed' : 'Not passed'}

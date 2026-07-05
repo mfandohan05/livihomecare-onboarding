@@ -98,7 +98,7 @@ export default function AdminDashboard() {
                     <h2 className="font-semibold">Recent Employees</h2>
                     <button
                         onClick={() => navigate('/admin/employees')}
-                        className="text-sm text-[#577C09] hover:underline"
+                        className="text-sm text-[var(--primary-color)] hover:underline cursor-pointer"
                     >
                         View all
                     </button>
@@ -116,7 +116,7 @@ export default function AdminDashboard() {
                                 className="px-6 py-4 flex items-center justify-between hover:bg-muted/30 cursor-pointer transition-colors"
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className="w-9 h-9 rounded-full bg-[#577C09] flex items-center justify-center text-white text-sm font-medium">
+                                    <div className="w-9 h-9 rounded-full bg-[var(--primary-color)] flex items-center justify-center text-white text-sm font-medium">
                                         {caregiver.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                                     </div>
                                     <div>

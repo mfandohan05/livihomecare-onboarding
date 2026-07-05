@@ -100,8 +100,11 @@ export default function AdminLogs() {
     }, [search])
 
     useEffect(() => {
+        if (!companyId) {
+            return;
+        }
         fetchLogs()
-    }, [page, debouncedSearch, actionFilter, adminFilter, dateFrom, dateTo])
+    }, [page, debouncedSearch, actionFilter, adminFilter, dateFrom, dateTo, companyId])
 
     useEffect(() => {
         setPage(1)
@@ -191,7 +194,7 @@ export default function AdminLogs() {
                 <select
                     value={actionFilter}
                     onChange={(e) => setActionFilter(e.target.value)}
-                    className="border border-border rounded-lg px-3 py-2 text-sm bg-white"
+                    className="border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[var(--primary-color)]"
                 >
                     <option value="all">All actions</option>
                     {Object.entries(ACTION_LABELS).map(([value, label]) => (
@@ -201,7 +204,7 @@ export default function AdminLogs() {
                 <select
                     value={adminFilter}
                     onChange={(e) => setAdminFilter(e.target.value)}
-                    className="border border-border rounded-lg px-3 py-2 text-sm bg-white"
+                    className="border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[var(--primary-color)]"
                 >
                     <option value="all">All admins</option>
                     {admins.map(admin => (
@@ -213,13 +216,13 @@ export default function AdminLogs() {
                     type="date"
                     value={dateFrom}
                     onChange={(e) => setDateFrom(e.target.value)}
-                    className="border border-border rounded-lg px-3 py-2 text-sm bg-white"
+                    className="border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[var(--primary-color)]"
                 />
                 <input
                     type="date"
                     value={dateTo}
                     onChange={(e) => setDateTo(e.target.value)}
-                    className="border border-border rounded-lg px-3 py-2 text-sm bg-white"
+                    className="border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[var(--primary-color)]"
                 />
                 {(actionFilter !== 'all' || adminFilter !== 'all' || dateFrom || dateTo || search) && (
                     <button

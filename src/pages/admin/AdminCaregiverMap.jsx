@@ -58,8 +58,11 @@ export default function AdminCaregiverMap() {
     const { companyId } = useCompany();
 
     useEffect(() => {
+        if (!companyId) {
+            return;
+        }
         fetchCaregivers()
-    }, [])
+    }, [companyId])
 
     useEffect(() => {
         const handleClickOutside = (e) => {

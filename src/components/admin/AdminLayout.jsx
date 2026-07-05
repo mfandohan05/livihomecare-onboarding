@@ -89,7 +89,7 @@ export default function AdminLayout({ children }) {
                         <img src={logoUrl} alt={companyName + " logo"} className="w-[50px] h-[50px] object-contain" />
                         <div>
                             <p className="font-semibold text-sm leading-none">{companyName}</p>
-                            <p className="text-xs text-muted-foreground leading-none mt-0.5">Admin Portal v.{APP_VERSION}</p>
+                            <p className="text-xs text-muted-foreground leading-none mt-0.5">RSOnboard Admin Portal v.{APP_VERSION}</p>
                         </div>
                     </div>
 
