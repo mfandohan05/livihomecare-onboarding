@@ -3,7 +3,7 @@ import { supabase } from './supabase'
 export async function getCaregiverByToken(token) {
   const { data, error } = await supabase
     .from('caregivers')
-    .select('*')
+    .select('*, company_id')
     .eq('token', token)
     .maybeSingle()
 
@@ -20,11 +20,12 @@ export async function updateCaregiverStatus(caregiverId, status) {
   if (error) console.error('Error updating status:', error)
 }
 
-export async function saveProgress(caregiverId, activeStep, completedSteps, formData) {
+export async function saveProgress(caregiverId, companyId, activeStep, completedSteps, formData) {
   const { error } = await supabase
     .from('caregiver_progress')
     .upsert({
       caregiver_id: caregiverId,
+      company_id: companyId,
       active_step: activeStep,
       completed_steps: completedSteps,
       form_data: formData,
@@ -47,10 +48,10 @@ export async function loadProgress(caregiverId) {
   return data
 }
 
-export async function uploadDocument(caregiverId, caregiverName, documentType, file, expirationDate = null) {
+export async function uploadDocument(caregiverId, companyId, caregiverName, documentType, file, expirationDate = null) {
   const fileExt = file.name.split('.').pop()
   const sanitizedName = caregiverName.replace(/[^a-zA-Z0-9]/g, '_')
-  const filePath = `${caregiverId}/${sanitizedName}_${documentType}.${fileExt}`
+  const filePath = `${companyId}/${caregiverId}/${sanitizedName}_${documentType}.${fileExt}`
 
   const { error: uploadError } = await supabase.storage
     .from('documents')
@@ -65,6 +66,7 @@ export async function uploadDocument(caregiverId, caregiverName, documentType, f
     .from('caregiver_documents')
     .upsert({
       caregiver_id: caregiverId,
+      company_id: companyId,
       document_type: documentType,
       file_name: `${sanitizedName}_${documentType}.${fileExt}`,
       file_path: filePath,
@@ -105,9 +107,9 @@ export async function getDocuments(caregiverId) {
   return data
 }
 
-export async function saveTaxFormData(caregiverId, formType, data) {
-  const updates = { caregiver_id: caregiverId }
-  
+export async function saveTaxFormData(caregiverId, companyId, formType, data) {
+  const updates = { caregiver_id: caregiverId, company_id: companyId }
+
   if (formType === 'i9') {
     updates.i9_data = {
       lastName: data.lastName,
@@ -165,11 +167,12 @@ export async function saveTaxFormData(caregiverId, formType, data) {
   if (error) console.error('Error saving tax form data:', error)
 }
 
-export async function saveTimeLog(caregiverId, hoursWorked, sessionStart) {
+export async function saveTimeLog(caregiverId, companyId, hoursWorked, sessionStart) {
   const { error } = await supabase
     .from('caregiver_time_logs')
     .insert({
       caregiver_id: caregiverId,
+      company_id: companyId,
       session_start: sessionStart || new Date().toISOString,
       session_end: new Date().toISOString(),
       active_seconds: Math.round(hoursWorked * 3600),

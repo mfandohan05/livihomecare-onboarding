@@ -1,8 +1,9 @@
 # Changelog
 
 ## 2.0.0 - 2026-07-03
-- MAJOR UPDATE: support for multiple companies added
+- MAJOR UPDATE: support for multiple companies added (admin & caregiver side)
 - Updated login screen with new app logo & color scheme
+- Added address autocomplete for address fields in caregiver view
 
 
 ## 1.2.6 - 2026-06-27

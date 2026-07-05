@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { FolderUp, CreditCard, Car, Stethoscope, IdCard, Camera, CheckCircle, Upload, Award, Loader2 } from 'lucide-react'
 import { uploadDocument, updateDocumentExpiration, getDocuments } from '@/lib/caregiver'
 
-export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver }) {
+export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver, companyId }) {
 
   const baseDocs = [
     {
@@ -103,7 +103,7 @@ export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver
     setUploading(prev => ({ ...prev, [docId]: true }))
     setErrors(prev => ({ ...prev, [docId]: null }))
 
-    const filePath = await uploadDocument(caregiver.id, caregiver.name, docId, file, documentExpirations[docId] || null)
+    const filePath = await uploadDocument(caregiver.id, companyId, caregiver.name, docId, file, documentExpirations[docId] || null)
 
     if (filePath) {
       setUploads(prev => ({ ...prev, [docId]: { name: file.name, path: filePath } }))

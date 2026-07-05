@@ -5,8 +5,9 @@ import { Label } from '@/components/ui/label'
 import { UserRound } from 'lucide-react'
 import { formatPhone, formatZip, formatDOB } from '@/lib/formUtils'
 import StateSelect from '@/components/global/StateSelect'
+import AddressAutocompleteField from '@/components/global/AddressAutocompleteField'
 
-export default function PersonalInformationPage({ stepLabel, onNext, initialData, onChange, isPreview }) {
+export default function PersonalInformationPage({ stepLabel, onNext, initialData, onChange, isPreview, companyData }) {
     const [formData, setFormData] = useState(initialData || {
         lastName: '',
         firstName: '',
@@ -41,11 +42,15 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
         secondaryEmergencyRelationship: '',
     })
 
+    const updateField = (field, value) => {
+        setFormData(prev => ({ ...prev, [field]: value}))
+    }
+    
     useEffect(() => {
-  if (initialData && Object.keys(initialData).length > 0) {
-    setFormData(initialData)
-  }
-}, [initialData])
+        if (initialData && Object.keys(initialData).length > 0) {
+            setFormData(initialData)
+        }
+    }, [initialData])
 
     const handleChange = (e) => {
         let value = e.target.value;
@@ -65,13 +70,13 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
         e.preventDefault()
         onNext()
     }
-    
+
     if (isPreview) {
         return (
             <div className="max-w-2xl mx-auto py-8 md:py-16 px-4 md:px-8">
                 <div className="flex items-center gap-2 mb-2">
-                    <UserRound className="w-5 h-5 text-[#577C09]" />
-                    <span className="text-[#577C09] font-medium">{stepLabel}</span>
+                    <UserRound className="w-5 h-5 text-[var(--primary-color)]" />
+                    <span className="text-[var(--primary-color)] font-medium">{stepLabel}</span>
                 </div>
                 <h1 className="text-3xl font-bold mb-2">Personal Information</h1>
                 <div className="border border-border rounded-xl p-8 mt-6 flex items-center justify-center min-h-[200px]">
@@ -84,13 +89,13 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
     return (
         <div className="max-w-2xl mx-auto py-16 px-8">
             <div className="flex items-center gap-2 mb-2">
-                <UserRound className="w-5 h-5 text-[#577C09]" />
-                <span className="text-[#577C09] font-medium">{stepLabel}</span>
+                <UserRound className="w-5 h-5 text-[var(--primary-color)]" />
+                <span className="text-[var(--primary-color)] font-medium">{stepLabel}</span>
             </div>
 
             <h1 className="text-3xl font-bold mb-2">Personal Information</h1>
             <p className="text-muted-foreground mb-8">
-                Please fill out all fields accurately. This information will be kept on file at Livi Home Care.
+                Please fill out all fields accurately. This information will be kept on file at {companyData.company_name}.
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-10">
@@ -124,16 +129,42 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="streetAddress">Street address</Label>
+                            <AddressAutocompleteField 
+                                label="Street Address"
+                                value={formData.streetAddress}
+                                onSelect={(parsed) => {
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        streetAddress: parsed.streetAddress,
+                                        city: parsed.city,
+                                        state: parsed.state,
+                                        zip: parsed.zip,
+                                    }))
+                                }}
+                            />
+                            {/* <Label htmlFor="streetAddress">Street address</Label>
                             <Input
                                 id="streetAddress"
                                 name="streetAddress"
-                                placeholder="123 Main St"
-                                value={formData.streetAddress}
-                                onChange={handleChange}
+                                placeholder="Start typing an address..."
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
                                 required
-                            />
+                            /> */}
                         </div>
+                        {/* {suggestions.length > 0 && (
+                            <ul className="absolute z-10 bg-white border border-border rounded-lg mt-1 shadow-lg max-h-60 overflow-y-auto">
+                                {suggestions.map((feature) => (
+                                    <li
+                                        key={feature.id}
+                                        onClick={() => handleSelectSuggestion(feature)}
+                                        className="px-3 py-2 text-sm cursor-pointer hover:bg-muted"
+                                    >
+                                        {feature.place_name}
+                                    </li>
+                                ))}
+                            </ul>
+                        )} */}
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="space-y-2 col-span-1">
@@ -169,7 +200,7 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                                     value={formData.zip}
                                     onChange={(e) => {
                                         const digits = e.target.value.replace(/\D/g, '').slice(0, 5);
-                                        handleChange({ target: { name: 'zip', value: digits }})
+                                        handleChange({ target: { name: 'zip', value: digits } })
                                     }}
                                     required
                                 />
@@ -248,13 +279,18 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="primaryEmergencyStreetAddress">Street address</Label>
-                            <Input
-                                id="primaryEmergencyStreetAddress"
-                                name="primaryEmergencyStreetAddress"
-                                placeholder="123 Main St"
+                            <AddressAutocompleteField 
+                                label="Street Address"
                                 value={formData.primaryEmergencyStreetAddress}
-                                onChange={handleChange}
+                                onSelect={(parsed) => {
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        primaryEmergencyStreetAddress: parsed.streetAddress,
+                                        primaryEmergencyCity: parsed.city,
+                                        primaryEmergencyState: parsed.state,
+                                        primaryEmergencyZip: parsed.zip,
+                                    }))
+                                }}
                             />
                         </div>
 
@@ -291,7 +327,7 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                                     value={formData.primaryEmergencyZip}
                                     onChange={(e) => {
                                         const digits = e.target.value.replace(/\D/g, '').slice(0, 5);
-                                        handleChange({ target: { name: 'primaryEmergencyZip', value: digits }})
+                                        handleChange({ target: { name: 'primaryEmergencyZip', value: digits } })
                                     }}
                                 />
                             </div>
@@ -380,13 +416,18 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="secondaryEmergencyStreetAddress">Street address</Label>
-                            <Input
-                                id="secondaryEmergencyStreetAddress"
-                                name="secondaryEmergencyStreetAddress"
-                                placeholder="123 Main St"
+                            <AddressAutocompleteField 
+                                label="Street Address"
                                 value={formData.secondaryEmergencyStreetAddress}
-                                onChange={handleChange}
+                                onSelect={(parsed) => {
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        secondaryEmergencyStreetAddress: parsed.streetAddress,
+                                        secondaryEmergencyCity: parsed.city,
+                                        secondaryEmergencyState: parsed.state,
+                                        secondaryEmergencyZip: parsed.zip,
+                                    }))
+                                }}
                             />
                         </div>
 
@@ -423,7 +464,7 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                                     inputMode="numeric"
                                     onChange={(e) => {
                                         const digits = e.target.value.replace(/\D/g, '').slice(0, 5);
-                                        handleChange({ target: { name: 'secondaryEmergencyZip', value: digits }})
+                                        handleChange({ target: { name: 'secondaryEmergencyZip', value: digits } })
                                     }}
                                 />
                             </div>
@@ -484,7 +525,7 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
 
                 <Button
                     type="submit"
-                    className="bg-[#577C09] hover:bg-[#3D5906] text-white px-8"
+                    className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white px-8"
                 >
                     Save & Continue
                 </Button>

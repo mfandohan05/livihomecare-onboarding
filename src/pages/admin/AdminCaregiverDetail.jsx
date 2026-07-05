@@ -1794,7 +1794,7 @@ export default function AdminCaregiverDetail() {
                                         return (
                                             <div
                                                 key={stepId}
-                                                className={`flex items-center justify-between py-2 px-3 rounded-lg ${isLatest && caregiver.status !== 'completed' ? 'bg-[#577C09] text-white' : 'bg-[var(--secondary-bg-color)]'}`}
+                                                className={`flex items-center justify-between py-2 px-3 rounded-lg ${isLatest && caregiver.status !== 'completed' ? 'bg-[#577C09] text-white' : 'bg-[#E8F0D0]'}`}
                                             >
                                                 <div className="flex items-center gap-2">
                                                     <CheckCircle className={`w-4 h-4 ${isLatest && caregiver.status !== 'completed' ? 'text-white' : 'text-[#577C09]'}`} />
