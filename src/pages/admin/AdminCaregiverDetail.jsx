@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import { stepsByRole } from '@/data/steps'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Upload, Eye, EyeOff, Loader2, CheckCircle, Pencil } from 'lucide-react'
 import {
@@ -73,21 +72,6 @@ const docLabel = (type) => {
     return labels[type] || type
 }
 
-const stepFormDataKey = {
-    'Welcome': null,
-    'Upload Documents': 'uploads',
-    'Personal Information': 'personalInfo',
-    'New Hire Orientation': 'orientationQuiz',
-    'Bloodborne Pathogens': 'bloodborne',
-    'Competency Checklist': 'competency',
-    'How to Use eRSP': 'erspGuide',
-    'Forms & Agreements': 'signatures',
-    'Tax Forms': null,
-    'Tax Forms (W-9)': null,
-    'Offer Letter': 'offerLetter',
-    'Completed!': null,
-}
-
 export default function AdminCaregiverDetail() {
     const { id } = useParams()
     const navigate = useNavigate()
@@ -141,6 +125,36 @@ export default function AdminCaregiverDetail() {
     const [cancelError, setCancelError] = useState(null)
     const [cancelLoading, setCancelLoading] = useState(false)
     const { companyId } = useCompany();
+    const [roleSteps, setRoleSteps] = useState([])
+
+    useEffect(() => {
+        if (!companyId || !caregiver?.role) return
+
+        const fetchRoleSteps = async () => {
+            const { data, error } = await supabase
+                .from('onboarding_steps')
+                .select('step_key, step_name, step_order, form_data_key, visible_to_roles')
+                .eq('company_id', companyId)
+                .contains('visible_to_roles', [caregiver.role])
+                .order('step_order')
+
+            if (error || !data) {
+                setRoleSteps([])
+                return
+            }
+
+            const numbered = data.map((step, index) => ({
+                id: index + 1,
+                stepName: step.step_name,
+                stepKey: step.step_key,
+                formDataKey: step.form_data_key,
+            }))
+
+            setRoleSteps(numbered)
+        }
+
+        fetchRoleSteps()
+    }, [companyId, caregiver?.role])
 
     const handleSaveInfo = async () => {
         await supabase
@@ -168,7 +182,7 @@ export default function AdminCaregiverDetail() {
     useEffect(() => {
         if (!companyId) {
             return;
-        }
+        } 
         fetchAll()
     }, [id, companyId])
 
@@ -304,7 +318,7 @@ export default function AdminCaregiverDetail() {
         setUploadingDoc(documentType)
         const fileExt = file.name.split('.').pop()
         const sanitizedName = caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')
-        const filePath = `${id}/${sanitizedName}_${documentType}.${fileExt}`
+        const filePath = `${companyId}/${id}/${sanitizedName}_${documentType}.${fileExt}`
 
         const { error: uploadError } = await supabase.storage
             .from('documents')
@@ -316,10 +330,11 @@ export default function AdminCaregiverDetail() {
                 .upsert({
                     caregiver_id: id,
                     document_type: documentType,
-                    file_name: file.name,
+                    file_name: `${sanitizedName}_${documentType}.${fileExt}`,
                     file_path: filePath,
                     file_size: file.size,
                     mime_type: file.type,
+                    company_id: companyId,
                 }, { onConflict: 'caregiver_id, document_type' })
                 .eq('company_id', companyId)
             await supabase.from('audit_logs').insert({
@@ -434,9 +449,9 @@ export default function AdminCaregiverDetail() {
     const handleDeleteStepProgress = async (stepId) => {
         setDeletingStep(stepId)
 
-        const roleSteps = stepsByRole[caregiver.role] || stepsByRole.caregiver
-        const stepName = roleSteps.find(s => s.id === stepId)?.stepName
-        const formDataKey = stepName ? stepFormDataKey[stepName] : null
+        const step = roleSteps.find(s => s.id === stepId)
+        const stepName = step?.stepName
+        const formDataKey = step?.formDataKey
 
         const updatedCompletedSteps = progress.completed_steps.filter(s => s !== stepId)
         const newActiveStep = stepId;
@@ -596,8 +611,8 @@ export default function AdminCaregiverDetail() {
             return
         }
 
-        await supabase.from('caregivers').update({ status: 'cancelled' }).eq('id', id)
-        await supabase.from('caregivers').update({ token: null, link_expires_at: null }).eq('id', id)
+        await supabase.from('caregivers').update({ status: 'cancelled' }).eq('id', id).eq('company_id', companyId)
+        await supabase.from('caregivers').update({ token: null, link_expires_at: null }).eq('id', id).eq('company_id', companyId)
         await logAction('cancelled_onboarding')
         navigate('/admin/employees')
     }
@@ -1775,7 +1790,6 @@ export default function AdminCaregiverDetail() {
                                 {progress.completed_steps?.length > 0 ? (
                                     [...progress.completed_steps].sort((a, b) => a - b).map((stepId, index, arr) => {
                                         const isLatest = index === arr.length
-                                        const roleSteps = stepsByRole[caregiver.role] || stepsByRole.caregiver
                                         const stepName = roleSteps.find(s => s.id === stepId)?.stepName || `Step ${stepId}`
                                         return (
                                             <div
