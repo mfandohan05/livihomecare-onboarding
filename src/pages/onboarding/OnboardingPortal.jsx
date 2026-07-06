@@ -32,10 +32,7 @@ export default function OnboardingPortal() {
     const isPreview = searchParams.get('preview') === 'true'
     const { isIdle, getHoursWorked, isActiveTab, setPopupOpen } = useOnboardingTimer(token)
 
-
     const [caregiver, setCaregiver] = useState(null)
-    const [companyId, setCompanyId] = useState("");
-    const [companyData, setCompanyData] = useState({});
     const [loading, setLoading] = useState(true)
     const [steps, setSteps] = useState([])
     const [activeStep, setActiveStep] = useState(1)
@@ -84,8 +81,6 @@ export default function OnboardingPortal() {
             setCaregiver(data)
 
             if (data) {
-                setCompanyId(data.company_id)
-
                 const roleSteps = stepsByRole[data.role]
 
                 if (data.status === 'completed') {
@@ -121,7 +116,7 @@ export default function OnboardingPortal() {
         fetchCaregiver()
     }, [token])
 
-    const { logAction } = logImportantAction(caregiver?.id, caregiver?.name, false, companyId);
+    const { logAction } = logImportantAction(caregiver?.id, caregiver?.name, false);
     // update status to in_progress
     useEffect(() => {
         if (!caregiver) {
@@ -211,57 +206,40 @@ export default function OnboardingPortal() {
                         .eq('session_start', sessionStart)
                         .maybeSingle();
 
-                await saveCoordinates(caregiver.id, formData.personalInfo)
-
-                if (existingLog) {
-                    await supabase
-                        .from('caregiver_time_logs')
-                        .update({
-                            active_seconds: totalSeconds,
-                            session_end: new Date().toISOString(),
-                            completed: true
-                        })
-                        .eq('caregiver_id', caregiver.id)
-                        .eq('session_start', sessionStart);
-                } else {
-                    saveTimeLog(caregiver.id, companyId, currentHours, sessionStart);
+                    if (existingLog) {
+                        await supabase
+                            .from('caregiver_time_logs')
+                            .update({
+                                active_seconds: totalSeconds,
+                                session_end: new Date().toISOString(),
+                                completed: true
+                            })
+                            .eq('caregiver_id', caregiver.id)
+                            .eq('session_start', sessionStart);
+                    } else {
+                        await saveTimeLog(caregiver.id, currentHours, sessionStart);
+                    }
+                } catch (e) {
+                    console.error('time log write failed', e)
                 }
 
-                await supabase.functions.invoke('send-completion-email', {
+                try {
+                    await saveCoordinates(caregiver.id, formData.personalInfo)
+                } catch (e) {
+                    console.error('geocoding failed (non-fatal)', e)
+                }
+
+                const { error } = await supabase.functions.invoke('send-completion-email', {
                     body: { caregiverId: caregiver.id }
                 });
                 if (error) console.error('completion email invoke failed', error)
             }
 
-            // saveTimeLog().catch(e => console.error('saveLog crashed', e));
+            saveLog().catch(e => console.error('saveLog crashed', e));
 
         }
     }, [activeStep])
     const prevIsIdle = useRef(isIdle);
-
-    useEffect(() => {
-        if (!companyId) {
-            return;
-        }
-        const loadCompanyInformation = async () => {
-            const { data } = await supabase
-            .from('company_branding')
-            .select('company_name, primary_color, secondary_bg_color, hover_color')
-            .eq('company_id', companyId)
-            .single();
-
-            if (data) {
-                setCompanyData(data);
-                document.documentElement.style.setProperty('--primary-color', data.primary_color)
-                document.documentElement.style.setProperty('--secondary-bg-color', data.secondary_bg_color)
-                document.documentElement.style.setProperty('--hover-color', data.hover_color)
-            }
-
-        }
-
-        loadCompanyInformation();
-        
-    }, [companyId])
     useEffect(() => {
         if (prevIsIdle.current === isIdle) {
             return;
@@ -370,11 +348,9 @@ export default function OnboardingPortal() {
         setActiveStep(prev => prev + 1)
         window.scrollTo({ top: 0, behavior: 'smooth' })
 
-        await saveProgress(caregiver.id, companyId, activeStep + 1, completedStepIds, formData)
+        await saveProgress(caregiver.id, activeStep + 1, completedStepIds, formData)
         setSaving(false)
     }
-
-    
 
     const renderStep = () => {
         const step = steps.find(s => s.id === activeStep)
@@ -382,9 +358,9 @@ export default function OnboardingPortal() {
 
         switch (step.stepName) {
             case 'Welcome':
-                return <WelcomePage caregiver={caregiver} onNext={handleNext} welcomeSteps={welcomeSteps[role]} companyData={companyData} />
+                return <WelcomePage caregiver={caregiver} onNext={handleNext} welcomeSteps={welcomeSteps[role]} />
             case 'Upload Documents':
-                return <UploadDocumentsPage stepLabel={stepLabel} companyId={companyId} onNext={
+                return <UploadDocumentsPage stepLabel={stepLabel} onNext={
                     async () => {
                         await supabase.functions.invoke('send-documents-email', {
                             body: { caregiverId: caregiver.id }
@@ -393,11 +369,11 @@ export default function OnboardingPortal() {
                     }
                 } role={caregiver.role} caregiver={caregiver} />
             case 'Personal Information':
-                return <PersonalInformationPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.personalInfo} onChange={(data) => updateFormData('personalInfo', data)} isPreview={isPreview} companyData={companyData} />
+                return <PersonalInformationPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.personalInfo} onChange={(data) => updateFormData('personalInfo', data)} isPreview={isPreview} />
             case 'New Hire Orientation':
-                return <NewHireOrientationPage caregiverId={caregiver.id} stepLabel={stepLabel} onNext={handleNext} companyId={companyId} initialData={formData.orientationQuiz} onChange={async (data) => {
+                return <NewHireOrientationPage caregiverId={caregiver.id} stepLabel={stepLabel} onNext={handleNext} initialData={formData.orientationQuiz} onChange={async (data) => {
                     updateFormData('orientationQuiz', data)
-                    await saveProgress(caregiver.id, companyId, activeStep, steps.filter(s => s.status === 'completed').map(s => s.id), { ...formData, orientationQuiz: data })
+                    await saveProgress(caregiver.id, activeStep, steps.filter(s => s.status === 'completed').map(s => s.id), { ...formData, orientationQuiz: data })
                 }} />
             case 'Bloodborne Pathogens':
                 return <BloodbornePathogensTraining
@@ -410,7 +386,6 @@ export default function OnboardingPortal() {
                         updateFormData('bloodborne', data)
                         await saveProgress(
                             caregiver.id,
-                            companyId,
                             activeStep,
                             steps.filter(s => s.status === 'completed').map(s => s.id),
                             { ...formData, bloodborne: data }
@@ -422,16 +397,15 @@ export default function OnboardingPortal() {
                     updateFormData('compentency', data)
                     await saveProgress(
                         caregiver.id,
-                        companyId,
                         activeStep,
                         steps.filter(s => s.status === 'completed').map(s => s.id),
                         { ...formData, competency: data }
                     )
                 }} />
             case 'How to Use eRSP':
-                return <ERSPGuidePage stepLabel={stepLabel} onNext={handleNext} initialData={formData.erspGuide} onChange={(data) => updateFormData('erspGuide', data)} companyData={companyData} />
+                return <ERSPGuidePage stepLabel={stepLabel} onNext={handleNext} initialData={formData.erspGuide} onChange={(data) => updateFormData('erspGuide', data)} />
             case 'How to Use SurePayroll':
-                return <SurePayrollGuidePage stepLabel={stepLabel} onNext={handleNext} initialData={formData.surePayroll} onChange={(data) => updateFormData('surePayroll', data)} companyData={companyData}/>
+                return <SurePayrollGuidePage stepLabel={stepLabel} onNext={handleNext} initialData={formData.surePayroll} onChange={(data) => updateFormData('surePayroll', data)} />
             case 'Forms & Agreements':
                 return <FormsApplicationsPage stepLabel={stepLabel} caregiver={caregiver} setSaving={setSaving} onNext={async () => {
                     setSaving(true)
@@ -455,7 +429,6 @@ export default function OnboardingPortal() {
                     updateFormData('formsCompleted', data.completed)
                     await saveProgress(
                         caregiver.id,
-                        companyId,
                         activeStep,
                         steps.filter(s => s.status === 'completed').map(s => s.id),
                         { ...formData, signatures: data.signatures, formsCompleted: data.completed }
@@ -464,13 +437,12 @@ export default function OnboardingPortal() {
                     isPreview={isPreview} />
             case 'Tax Forms':
             case 'Tax Forms (W-9)':
-                return <TaxFormsPage stepLabel={stepLabel} onNext={handleNext} role={isNurse ? 'nurse' : role} caregiver={caregiver} companyId={companyId} setSaving={setSaving} isPreview={isPreview} />
+                return <TaxFormsPage stepLabel={stepLabel} onNext={handleNext} role={isNurse ? 'nurse' : role} caregiver={caregiver} setSaving={setSaving} isPreview={isPreview} />
             case 'Offer Letter':
                 return <OfferLetterPage stepLabel={stepLabel} caregiver={caregiver} onNext={handleNext} initialData={formData.offerLetter} onChange={async (data) => {
                     updateFormData('offerLetter', data)
                     await saveProgress(
                         caregiver.id,
-                        companyId,
                         activeStep,
                         steps.filter(s => s.status === 'completed').map(s => s.id),
                         { ...formData, offerLetter: data }
