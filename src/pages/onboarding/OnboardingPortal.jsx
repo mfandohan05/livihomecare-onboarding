@@ -32,12 +32,14 @@ export default function OnboardingPortal() {
     const isPreview = searchParams.get('preview') === 'true'
     const { isIdle, getHoursWorked, isActiveTab, setPopupOpen } = useOnboardingTimer(token)
 
+
     const [caregiver, setCaregiver] = useState(null)
     const [companyId, setCompanyId] = useState("");
     const [companyData, setCompanyData] = useState({});
     const [loading, setLoading] = useState(true)
     const [steps, setSteps] = useState([])
     const [activeStep, setActiveStep] = useState(1)
+    const hasSavedCompletion = useRef(false);
     const [formData, setFormData] = useState({
         personalInfo: {},
         competency: { checked: {}, lunch: '', dinner: '' },
@@ -163,21 +165,20 @@ export default function OnboardingPortal() {
 
     const saveCoordinates = async (caregiverId, personalInfo) => {
         if (!personalInfo?.streetAddress) return
-
-        const address = `${personalInfo.streetAddress}, ${personalInfo.city}, ${personalInfo.state} ${personalInfo.zip}`
-        const encoded = encodeURIComponent(address)
-
-        const res = await fetch(
-            `https://api.mapbox.com/geocoding/v5/mapbox.places/${encoded}.json?access_token=${import.meta.env.VITE_MAPBOX_TOKEN}&country=US&limit=1`
-        )
-        const data = await res.json()
-
-        if (data.features?.length > 0) {
-            const [lng, lat] = data.features[0].center
-            await supabase
-                .from('caregivers')
-                .update({ lat, lng })
-                .eq('id', caregiverId)
+        try {
+            const address = `${personalInfo.streetAddress}, ${personalInfo.city}, ${personalInfo.state} ${personalInfo.zip}`
+            const encoded = encodeURIComponent(address)
+            const res = await fetch(
+                `https://api.mapbox.com/geocoding/v5/mapbox.places/${encoded}.json?access_token=${import.meta.env.VITE_MAPBOX_TOKEN}&country=US&limit=1`
+            )
+            if (!res.ok) return
+            const data = await res.json()
+            if (data.features?.length > 0) {
+                const [lng, lat] = data.features[0].center
+                await supabase.from('caregivers').update({ lat, lng }).eq('id', caregiverId)
+            }
+        } catch (e) {
+            console.error('saveCoordinates failed', e)
         }
     }
     useEffect(() => {
@@ -186,6 +187,12 @@ export default function OnboardingPortal() {
         }
         const lastStep = steps[steps.length - 1]
         if (activeStep === lastStep.id) {
+            if (activeStep === lastStep.id) {
+                if (hasSavedCompletion.current) {
+                    return;
+                }
+                hasSavedCompletion.current = true;
+            }
             setSteps(prev => prev.map(step =>
                 step.id === lastStep.id ? { ...step, status: 'completed' } : step
             ))
@@ -196,12 +203,13 @@ export default function OnboardingPortal() {
                 const currentHours = getHoursWorked();
                 const totalSeconds = Math.round(currentHours * 3600);
 
-                const { data: existingLog } = await supabase
-                    .from('caregiver_time_logs')
-                    .select('id')
-                    .eq('caregiver_id', caregiver.id)
-                    .eq('session_start', sessionStart)
-                    .maybeSingle();
+                try {
+                    const { data: existingLog } = await supabase
+                        .from('caregiver_time_logs')
+                        .select('id')
+                        .eq('caregiver_id', caregiver.id)
+                        .eq('session_start', sessionStart)
+                        .maybeSingle();
 
                 await saveCoordinates(caregiver.id, formData.personalInfo)
 
@@ -222,9 +230,10 @@ export default function OnboardingPortal() {
                 await supabase.functions.invoke('send-completion-email', {
                     body: { caregiverId: caregiver.id }
                 });
+                if (error) console.error('completion email invoke failed', error)
             }
 
-            saveLog();
+            // saveTimeLog().catch(e => console.error('saveLog crashed', e));
 
         }
     }, [activeStep])
