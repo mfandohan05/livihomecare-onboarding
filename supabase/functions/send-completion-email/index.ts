@@ -18,13 +18,13 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
-    const { data: caregiver } = await supabase
+    const { data: caregiver, error: cgErr } = await supabase
       .from('caregivers')
       .select('name, role, position_title, pay_rate')
       .eq('id', caregiverId)
       .single()
 
-    if (!caregiver) throw new Error('Caregiver not found')
+    if (!caregiver || cgErr) throw new Error(`Caregiver lookup failed: ${cgErr?.message ?? 'not found'}`)
 
     const { data: timeLog } = await supabase
       .from('caregiver_time_logs')
@@ -95,6 +95,7 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
+    console.error('send-completion-email failed:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

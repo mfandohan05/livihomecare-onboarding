@@ -2,6 +2,8 @@
 
 ## 1.2.7 - 2026-07-05
 - Added support for uploading criminal background check results, as well as NC Health Care Personnel Registry Check
+- Fixed bug causing completion email to not be sent
+- Fixed bug causing overcounting time
 
 
 ## 1.2.6 - 2026-06-27

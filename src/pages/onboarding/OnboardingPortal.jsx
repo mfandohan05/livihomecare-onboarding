@@ -31,11 +31,12 @@ export default function OnboardingPortal() {
     const [searchParams] = useSearchParams();
     const isPreview = searchParams.get('preview') === 'true'
     const { isIdle, getHoursWorked, isActiveTab, setPopupOpen } = useOnboardingTimer(token)
-    
+
     const [caregiver, setCaregiver] = useState(null)
     const [loading, setLoading] = useState(true)
     const [steps, setSteps] = useState([])
     const [activeStep, setActiveStep] = useState(1)
+    const hasSavedCompletion = useRef(false);
     const [formData, setFormData] = useState({
         personalInfo: {},
         competency: { checked: {}, lunch: '', dinner: '' },
@@ -136,7 +137,7 @@ export default function OnboardingPortal() {
         if (!localStorage.getItem(key)) {
             localStorage.setItem(key, new Date().toISOString())
         }
-        
+
         const restoreTimeFromDB = async () => {
             const sessionStart = localStorage.getItem(key);
             const { data: existingLog } = await supabase
@@ -145,35 +146,34 @@ export default function OnboardingPortal() {
                 .eq('caregiver_id', caregiver.id)
                 .eq('session_start', sessionStart)
                 .maybeSingle();
-            
+
             if (existingLog && existingLog.active_seconds) {
                 const milliseconds = existingLog.active_seconds * 1000;
                 localStorage.setItem(`livi_time_${token}`, milliseconds);
             }
         }
-        
+
         restoreTimeFromDB();
     }, [caregiver?.id])
 
     const isNurse = caregiver?.role === 'nurse_prn' || caregiver?.role === "nurse_director";
-    
+
     const saveCoordinates = async (caregiverId, personalInfo) => {
         if (!personalInfo?.streetAddress) return
-
-        const address = `${personalInfo.streetAddress}, ${personalInfo.city}, ${personalInfo.state} ${personalInfo.zip}`
-        const encoded = encodeURIComponent(address)
-
-        const res = await fetch(
-            `https://api.mapbox.com/geocoding/v5/mapbox.places/${encoded}.json?access_token=${import.meta.env.VITE_MAPBOX_TOKEN}&country=US&limit=1`
-        )
-        const data = await res.json()
-
-        if (data.features?.length > 0) {
-            const [lng, lat] = data.features[0].center
-            await supabase
-                .from('caregivers')
-                .update({ lat, lng })
-                .eq('id', caregiverId)
+        try {
+            const address = `${personalInfo.streetAddress}, ${personalInfo.city}, ${personalInfo.state} ${personalInfo.zip}`
+            const encoded = encodeURIComponent(address)
+            const res = await fetch(
+                `https://api.mapbox.com/geocoding/v5/mapbox.places/${encoded}.json?access_token=${import.meta.env.VITE_MAPBOX_TOKEN}&country=US&limit=1`
+            )
+            if (!res.ok) return
+            const data = await res.json()
+            if (data.features?.length > 0) {
+                const [lng, lat] = data.features[0].center
+                await supabase.from('caregivers').update({ lat, lng }).eq('id', caregiverId)
+            }
+        } catch (e) {
+            console.error('saveCoordinates failed', e)
         }
     }
     useEffect(() => {
@@ -182,6 +182,12 @@ export default function OnboardingPortal() {
         }
         const lastStep = steps[steps.length - 1]
         if (activeStep === lastStep.id) {
+            if (activeStep === lastStep.id) {
+                if (hasSavedCompletion.current) {
+                    return;
+                }
+                hasSavedCompletion.current = true;
+            }
             setSteps(prev => prev.map(step =>
                 step.id === lastStep.id ? { ...step, status: 'completed' } : step
             ))
@@ -191,36 +197,45 @@ export default function OnboardingPortal() {
                 const sessionStart = localStorage.getItem(`livi_session_start_${token}`);
                 const currentHours = getHoursWorked();
                 const totalSeconds = Math.round(currentHours * 3600);
-                
-                const { data: existingLog } = await supabase
-                    .from('caregiver_time_logs')
-                    .select('id')
-                    .eq('caregiver_id', caregiver.id)
-                    .eq('session_start', sessionStart)
-                    .maybeSingle();
 
-                await saveCoordinates(caregiver.id, formData.personalInfo)
-
-                if (existingLog) {
-                    await supabase
+                try {
+                    const { data: existingLog } = await supabase
                         .from('caregiver_time_logs')
-                        .update({
-                            active_seconds: totalSeconds,
-                            session_end: new Date().toISOString(),
-                            completed: true
-                        })
+                        .select('id')
                         .eq('caregiver_id', caregiver.id)
-                        .eq('session_start', sessionStart);
-                } else {
-                    saveTimeLog(caregiver.id, currentHours, sessionStart);
+                        .eq('session_start', sessionStart)
+                        .maybeSingle();
+
+                    if (existingLog) {
+                        await supabase
+                            .from('caregiver_time_logs')
+                            .update({
+                                active_seconds: totalSeconds,
+                                session_end: new Date().toISOString(),
+                                completed: true
+                            })
+                            .eq('caregiver_id', caregiver.id)
+                            .eq('session_start', sessionStart);
+                    } else {
+                        await saveTimeLog(caregiver.id, currentHours, sessionStart);
+                    }
+                } catch (e) {
+                    console.error('time log write failed', e)
                 }
 
-                await supabase.functions.invoke('send-completion-email', {
+                try {
+                    await saveCoordinates(caregiver.id, formData.personalInfo)
+                } catch (e) {
+                    console.error('geocoding failed (non-fatal)', e)
+                }
+
+                const { error } = await supabase.functions.invoke('send-completion-email', {
                     body: { caregiverId: caregiver.id }
                 });
+                if (error) console.error('completion email invoke failed', error)
             }
 
-            saveLog();
+            saveLog().catch(e => console.error('saveLog crashed', e));
 
         }
     }, [activeStep])
