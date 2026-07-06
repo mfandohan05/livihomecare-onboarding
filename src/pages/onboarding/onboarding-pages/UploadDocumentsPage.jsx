@@ -141,8 +141,8 @@ export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver
   return (
     <div className="max-w-2xl mx-auto py-16 px-8">
       <div className="flex items-center gap-2 mb-2">
-        <FolderUp className="w-5 h-5 text-[#577C09]" />
-        <span className="text-[#577C09] font-medium">{stepLabel}</span>
+        <FolderUp className="w-5 h-5 text-[var(--primary-color)]" />
+        <span className="text-[var(--primary-color)] font-medium">{stepLabel}</span>
       </div>
 
       <h1 className="text-3xl font-bold mb-2">Upload Documents</h1>
@@ -164,14 +164,14 @@ export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver
               key={doc.id}
               className={`border rounded-lg p-4 transition-colors ${
                 uploaded
-                  ? 'border-[#577C09] bg-[#E8F0D0]'
+                  ? 'border-[var(--primary-color)] bg-[var(--secondary-bg-color)]'
                   : error
                   ? 'border-red-300 bg-red-50'
                   : 'border-border bg-background'
               }`}
             >
               <div className="flex items-start gap-4">
-                <div className={`p-2 rounded-md ${uploaded ? 'bg-[#577C09]' : 'bg-muted'}`}>
+                <div className={`p-2 rounded-md ${uploaded ? 'bg-[var(--primary-color)]' : 'bg-muted'}`}>
                   <Icon className={`w-5 h-5 ${uploaded ? 'text-white' : 'text-muted-foreground'}`} />
                 </div>
 
@@ -188,7 +188,7 @@ export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver
                       </span>
                     )}
                     {uploaded && (
-                      <CheckCircle className="w-4 h-4 text-[#577C09] ml-auto" />
+                      <CheckCircle className="w-4 h-4 text-[var(--primary-color)] ml-auto" />
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground mb-3">{doc.description}</p>
@@ -200,7 +200,7 @@ export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver
                     </div>
                   ) : uploaded ? (
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-[#577C09] font-medium truncate max-w-[200px]">
+                      <span className="text-xs text-[var(--primary-color)] font-medium truncate max-w-[200px]">
                         {uploaded.name}
                       </span>
                       <button
@@ -232,7 +232,7 @@ export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver
 
                   {['driversLicense', 'carInsurance', 'socialSecurityCard', 'nursingLicense', 'certifications'].includes(doc.id) && (
                     <div className="mt-4">
-                      <label htmlFor={`${doc.id}-expiration`} className="text-xs font-semibold mb-1 block text-[#3D5906]">
+                      <label htmlFor={`${doc.id}-expiration`} className="text-xs font-semibold mb-1 block text-[var(--hover-color)]">
                         Expiration Date{doc.id === 'socialSecurityCard' || doc.id === 'certifications' ? ' (optional)' : ''}
                       </label>
                       <input
@@ -262,7 +262,7 @@ export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver
       <Button
         onClick={onNext}
         disabled={!allRequiredUploaded || anyUploading}
-        className="bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {anyUploading ? (
           <span className="flex items-center gap-2">

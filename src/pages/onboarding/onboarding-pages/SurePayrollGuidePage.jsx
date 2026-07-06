@@ -90,7 +90,7 @@ const sections = [
     },
 ]
 
-export default function SurePayrollGuidePage({ stepLabel, onNext, initialData, onChange }) {
+export default function SurePayrollGuidePage({ stepLabel, onNext, initialData, onChange, companyData }) {
     const [expanded, setExpanded] = useState({ overview: true, web: false, app: false })
     const [confirmed, setConfirmed] = useState(initialData?.confirmed || false)
 
@@ -105,12 +105,12 @@ export default function SurePayrollGuidePage({ stepLabel, onNext, initialData, o
     return (
         <div className="max-w-2xl mx-auto py-8 md:py-16 px-4 md:px-8">
             <div className="flex items-center gap-2 mb-2">
-                <DollarSign className="w-5 h-5 text-[#577C09]" />
-                <span className="text-[#577C09] font-medium">{stepLabel}</span>
+                <DollarSign className="w-5 h-5 text-[var(--primary-color)]" />
+                <span className="text-[var(--primary-color)] font-medium">{stepLabel}</span>
             </div>
             <h1 className="text-3xl font-bold mb-2">SurePayroll for Employees</h1>
             <p className="text-muted-foreground mb-8">
-                As a Livi Home Care employee, you will use SurePayroll to view your paycheck
+                As a {companyData.company_name} employee, you will use SurePayroll to view your paycheck
                 stubs and tax information. You can access your account securely 24/7 through
                 any web browser or the dedicated mobile app on iOS or Android.
             </p>
@@ -127,8 +127,8 @@ export default function SurePayrollGuidePage({ stepLabel, onNext, initialData, o
                                 className="w-full flex items-center justify-between px-4 md:px-6 py-4 hover:bg-muted/50 transition-colors"
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-lg bg-[#E8F0D0]">
-                                        <Icon className="w-4 h-4 text-[#577C09]" />
+                                    <div className="p-2 rounded-lg bg-[var(--secondary-bg-color)]">
+                                        <Icon className="w-4 h-4 text-[var(--primary-color)]" />
                                     </div>
                                     <span className="font-medium text-sm">{section.title}</span>
                                 </div>
@@ -148,7 +148,7 @@ export default function SurePayrollGuidePage({ stepLabel, onNext, initialData, o
                                                     <li key={j} className="text-sm leading-relaxed flex items-start gap-2">
                                                         <span
                                                             className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0"
-                                                            style={{ background: step.warning ? '#8C5C2B' : '#577C09' }}
+                                                            style={{ background: step.warning ? '#8C5C2B' : 'var(--primary-color)' }}
                                                         />
                                                         <span className={step.warning ? 'text-amber-800' : 'text-foreground'}>
                                                             {item}
@@ -182,7 +182,7 @@ export default function SurePayrollGuidePage({ stepLabel, onNext, initialData, o
                     onClick={handleConfirm}
                     className="flex items-start gap-3 w-full text-left"
                 >
-                    <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${confirmed ? 'bg-[#577C09] border-[#577C09]' : 'border-muted-foreground'}`}>
+                    <div className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${confirmed ? 'bg-[var(--primary-color)] border-[var(--primary-color)]' : 'border-muted-foreground'}`}>
                         {confirmed && (
                             <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -205,7 +205,7 @@ export default function SurePayrollGuidePage({ stepLabel, onNext, initialData, o
             <Button
                 onClick={onNext}
                 disabled={!confirmed}
-                className="bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-[var(--primary-color)] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 Save & Continue
             </Button>

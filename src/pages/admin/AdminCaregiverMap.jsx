@@ -207,6 +207,11 @@ export default function AdminCaregiverMap() {
                     <h1 className="text-2xl font-bold">Caregiver Map</h1>
                     <p className="text-muted-foreground">
                         {caregivers.length} caregivers with addresses on file
+                        {caregivers.length === 0 && 
+                            <div className='text-[12px]'>
+                                Note: An employee must complete onboarding before they appear in this list.
+                            </div>
+                        }
                     </p>
                 </div>
             </div>

@@ -6,7 +6,7 @@ import companyLogo from '@/assets/logo.png';
 import { APP_VERSION } from "@/version";
 
 const getStatusIcon = (status) => {
-    if (status === "completed") return <CircleCheck className="w-4 h-4 text-[#577C09]" />
+    if (status === "completed") return <CircleCheck className="w-4 h-4 text-[var(--primary-color)]" />
     if (status === "locked") return <Lock className="w-4 h-4 text-muted-foreground" />
     return null
 }
@@ -44,7 +44,7 @@ function SidebarComponent({ steps, activeStep, setActiveStep, handleNext, caregi
                                 }}
                                 className={
                                     step.id === activeStep
-                                        ? 'bg-[#E8F0D0] text-[#577C09] font-medium'
+                                        ? 'bg-[var(--secondary-bg-color)] text-[var(--primary-color)] font-medium'
                                         : step.status === 'locked'
                                             ? 'opacity-50 cursor-not-allowed'
                                             : isCompleted
@@ -70,7 +70,7 @@ function SidebarComponent({ steps, activeStep, setActiveStep, handleNext, caregi
                         </>
                     ) : (
                         <>
-                            <Clock className="w-3 h-3 text-[#577C09] shrink-0" />
+                            <Clock className="w-3 h-3 text-[var(--primary-color)] shrink-0" />
                             <span>Onboarding time is being recorded</span>
                         </>
                     )}
