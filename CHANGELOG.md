@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.7 - 2026-07-05
+- Added support for uploading criminal background check results, as well as NC Health Care Personnel Registry Check
+
+
 ## 1.2.6 - 2026-06-27
 - Fixed bug where completion email was not being sent to admin team
 - Fixed bug where on mobile UI, exp date field was too large

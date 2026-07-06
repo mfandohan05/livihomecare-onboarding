@@ -67,7 +67,9 @@ const docLabel = (type) => {
         hep_b_declination_signed: 'Hep B Declination (Signed)',
         offer_letter_generated: "Generated Offer Letter",
         direct_deposit_authorization: 'Direct Deposit Authorization',
-        job_description: "Job Description Form"
+        job_description: "Job Description Form",
+        "criminal-background-results": "Criminal Background Check Results",
+        "nc-healthcare-personnel-check": "NC Health Care Personnel Registry Check"
     }
     return labels[type] || type
 }
@@ -290,7 +292,9 @@ export default function AdminCaregiverDetail() {
         "direct_deposit_authorization": 'Direct Deposit Authorization',
         "wotc_disclosure": 'WOTC Disclosure Form',
         "reference_check": 'Reference Check',
-        "job_description": "Job Description Form"
+        "job_description": "Job Description Form",
+        "criminal-background-results": "Criminal Background Check Results",
+        "nc-healthcare-personnel-check": "NC Health Care Personnel Registry Check"
     }
 
     const handleUpload = async (documentType, file) => {
@@ -612,8 +616,8 @@ export default function AdminCaregiverDetail() {
     const isNurse = caregiver.role === 'nurse_prn' || caregiver.role === 'nurse_director'
     const isCancelled = caregiver.status === 'cancelled'
     const uploadableDocs = isNurse
-        ? ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'nursingLicense', 'bloodbornePathogens', 'certifications']
-        : ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'bloodbornePathogens', 'certifications']
+        ? ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'nursingLicense', 'bloodbornePathogens', 'certifications', 'criminal-background-results', 'nc-healthcare-personnel-check']
+        : ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'bloodbornePathogens', 'certifications', 'criminal-background-results', 'nc-healthcare-personnel-check']
     const groupedSkills = Object.entries(competency?.checked || {})
         .filter(([_, checked]) => checked)
         .reduce((acc, [key]) => {
