@@ -1,7 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://app.livihomecare.com',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
         'Authorization': `Bearer ${Deno.env.get('RESEND_API_KEY')}`,
       },
       body: JSON.stringify({
-        from: 'Livi Home Care <onboarding@resend.dev>',
+        from: 'Livi Home Care Onboarding System <noreply@livihomecare.com>',
         to: caregiver.email,
         subject: 'Welcome to Livi Home Care — Complete Your Onboarding',
         html: `

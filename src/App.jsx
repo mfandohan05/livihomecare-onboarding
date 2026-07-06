@@ -10,6 +10,7 @@ import AdminLogs from './pages/admin/AdminLogs';
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from './components/ui/sonner';
 import { Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
 
 import { Outlet } from 'react-router-dom'
 import { CompanyProvider } from './context/CompanyContext';

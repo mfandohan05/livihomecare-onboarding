@@ -319,7 +319,7 @@ function NurseDirectorAgreement({ caregiver }) {
         <div>
           <p className="font-medium">Pay Rate:</p>
           <p className="text-muted-foreground">
-            ${caregiver.pay_rate ? `${caregiver.pay_rate}.00` : '_______.00'} per hour
+            ${caregiver.pay_rate ? `${caregiver.pay_rate}` : '_______.00'} per hour
           </p>
         </div>
         <div>

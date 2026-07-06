@@ -238,8 +238,8 @@ function NewCaregiverDialog({ open, onClose, onCreated, companyId }) {
                                     </SelectContent>
                                 </Select>
                             </Field>
-                            <Field label="Start date" id="start_date">
-                                <Input id="start_date" type="date" value={form.start_date} onChange={set('start_date')} />
+                            <Field label="Start date" id="start_date" required>
+                                <Input id="start_date" type="date" value={form.start_date} onChange={set('start_date')}  />
                             </Field>
                         </div>
                     </div>
