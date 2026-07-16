@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
-import { stepsByRole } from '@/data/steps'
 import { welcomeSteps } from '@/data/steps'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import SidebarComponent from '@/components/global/SidebarComponent'
@@ -26,13 +25,66 @@ import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import SurePayrollGuidePage from './onboarding-pages/SurePayrollGuidePage'
 
+import {
+    Heart,
+    FolderUp,
+    UserRound,
+    DollarSign,
+    GraduationCap,
+    ClipboardCheck,
+    MonitorPlay,
+    ScrollText,
+    FileText,
+    FileSignature,
+    PartyPopper,
+    HeartPulse
+} from "lucide-react";
+
+const stepIcons = {
+    welcome: Heart,
+    upload_documents: FolderUp,
+    personal_information: UserRound,
+    orientation: GraduationCap,
+    competency_checklist: ClipboardCheck,
+    ersp_guide: MonitorPlay,
+    surepayroll_guide: DollarSign,
+    forms_agreements: ScrollText,
+    tax_forms: FileText,
+    offer_letter: FileSignature,
+    bloodborne_pathogens: HeartPulse,
+    completed: PartyPopper,
+}
+
+const makeSteps = (stepList) =>
+    stepList.map((step, index) => ({
+        ...step,
+        status: index === 0 ? 'active' : 'locked',
+    }))
+
+const fetchRoleSteps = async (companyId, role) => {
+    const { data, error } = await supabase
+        .from('onboarding_steps')
+        .select('step_key, step_name, step_order, form_data_key, visible_to_roles')
+        .eq('company_id', companyId)
+        .contains('visible_to_roles', [role])
+        .order('step_order')
+
+    if (error || !data) return []
+
+    return data.map((step, index) => ({
+        id: index + 1,
+        stepName: step.step_name,
+        stepKey: step.step_key,
+        formDataKey: step.form_data_key,
+        logo: stepIcons[step.step_key] || Heart,
+    }))
+}
+
 export default function OnboardingPortal() {
     const { token } = useParams()
     const [searchParams] = useSearchParams();
     const isPreview = searchParams.get('preview') === 'true'
     const { isIdle, getHoursWorked, isActiveTab, setPopupOpen } = useOnboardingTimer(token)
-
-
     const [caregiver, setCaregiver] = useState(null)
     const [companyId, setCompanyId] = useState("");
     const [companyData, setCompanyData] = useState({});
@@ -61,6 +113,7 @@ export default function OnboardingPortal() {
         erspGuide: { confirmed: false }
     })
     const [saving, setSaving] = useState(false)
+    const [roleStepsTemplate, setRoleStepsTemplate] = useState([]);
     useSaveProgress(token, activeStep, steps, formData)
 
     useEffect(() => {
@@ -86,7 +139,16 @@ export default function OnboardingPortal() {
             if (data) {
                 setCompanyId(data.company_id)
 
-                const roleSteps = stepsByRole[data.role]
+                const template = await fetchRoleSteps(data.company_id, data.role)
+                setRoleStepsTemplate(template)
+
+                if (template.length === 0) {
+                    setCaregiver(null)
+                    setLoading(false)
+                    return
+                }
+
+                const roleSteps = makeSteps(template)
 
                 if (data.status === 'completed') {
                     setSteps(roleSteps.map(step => ({ ...step, status: 'completed' })))
@@ -122,7 +184,6 @@ export default function OnboardingPortal() {
     }, [token])
 
     const { logAction } = logImportantAction(caregiver?.id, caregiver?.name, false, companyId);
-    // update status to in_progress
     useEffect(() => {
         if (!caregiver) {
             return
@@ -187,12 +248,11 @@ export default function OnboardingPortal() {
         }
         const lastStep = steps[steps.length - 1]
         if (activeStep === lastStep.id) {
-            if (activeStep === lastStep.id) {
-                if (hasSavedCompletion.current) {
-                    return;
-                }
-                hasSavedCompletion.current = true;
+            if (hasSavedCompletion.current) {
+                return;
             }
+            hasSavedCompletion.current = true;
+
             setSteps(prev => prev.map(step =>
                 step.id === lastStep.id ? { ...step, status: 'completed' } : step
             ))
@@ -211,30 +271,40 @@ export default function OnboardingPortal() {
                         .eq('session_start', sessionStart)
                         .maybeSingle();
 
-                await saveCoordinates(caregiver.id, formData.personalInfo)
-
-                if (existingLog) {
-                    await supabase
-                        .from('caregiver_time_logs')
-                        .update({
-                            active_seconds: totalSeconds,
-                            session_end: new Date().toISOString(),
-                            completed: true
-                        })
-                        .eq('caregiver_id', caregiver.id)
-                        .eq('session_start', sessionStart);
-                } else {
-                    saveTimeLog(caregiver.id, companyId, currentHours, sessionStart);
+                    if (existingLog) {
+                        await supabase
+                            .from('caregiver_time_logs')
+                            .update({
+                                active_seconds: totalSeconds,
+                                session_end: new Date().toISOString(),
+                                completed: true
+                            })
+                            .eq('caregiver_id', caregiver.id)
+                            .eq('session_start', sessionStart);
+                    } else {
+                        await saveTimeLog(caregiver.id, companyId, currentHours, sessionStart);
+                    }
+                } catch (err) {
+                    console.error('Error saving time log:', err)
                 }
 
-                await supabase.functions.invoke('send-completion-email', {
-                    body: { caregiverId: caregiver.id }
-                });
-                if (error) console.error('completion email invoke failed', error)
+                try {
+                    await saveCoordinates(caregiver.id, formData.personalInfo)
+                } catch (err) {
+                    console.error('Error saving coordinates:', err)
+                }
+
+                try {
+                    const { error } = await supabase.functions.invoke('send-completion-email', {
+                        body: { caregiverId: caregiver.id }
+                    });
+                    if (error) console.error('Completion email invoke failed:', error)
+                } catch (err) {
+                    console.error('Error sending completion email:', err)
+                }
             }
 
-            // saveTimeLog().catch(e => console.error('saveLog crashed', e));
-
+            saveLog();
         }
     }, [activeStep])
     const prevIsIdle = useRef(isIdle);
@@ -245,10 +315,10 @@ export default function OnboardingPortal() {
         }
         const loadCompanyInformation = async () => {
             const { data } = await supabase
-            .from('company_branding')
-            .select('company_name, primary_color, secondary_bg_color, hover_color')
-            .eq('company_id', companyId)
-            .single();
+                .from('company_branding')
+                .select('company_name, primary_color, secondary_bg_color, hover_color')
+                .eq('company_id', companyId)
+                .single();
 
             if (data) {
                 setCompanyData(data);
@@ -260,7 +330,7 @@ export default function OnboardingPortal() {
         }
 
         loadCompanyInformation();
-        
+
     }, [companyId])
     useEffect(() => {
         if (prevIsIdle.current === isIdle) {
@@ -374,7 +444,7 @@ export default function OnboardingPortal() {
         setSaving(false)
     }
 
-    
+
 
     const renderStep = () => {
         const step = steps.find(s => s.id === activeStep)
@@ -418,7 +488,7 @@ export default function OnboardingPortal() {
                     }}
                 />
             case 'Competency Checklist':
-                return <SkillsCompetencyPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.competency} onChange={async (data) => {
+                return <SkillsCompetencyPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.competency} companyData={companyData} onChange={async (data) => {
                     updateFormData('compentency', data)
                     await saveProgress(
                         caregiver.id,
@@ -431,9 +501,9 @@ export default function OnboardingPortal() {
             case 'How to Use eRSP':
                 return <ERSPGuidePage stepLabel={stepLabel} onNext={handleNext} initialData={formData.erspGuide} onChange={(data) => updateFormData('erspGuide', data)} companyData={companyData} />
             case 'How to Use SurePayroll':
-                return <SurePayrollGuidePage stepLabel={stepLabel} onNext={handleNext} initialData={formData.surePayroll} onChange={(data) => updateFormData('surePayroll', data)} companyData={companyData}/>
+                return <SurePayrollGuidePage stepLabel={stepLabel} onNext={handleNext} initialData={formData.surePayroll} onChange={(data) => updateFormData('surePayroll', data)} companyData={companyData} />
             case 'Forms & Agreements':
-                return <FormsApplicationsPage stepLabel={stepLabel} caregiver={caregiver} setSaving={setSaving} onNext={async () => {
+                return <FormsApplicationsPage stepLabel={stepLabel} caregiver={caregiver} setSaving={setSaving} companyId={companyId} onNext={async () => {
                     setSaving(true)
                     const signature = formData.signatures?.form_0 || caregiver.name
 
@@ -464,9 +534,9 @@ export default function OnboardingPortal() {
                     isPreview={isPreview} />
             case 'Tax Forms':
             case 'Tax Forms (W-9)':
-                return <TaxFormsPage stepLabel={stepLabel} onNext={handleNext} role={isNurse ? 'nurse' : role} caregiver={caregiver} companyId={companyId} setSaving={setSaving} isPreview={isPreview} />
+                return <TaxFormsPage stepLabel={stepLabel} onNext={handleNext} role={isNurse ? 'nurse' : role} caregiver={caregiver} companyId={companyId} setSaving={setSaving} isPreview={isPreview} companyData={companyData} />
             case 'Offer Letter':
-                return <OfferLetterPage stepLabel={stepLabel} caregiver={caregiver} onNext={handleNext} initialData={formData.offerLetter} onChange={async (data) => {
+                return <OfferLetterPage companyId={companyId} companyData={companyData} stepLabel={stepLabel} caregiver={caregiver} onNext={handleNext} initialData={formData.offerLetter} onChange={async (data) => {
                     updateFormData('offerLetter', data)
                     await saveProgress(
                         caregiver.id,

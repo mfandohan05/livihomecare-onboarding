@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ScrollText, ChevronDown, ChevronUp } from 'lucide-react'
+import { ScrollText, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 const today = new Date().toLocaleDateString('en-US', {
@@ -12,181 +12,141 @@ const today = new Date().toLocaleDateString('en-US', {
     timeZone: 'America/New_York'
 })
 
-const jobDescriptions = {
-    caregiver: {
-        title: 'Job Description for the In-Home Aide',
-        intro: 'Livi Home Care In-Home Aide is responsible for providing basic nursing care to our clients in their home. You will work under the supervision of our Registered Nurse.',
-        duties: [
-            'Assisting with personal care such as bathing, mouth care, skin care and hair care',
-            'Assisting with ambulation',
-            'Medication reminder',
-            'Perform incidental household services essential to the client\'s care at home',
-            'Observe, record and report any changes in the client\'s condition to the Livi Home Care Registered Nurse/supervisor',
-            'Assisting with mobility and transfers, including helping clients get in and out of bed or chairs',
-            'Assisting with meal preparation and feeding clients if necessary',
-            'Providing companionship and emotional support to clients and their families',
-            'Following infection control measures, including proper hand hygiene and PPE usage',
-            'Maintaining client records accurately and timely',
-            'Maintaining client confidentiality',
-            'Participating in ongoing education and training',
-            'Collaborating with other healthcare professionals to ensure coordinated and quality care',
-            'Adhering to safety guidelines to prevent accidents and injuries',
-            'Help with transportation',
-            'Other services as assigned',
-        ]
-    },
-    nurse: {
-        title: 'Job Description for the Registered Nurse',
-        intro: 'A Livi Home Care Registered Nurse is responsible for providing skilled nursing care to our clients in their home.',
-        duties: [
-            'Conducting assessments for new clients',
-            'Performing quarterly and annual assessment of current clients.',
-            'Managing care plans in accordance with physicians’ instructions',
-            'Attend all	Leadership and Team Management meetings',
-            'Supervise and evaluate caregivers as needed',
-            'Create a positive and collaborative work environment',
-            'Ensure compliance and quality assurance',
-            'Additional duties may be assigned by the agency as needed.'
-        ]
-    },
-    other: {
-        title: 'Job Description for Office Staff',
-        intro: 'Livi Home Care Office Staff is responsible for supporting the administrative operations of the agency.',
-        duties: [
-            'Answering and directing phone calls and emails',
-            'Scheduling and coordinating caregiver assignments',
-            'Maintaining client and employee records',
-            'Processing payroll and billing documentation',
-            'Assisting with onboarding new caregivers',
-            'Coordinating with healthcare providers and clients',
-            'Supporting management with administrative tasks',
-            'Ensuring compliance with agency policies and procedures',
-            'Other duties as assigned',
-        ]
-    }
+const resolveJobDescRoleKey = (caregiver) => {
+    if (caregiver.role === 'nurse_prn' || caregiver.role === 'nurse_director') return 'nurse'
+    return caregiver.role
 }
 
-const getJobDescription = (caregiver) => {
+const getJobDescription = (caregiver, form) => {
     if (caregiver.role === 'other' && caregiver.job_duties) {
         return {
             title: caregiver.job_description || 'Job Description',
             intro: '',
-            duties: caregiver.job_duties
-                .split('\n')
-                .filter(line => line.trim())
-                .map(line => line.trim())
+            sections: [{
+                heading: null,
+                items: caregiver.job_duties.split('\n').filter(l => l.trim()).map(l => l.trim())
+            }]
         }
     }
-    if (caregiver.role === 'nurse_prn' || caregiver.role === 'nurse_director') {
-        return jobDescriptions.nurse
-    }
-    if (caregiver.role === 'other') {
-        return jobDescriptions.other
-    }
-    return jobDescriptions.caregiver
+    const roleKey = resolveJobDescRoleKey(caregiver)
+    return form?.config?.by_role?.[roleKey] || null
 }
 
-const SignatureField = ({ formId, label = 'Type your full name to sign', signatures, onSign, caregiver }) => (
+const interpolate = (text, caregiver) => {
+    if (!text) return text
+    return text
+        .replaceAll('{{today}}', today)
+        .replaceAll('{{caregiver.name}}', caregiver?.name || '')
+}
+
+const renderContentBlock = (block, i, caregiver) => {
+    if (block.type === 'heading') {
+        return <p key={i} className="font-medium mt-2">{interpolate(block.text, caregiver)}</p>
+    }
+    if (block.type === 'list') {
+        return (
+            <ul key={i} className="space-y-1 pl-4">
+                {block.items.map((item, j) => (
+                    <li key={j} className="flex items-start gap-2">
+                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[var(--primary-color)] shrink-0" />
+                        {interpolate(item, caregiver)}
+                    </li>
+                ))}
+            </ul>
+        )
+    }
+    return <p key={i}>{interpolate(block.text, caregiver)}</p>
+}
+
+const SignatureField = ({ formKey, label = 'Type your full name to sign', signatures, onSign, caregiver }) => (
     <div className="mt-6 pt-6 border-t border-border">
         <p className="text-xs text-muted-foreground mb-3">
             By typing your name below, you are providing a legally binding electronic signature.
         </p>
         <div className="space-y-2">
-            <Label htmlFor={`sig_${formId}`}>{label}</Label>
+            <Label htmlFor={`sig_${formKey}`}>{label}</Label>
             <Input
-                id={`sig_${formId}`}
+                id={`sig_${formKey}`}
                 placeholder={caregiver.name}
-                value={signatures[formId] || ''}
-                onChange={(e) => onSign(formId, e.target.value)}
+                value={signatures[formKey] || ''}
+                onChange={(e) => onSign(formKey, e.target.value)}
                 className="font-serif italic"
             />
         </div>
         <p className="text-xs text-muted-foreground mt-2">Date: {today}</p>
     </div>
-
 )
-const FormContent = ({ children, color = '#F9F9F9' }) => (
-        <div
-            className="rounded-lg p-5 mb-4 text-sm leading-relaxed space-y-3 border border-border"
-            style={{ background: color }}
-        >
-            {children}
-        </div>
-    )
 
-const FormButton = ({ formId, disabled, completed, markComplete }) => (
-    <Button
-        onClick={() => markComplete(formId)}
-        disabled={disabled}
-        className="mt-4 bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+const FormContent = ({ children, color = '#F9F9F9' }) => (
+    <div
+        className="rounded-lg p-5 mb-4 text-sm leading-relaxed space-y-3 border border-border"
+        style={{ background: color }}
     >
-        {completed[formId] ? 'Signed ✓' : 'Sign & Continue'}
+        {children}
+    </div>
+)
+
+const FormButton = ({ disabled, isDone, onClick }) => (
+    <Button
+        onClick={onClick}
+        disabled={disabled}
+        className="mt-4 bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+        {isDone ? 'Signed ✓' : 'Sign & Continue'}
     </Button>
 )
-const ReferenceForm = ({ references, setReferences }) => {
+
+const ReferenceForm = ({ references, setReferences, minRequired = 1 }) => {
     const updateRef = (index, field, value) => {
         setReferences(prev => prev.map((r, i) => i === index ? { ...r, [field]: value } : r))
     }
 
     return (
         <>
-            <div className="border border-border rounded-lg p-4 space-y-3 mt-3">
-                <p className="text-sm font-medium">Reference 1 <span className="text-red-500">*</span></p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                        <Label htmlFor="ref1_name">Full Name <span className="text-red-500">*</span></Label>
-                        <Input id="ref1_name" placeholder="Jane Smith" value={references[0].name} onChange={(e) => updateRef(0, 'name', e.target.value)} />
+            {references.map((ref, index) => {
+                const isRequired = index < minRequired
+                return (
+                    <div
+                        key={index}
+                        className={`rounded-lg p-4 space-y-3 mt-3 border ${isRequired ? 'border-border' : 'border-dashed border-border'}`}
+                    >
+                        <p className={`text-sm font-medium ${isRequired ? '' : 'text-muted-foreground'}`}>
+                            Reference {index + 1} {isRequired ? <span className="text-red-500">*</span> : <span className="text-xs">(optional)</span>}
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <Label htmlFor={`ref${index}_name`}>Full Name {isRequired && <span className="text-red-500">*</span>}</Label>
+                                <Input id={`ref${index}_name`} placeholder="Jane Smith" value={ref.name} onChange={(e) => updateRef(index, 'name', e.target.value)} />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label htmlFor={`ref${index}_company`}>Company / Organization {isRequired && <span className="text-red-500">*</span>}</Label>
+                                <Input id={`ref${index}_company`} placeholder="ABC Home Care" value={ref.company} onChange={(e) => updateRef(index, 'company', e.target.value)} />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label htmlFor={`ref${index}_relationship`}>Professional Relationship {isRequired && <span className="text-red-500">*</span>}</Label>
+                                <Input id={`ref${index}_relationship`} placeholder="Former Supervisor" value={ref.relationship} onChange={(e) => updateRef(index, 'relationship', e.target.value)} />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label htmlFor={`ref${index}_phone`}>Phone Number {isRequired && <span className="text-red-500">*</span>}</Label>
+                                <Input id={`ref${index}_phone`} placeholder="(555) 000-0000" value={ref.phone} onChange={(e) => updateRef(index, 'phone', e.target.value)} />
+                            </div>
+                            <div className="space-y-1.5 md:col-span-2">
+                                <Label htmlFor={`ref${index}_email`}>Email Address</Label>
+                                <Input id={`ref${index}_email`} placeholder="jane@example.com" value={ref.email} onChange={(e) => updateRef(index, 'email', e.target.value)} />
+                            </div>
+                        </div>
                     </div>
-                    <div className="space-y-1.5">
-                        <Label htmlFor="ref1_company">Company / Organization <span className="text-red-500">*</span></Label>
-                        <Input id="ref1_company" placeholder="ABC Home Care" value={references[0].company} onChange={(e) => updateRef(0, 'company', e.target.value)} />
-                    </div>
-                    <div className="space-y-1.5">
-                        <Label htmlFor="ref1_relationship">Professional Relationship <span className="text-red-500">*</span></Label>
-                        <Input id="ref1_relationship" placeholder="Former Supervisor" value={references[0].relationship} onChange={(e) => updateRef(0, 'relationship', e.target.value)} />
-                    </div>
-                    <div className="space-y-1.5">
-                        <Label htmlFor="ref1_phone">Phone Number <span className="text-red-500">*</span></Label>
-                        <Input id="ref1_phone" placeholder="(555) 000-0000" value={references[0].phone} onChange={(e) => updateRef(0, 'phone', e.target.value)} />
-                    </div>
-                    <div className="space-y-1.5 md:col-span-2">
-                        <Label htmlFor="ref1_email">Email Address</Label>
-                        <Input id="ref1_email" placeholder="jane@example.com" value={references[0].email} onChange={(e) => updateRef(0, 'email', e.target.value)} />
-                    </div>
-                </div>
-            </div>
-
-            <div className="border border-dashed border-border rounded-lg p-4 space-y-3 mt-3">
-                <p className="text-sm font-medium text-muted-foreground">Reference 2 <span className="text-xs">(optional)</span></p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                        <Label htmlFor="ref2_name">Full Name</Label>
-                        <Input id="ref2_name" placeholder="John Doe" value={references[1].name} onChange={(e) => updateRef(1, 'name', e.target.value)} />
-                    </div>
-                    <div className="space-y-1.5">
-                        <Label htmlFor="ref2_company">Company / Organization</Label>
-                        <Input id="ref2_company" placeholder="XYZ Care Services" value={references[1].company} onChange={(e) => updateRef(1, 'company', e.target.value)} />
-                    </div>
-                    <div className="space-y-1.5">
-                        <Label htmlFor="ref2_relationship">Professional Relationship</Label>
-                        <Input id="ref2_relationship" placeholder="Former Colleague" value={references[1].relationship} onChange={(e) => updateRef(1, 'relationship', e.target.value)} />
-                    </div>
-                    <div className="space-y-1.5">
-                        <Label htmlFor="ref2_phone">Phone Number</Label>
-                        <Input id="ref2_phone" placeholder="(555) 000-0000" value={references[1].phone} onChange={(e) => updateRef(1, 'phone', e.target.value)} />
-                    </div>
-                    <div className="space-y-1.5 md:col-span-2">
-                        <Label htmlFor="ref2_email">Email Address</Label>
-                        <Input id="ref2_email" placeholder="john@example.com" value={references[1].email} onChange={(e) => updateRef(1, 'email', e.target.value)} />
-                    </div>
-                </div>
-            </div>
+                )
+            })}
         </>
     )
 }
 
-export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, initialData, onChange, onHepBChange, setSaving }) {
-    const [expanded, setExpanded] = useState({ form_0: true })
+export default function FormsApplicationsPage({ stepLabel, caregiver, companyId, onNext, initialData, onChange, onHepBChange, setSaving }) {
+    const [forms, setForms] = useState([])
+    const [loadingForms, setLoadingForms] = useState(true)
+
+    const [expanded, setExpanded] = useState({})
     const [completed, setCompleted] = useState(initialData?.completed || {})
     const [signatures, setSignatures] = useState(initialData?.signatures || {})
     const [hepBStatus, setHepBStatus] = useState(initialData?.hepBStatus || '')
@@ -202,12 +162,35 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
         { name: '', company: '', relationship: '', phone: '', email: '' },
     ])
 
-    const toggle = (id) => {
-        setExpanded(prev => ({ ...prev, [id]: !prev[id] }))
+    useEffect(() => {
+        if (!companyId) return
+
+        const loadForms = async () => {
+            setLoadingForms(true)
+            const { data, error } = await supabase
+                .from('company_forms')
+                .select('form_key, title, form_order, form_type, content, config, requires_signature')
+                .eq('company_id', companyId)
+                .order('form_order')
+
+            if (!error && data && data.length > 0) {
+                setForms(data)
+                setExpanded({ [data[0].form_key]: true })
+            } else {
+                setForms([])
+            }
+            setLoadingForms(false)
+        }
+
+        loadForms()
+    }, [companyId])
+
+    const toggle = (formKey) => {
+        setExpanded(prev => ({ ...prev, [formKey]: !prev[formKey] }))
     }
-    const updateSignature = (formId, value) => {
-        const updated = { ...signatures, [formId]: value }
-        setSignatures(updated);
+    const updateSignature = (formKey, value) => {
+        const updated = { ...signatures, [formKey]: value }
+        setSignatures(updated)
         onChange({ signatures: updated, completed, wotcAnswers, references })
     }
     const updateHepBStatus = (status) => {
@@ -215,49 +198,50 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
         onHepBChange(status)
     }
 
-    const markComplete = async (formId) => {
-        if (formId === 'form_1') {
-            setSaving(true);
+    const markComplete = async (form) => {
+        if (form.form_type === 'job_description') {
+            setSaving(true)
             await supabase.functions.invoke('generate-job-description', {
                 body: { caregiverId: caregiver.id }
             })
-            setSaving(false);
+            setSaving(false)
         }
-        if (formId === 'form_8') {
+        if (form.form_type === 'wotc') {
             setSaving(true)
             await supabase.functions.invoke('generate-wotc', {
                 body: {
                     caregiverId: caregiver.id,
                     wotcAnswers,
-                    signature: signatures['form_8']
+                    signature: signatures[form.form_key]
                 }
             })
             setSaving(false)
         }
-        if (formId === 'form_9') {
+        if (form.form_type === 'reference_check') {
             setSaving(true)
             await supabase.functions.invoke('generate-reference-pdf', {
                 body: {
                     caregiverId: caregiver.id,
                     references,
-                    signature: signatures['form_9'],
+                    signature: signatures[form.form_key],
                 }
             })
             setSaving(false)
         }
-        const updated = { ...completed, [formId]: true }
+
+        const updated = { ...completed, [form.form_key]: true }
         setCompleted(updated)
         onChange({ signatures, completed: updated, wotcAnswers, references })
-        const nextIndex = parseInt(formId.split('_')[1]) + 1
-        setExpanded(prev => ({ ...prev, [`form_${nextIndex}`]: true }))
+
+        const currentIndex = forms.findIndex(f => f.form_key === form.form_key)
+        const nextForm = forms[currentIndex + 1]
+        if (nextForm) {
+            setExpanded(prev => ({ ...prev, [nextForm.form_key]: true }))
+        }
     }
 
-    const allCompleted = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].every(i => completed[`form_${i}`])
-
-
-    
-    const handleDirectDepositComplete = async (formId) => {
-        setSaving(true);
+    const handleDirectDepositComplete = async (form) => {
+        setSaving(true)
         const { error } = await supabase.functions.invoke('save-banking-info', {
             body: {
                 caregiverId: caregiver.id,
@@ -273,279 +257,140 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
 
         if (error) {
             console.error('Error saving banking info:', error)
+            setSaving(false)
             return
         }
 
-        markComplete(formId)
-        setSaving(false);
+        await markComplete(form)
+        setSaving(false)
     }
-    const forms = [
-        {
-            id: 'form_0',
-            title: 'New Hire Notification',
-            render: () => (
-                <>
-                    <FormContent>
-                        <p className="font-medium">New Hire Notification Form</p>
-                        <p>All new hires must complete the online onboarding process before starting any shifts. This onboarding covers Livi Home Care's policies, procedures, and expectations and must be fully completed prior to your first scheduled shift.</p>
-                        <p className="font-medium mt-2">Orientation Payment</p>
-                        <p>The orientation payment will be made to you after you have successfully completed 10 shifts with Livi Home Care.</p>
-                        <p className="mt-2">By signing below, you acknowledge that you understand and agree to the requirements outlined above.</p>
-                    </FormContent>
-                    <SignatureField formId="form_0" signatures={signatures} onSign={(formId, value) => updateSignature(formId, value)} caregiver={caregiver} />
-                    <FormButton
-                        formId="form_0"
-                        disabled={!signatures['form_0']?.trim() || completed['form_0']}
-                        completed={completed}
-                        markComplete={markComplete}
-                    />
-                </>
-            )
-        },
-        {
-            id: 'form_1',
-            title: `Job Description - ${caregiver.job_description}`,
-            render: () => {
-                const jobDesc = getJobDescription(caregiver)
 
-                return (
-                    <>
-                        <FormContent>
-                            <p className="font-medium">{jobDesc.title}</p>
-                            <p>{jobDesc.intro}</p>
-                            <p className="font-medium mt-2">Your duties may include the following:</p>
-                            <ul className="space-y-1 pl-4">
-                                {jobDesc.duties.map((duty, i) => (
-                                    <li key={i} className="flex items-start gap-2">
-                                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#577C09] shrink-0" />
-                                        {duty}
-                                    </li>
-                                ))}
-                            </ul>
-                        </FormContent>
-                        <SignatureField
-                            formId="form_1"
-                            signatures={signatures}
-                            onSign={(formId, value) => updateSignature(formId, value)}
-                            caregiver={caregiver}
-                            label="Type your full name to acknowledge this job description"
-                        />
-                        <FormButton
-                            formId="form_1"
-                            disabled={!signatures['form_1']?.trim() || completed['form_1']}
-                            completed={completed}
-                            markComplete={markComplete}
-                        />
-                    </>
-                )
+    const allCompleted = forms.length > 0 && forms.every(f => completed[f.form_key])
+
+    if (loadingForms) {
+        return (
+            <div className="max-w-2xl mx-auto py-16 px-8 flex items-center justify-center">
+                <Loader2 className="w-5 h-5 animate-spin text-[var(--primary-color)] mr-2" />
+                <p className="text-muted-foreground">Loading forms...</p>
+            </div>
+        )
+    }
+
+    if (forms.length === 0) {
+        return (
+            <div className="max-w-2xl mx-auto py-16 px-8 text-center">
+                <p className="text-muted-foreground">No forms are configured yet. Please contact your administrator.</p>
+            </div>
+        )
+    }
+
+    const renderFormBody = (form) => {
+        if (form.form_type === 'job_description') {
+            const jobDesc = getJobDescription(caregiver, form)
+            if (!jobDesc) {
+                return <p className="text-sm text-muted-foreground">Job description not available for your role. Please contact your administrator.</p>
             }
-        },
-        {
-            id: 'form_2',
-            title: 'Non-Compete Agreement',
-            render: () => (
+            return (
                 <>
                     <FormContent>
-                        <p className="font-medium">Employee Non-Compete Agreement</p>
-                        <p>This Non-Compete Agreement is entered into on {today}, by and between Livi Home Care, located at 179 Gasoline Alley Dr. Suite 203, Mooresville NC 28117 and <strong>{caregiver.name}</strong>.</p>
-                        <p className="font-medium mt-2">Non-Compete Obligation</p>
-                        <p>In consideration of employment with Livi Home Care, Employee agrees that for a period of <strong>36 months</strong> following the termination of employment, for any reason, they shall not:</p>
-                        <ul className="space-y-1 pl-4">
-                            <li className="flex items-start gap-2">
-                                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#577C09] shrink-0" />
-                                Provide home care, personal care, respite or companion services to any current or prospective clients of Livi Home Care with whom employees had direct or indirect interaction or access to confidential information during their employment.
-                            </li>
-                            <li className="flex items-start gap-2">
-                                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#577C09] shrink-0" />
-                                Solicit or attempt to solicit any clients, prospective clients, or employees of Livi Home Care to work with or for a competing business.
-                            </li>
-                        </ul>
-                        <p className="font-medium mt-2">Confidentiality</p>
-                        <p>Employee agrees not to disclose any confidential information or trade secrets learned during the course of employment, including but not limited to:</p>
-                        <ul className="space-y-1 pl-4">
-                            {[
-                                'Client information, including personal health information',
-                                'Pricing strategies, marketing plans, and service delivery models',
-                                'Any other proprietary information belonging to Livi Home Care',
-                            ].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2">
-                                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#577C09] shrink-0" />
-                                    {item}
-                                </li>
-                            ))}
-                        </ul>
-                        <p className="font-medium mt-2">Enforcement</p>
-                        <p>If the employee violates the terms of this agreement, Livi Home Care may seek appropriate legal remedies, including injunctive relief and damages. This Agreement constitutes the entire agreement between the parties with respect to the non-compete obligations.</p>
+                        <p className="font-medium">{jobDesc.title}</p>
+                        {jobDesc.intro && <p>{jobDesc.intro}</p>}
+                        {jobDesc.sections.map((section, i) => (
+                            <div key={i}>
+                                {section.heading && <p className="font-medium mt-2">{section.heading}</p>}
+                                <ul className="space-y-1 pl-4">
+                                    {section.items.map((item, j) => (
+                                        <li key={j} className="flex items-start gap-2">
+                                            <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[var(--primary-color)] shrink-0" />
+                                            {item}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ))}
                     </FormContent>
-                    <SignatureField formId="form_2" signatures={signatures} onSign={(formId, value) => updateSignature(formId, value)} caregiver={caregiver} label="Type your full name to sign the Non-Compete Agreement" />
+                    <SignatureField
+                        formKey={form.form_key}
+                        signatures={signatures}
+                        onSign={updateSignature}
+                        caregiver={caregiver}
+                        label="Type your full name to acknowledge this job description"
+                    />
                     <FormButton
-                        formId="form_2"
-                        disabled={!signatures['form_2']?.trim() || completed['form_2']}
-                        completed={completed}
-                        markComplete={markComplete}
+                        isDone={completed[form.form_key]}
+                        disabled={!signatures[form.form_key]?.trim() || completed[form.form_key]}
+                        onClick={() => markComplete(form)}
                     />
                 </>
             )
-        },
-        {
-            id: 'form_3',
-            title: 'Consent for Criminal Background Check',
-            render: () => (
+        }
+
+        if (form.form_type === 'hepb_status') {
+            const options = form.config?.options || []
+            const intro = form.config?.intro || []
+            return (
                 <>
                     <FormContent>
-                        <p className="font-medium">Criminal Background Check Consent Form</p>
-                        <p>I, <strong>{caregiver.name}</strong>, hereby authorize Livi Home Care and its designated agents or representatives to conduct a comprehensive criminal background check as part of the employment screening process.</p>
-                        <p>I understand that this background check may include, but is not limited to, verification of criminal history, driving records, and other background information relevant to my potential employment with Livi Home Care.</p>
-                        <p>I understand that the information obtained from the background check will be used solely for employment purposes and will be kept strictly confidential in compliance with all applicable laws.</p>
-                        <ul className="space-y-1 pl-4 mt-2">
-                            {[
-                                'I further release Livi Home Care, its agents, and all parties involved from any claims, damages, or liabilities arising from or related to this criminal background check.',
-                                'I understand that I have the right to request a copy of the report upon which the hiring decision is based if an adverse action is taken.',
-                                'I understand that this consent will remain in effect for the duration of my employment, allowing Livi Home Care to conduct periodic background checks as necessary.',
-                            ].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2">
-                                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#577C09] shrink-0" />
-                                    {item}
-                                </li>
-                            ))}
-                        </ul>
-                        <p className="mt-2">I have read this authorization and release, and I fully understand its contents. I certify that the information I have provided is accurate and complete to the best of my knowledge.</p>
-                    </FormContent>
-                    <SignatureField formId="form_3" signatures={signatures} onSign={(formId, value) => updateSignature(formId, value)} caregiver={caregiver} label="Type your full name to consent" />
-                    <FormButton
-                        formId="form_3"
-                        disabled={!signatures['form_3']?.trim() || completed['form_3']}
-                        completed={completed}
-                        markComplete={markComplete}
-                    />
-                </>
-            )
-        },
-        {
-            id: 'form_4',
-            title: 'Drug Test Policy & Acknowledgment',
-            render: () => (
-                <>
-                    <FormContent>
-                        <p className="font-medium">Drug Test Policy & Acknowledgment</p>
-                        <ul className="space-y-2 pl-4">
-                            {[
-                                'All employees of Livi Home Care, including but not limited to caregivers, nurses, administrative staff, and management, are subject to drug testing at random intervals and thereafter.',
-                                'Drug testing will be conducted in accordance with applicable laws and regulations.',
-                                'Random drug testing may be conducted throughout an employee\'s tenure with Livi Home Care to ensure compliance with the drug-free workplace policy.',
-                                'Any employee who refuses to undergo drug testing or tests positive for prohibited substances may face disciplinary action, up to and including termination of employment.',
-                                'Drug testing results will be treated as confidential information and will only be disclosed to authorized personnel on a need-to-know basis.',
-                                'Employees who are prescribed medications that may result in a positive drug test result must notify their supervisor and provide appropriate documentation from a licensed healthcare provider.',
-                                'Livi Home Care reserves the right to modify this policy as deemed necessary and to ensure compliance with applicable laws and regulations.',
-                            ].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2">
-                                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#577C09] shrink-0" />
-                                    {item}
-                                </li>
-                            ))}
-                        </ul>
-                        <p className="mt-3">By signing below, I acknowledge that I have received and read a copy of the Drug Test Policy for Livi Home Care Employees. I understand my responsibilities under this policy and agree to comply with all requirements outlined herein.</p>
-                    </FormContent>
-                    <SignatureField formId="form_4" signatures={signatures} onSign={(formId, value) => updateSignature(formId, value)} caregiver={caregiver} label="Type your full name to acknowledge the Drug Test Policy" />
-                    <FormButton
-                        formId="form_4"
-                        disabled={!signatures['form_4']?.trim() || completed['form_4']}
-                        completed={completed}
-                        markComplete={markComplete}
-                    />
-                </>
-            )
-        },
-        {
-            id: 'form_5',
-            title: 'Hepatitis B Vaccine Status',
-            render: () => (
-                <>
-                    <FormContent>
-                        <p className="font-medium">Hepatitis B Vaccine Status</p>
-                        <p>I understand that due to my occupational exposure to blood or other potentially infectious materials (OPIM), I may be at risk of acquiring Hepatitis B virus (HBV) infection.</p>
-                        <p>Livi Home Care has given me the opportunity to be vaccinated with the Hepatitis B vaccine at no charge to myself.</p>
+                        {intro.map((line, i) => <p key={i}>{line}</p>)}
                         <p className="mt-2">Please select the option that applies to you:</p>
                     </FormContent>
-
                     <div className="space-y-3 mb-6">
-                        {[
-                            { value: 'decline', label: 'I decline the Hepatitis B vaccine at this time. I understand that by declining I continue to be at risk of acquiring Hepatitis B.' },
-                            { value: 'received', label: 'I have already received the full Hepatitis B vaccination series.' },
-                            { value: 'immune', label: 'An antibody test has confirmed that I am immune to Hepatitis B.' },
-                            { value: 'medical', label: 'I have medical reasons not to receive the vaccine. I will provide documentation from a licensed healthcare provider.' },
-                        ].map((option) => (
+                        {options.map((option) => (
                             <button
                                 key={option.value}
                                 onClick={() => updateHepBStatus(option.value)}
                                 className={`w-full text-left px-4 py-3 rounded-lg border text-sm transition-colors flex items-start gap-3 ${hepBStatus === option.value
-                                    ? 'border-[#577C09] bg-[#E8F0D0] text-[#3D5906]'
-                                    : 'border-border hover:border-[#577C09] hover:bg-[#E8F0D0]/30'
+                                    ? 'border-[var(--primary-color)] bg-[var(--secondary-bg-color)] text-[var(--hover-color)]'
+                                    : 'border-border hover:border-[var(--primary-color)] hover:bg-[var(--secondary-bg-color)]/30'
                                     }`}
                             >
-                                <div className={`w-4 h-4 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center ${hepBStatus === option.value
-                                    ? 'border-[#577C09]'
-                                    : 'border-muted-foreground'
-                                    }`}>
-                                    {hepBStatus === option.value && (
-                                        <div className="w-2 h-2 rounded-full bg-[#577C09]" />
-                                    )}
+                                <div className={`w-4 h-4 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center ${hepBStatus === option.value ? 'border-[var(--primary-color)]' : 'border-muted-foreground'}`}>
+                                    {hepBStatus === option.value && <div className="w-2 h-2 rounded-full bg-[var(--primary-color)]" />}
                                 </div>
                                 {option.label}
                             </button>
                         ))}
                     </div>
-
-                    <SignatureField formId="form_5" signatures={signatures} onSign={(formId, value) => updateSignature(formId, value)} caregiver={caregiver} label="Type your full name to confirm your vaccine status" />
+                    <SignatureField
+                        formKey={form.form_key}
+                        signatures={signatures}
+                        onSign={updateSignature}
+                        caregiver={caregiver}
+                        label="Type your full name to confirm your vaccine status"
+                    />
                     <FormButton
-                        formId="form_5"
-                        disabled={!hepBStatus || !signatures['form_5']?.trim() || completed['form_5']}
-                        completed={completed}
-                        markComplete={markComplete}
+                        isDone={completed[form.form_key]}
+                        disabled={!hepBStatus || !signatures[form.form_key]?.trim() || completed[form.form_key]}
+                        onClick={() => markComplete(form)}
                     />
                 </>
             )
-        },
-        {
-            id: 'form_6',
-            title: 'Direct Deposit Authorization',
-            render: () => (
+        }
+
+        if (form.form_type === 'direct_deposit') {
+            const fee = form.config?.correction_fee ?? 79
+            const intro = form.config?.intro || []
+            return (
                 <>
                     <FormContent>
-                        <p className="font-medium">Employee Direct Deposit Authorization</p>
-                        <p>I hereby voluntarily authorize MDC Global Care Solutions dba Livi Home Care, either directly or through its payroll service provider, to deposit any amounts owed to me by initiating credit entries to my account at the financial institution indicated on this form.</p>
-                        <p className="mt-2 font-medium text-amber-700">Important: A <strong>$79 correction fee</strong> will be assessed if incorrect banking information results in a failed or misdirected deposit. You will also need to wait until the next scheduled payday to receive your pay.</p>
+                        {intro.map((line, i) => <p key={i}>{line}</p>)}
+                        <p className="mt-2 font-medium text-amber-700">
+                            Important: A <strong>${fee} correction fee</strong> will be assessed if incorrect banking information results in a failed or misdirected deposit. You will also need to wait until the next scheduled payday to receive your pay.
+                        </p>
                     </FormContent>
-
                     <div className="space-y-4 mb-6">
                         <div className="space-y-2">
                             <Label htmlFor="bankName">Bank Name</Label>
-                            <Input
-                                id="bankName"
-                                placeholder="e.g. Bank of America"
-                                value={directDeposit.bankName}
-                                onChange={(e) => setDirectDeposit(prev => ({ ...prev, bankName: e.target.value }))}
-                            />
+                            <Input id="bankName" placeholder="e.g. Bank of America" value={directDeposit.bankName} onChange={(e) => setDirectDeposit(prev => ({ ...prev, bankName: e.target.value }))} />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="routingNumber">Routing Number</Label>
-                                <Input
-                                    id="routingNumber"
-                                    placeholder="9-digit ABA number"
-                                    maxLength={9}
-                                    value={directDeposit.routingNumber}
-                                    onChange={(e) => setDirectDeposit(prev => ({ ...prev, routingNumber: e.target.value }))}
-                                />
+                                <Input id="routingNumber" placeholder="9-digit ABA number" maxLength={9} value={directDeposit.routingNumber} onChange={(e) => setDirectDeposit(prev => ({ ...prev, routingNumber: e.target.value }))} />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="accountNumber">Account Number</Label>
-                                <Input
-                                    id="accountNumber"
-                                    placeholder="Account number"
-                                    value={directDeposit.accountNumber}
-                                    onChange={(e) => setDirectDeposit(prev => ({ ...prev, accountNumber: e.target.value }))}
-                                />
+                                <Input id="accountNumber" placeholder="Account number" value={directDeposit.accountNumber} onChange={(e) => setDirectDeposit(prev => ({ ...prev, accountNumber: e.target.value }))} />
                             </div>
                         </div>
                         <div className="space-y-2">
@@ -555,10 +400,7 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
                                     <button
                                         key={type}
                                         onClick={() => setDirectDeposit(prev => ({ ...prev, accountType: type }))}
-                                        className={`px-6 py-2 rounded-md border text-sm font-medium transition-colors ${directDeposit.accountType === type
-                                            ? 'bg-[#577C09] text-white border-[#577C09]'
-                                            : 'bg-white text-foreground border-border hover:bg-muted'
-                                            }`}
+                                        className={`px-6 py-2 rounded-md border text-sm font-medium transition-colors ${directDeposit.accountType === type ? 'bg-[var(--primary-color)] text-white border-[var(--primary-color)]' : 'bg-white text-foreground border-border hover:bg-muted'}`}
                                     >
                                         {type}
                                     </button>
@@ -566,109 +408,71 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
                             </div>
                         </div>
                     </div>
-
-                    <SignatureField formId="form_6" signatures={signatures} onSign={(formId, value) => updateSignature(formId, value)} caregiver={caregiver} label="Type your full name to authorize direct deposit" />
+                    <SignatureField
+                        formKey={form.form_key}
+                        signatures={signatures}
+                        onSign={updateSignature}
+                        caregiver={caregiver}
+                        label="Type your full name to authorize direct deposit"
+                    />
                     <FormButton
-                        formId="form_6"
+                        isDone={completed[form.form_key]}
                         disabled={
                             !directDeposit.bankName.trim() ||
                             !directDeposit.routingNumber.trim() ||
                             !directDeposit.accountNumber.trim() ||
                             !directDeposit.accountType ||
-                            !signatures['form_6']?.trim() ||
-                            completed['form_6']
+                            !signatures[form.form_key]?.trim() ||
+                            completed[form.form_key]
                         }
-                        completed={completed}
-                        markComplete={handleDirectDepositComplete}
+                        onClick={() => handleDirectDepositComplete(form)}
                     />
                 </>
             )
-        },
-        {
-            id: 'form_7',
-            title: 'Pre-Employment Orientation Checklist',
-            render: () => (
-                <>
-                    <FormContent>
-                        <p className="font-medium">Pre-Employment Orientation</p>
-                        <p className="font-medium mt-2">Completed application includes:</p>
-                        <ul className="space-y-1 pl-4">
-                            {[
-                                'Resume',
-                                'Signed Job Description & Offer Letter',
-                                'NA Listing Verification / Health Care Personnel Registry Check',
-                                'Proof of TB Skin Test or Chest X-Ray',
-                                'Proof of Hepatitis B Immunization or Declination',
-                                'Proof of Blood Borne Pathogen Training',
-                                'Reference Check(s)',
-                                'Signed Consent for Criminal Background Check',
-                                'Drug Test Policy & Acknowledgment',
-                            ].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2">
-                                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#577C09] shrink-0" />
-                                    {item}
-                                </li>
-                            ))}
-                        </ul>
-                        <p className="font-medium mt-3">The Orientation covers the following:</p>
-                        <ul className="space-y-1 pl-4">
-                            {[
-                                'Review of Livi Home Care Policies and Procedures',
-                                'Livi Home Care Vision, Mission and Values',
-                                'Infection and Exposure Control',
-                                'Universal Precautions',
-                                'Cleanup Procedures',
-                                'Hepatitis B and Tuberculosis Awareness and Procedures',
-                                'Safe Transfer of Clients (Back Safety)',
-                                'Home and Fire Safety',
-                                'Emergency Preparedness',
-                                'Abuse, Neglect, Injury of Unknown Source',
-                                'Client\'s Rights and Advance Directives',
-                                'HIPAA and Client Confidentiality',
-                                'Documentation',
-                                'Home Expectations',
-                            ].map((item, i) => (
-                                <li key={i} className="flex items-start gap-2">
-                                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#577C09] shrink-0" />
-                                    {item}
-                                </li>
-                            ))}
-                        </ul>
-                        <p className="mt-3">My signature below verifies that I have received all the required documents and have participated in the above orientation session.</p>
-                    </FormContent>
-                    <SignatureField formId="form_7" signatures={signatures} onSign={(formId, value) => updateSignature(formId, value)} caregiver={caregiver} label="Type your full name to confirm completion of pre-employment orientation" />
-                    <FormButton
-                        formId="form_7"
-                        disabled={!signatures['form_7']?.trim() || completed['form_7']}
-                        completed={completed}
-                        markComplete={markComplete}
-                    />
-                </>
-            )
-        },
-        {
-            id: 'form_8',
-            title: 'Confidential Employee Disclosure Form',
-            render: () => (
-                <>
-                    <FormContent>
-                        <p className="text-sm text-muted-foreground">
-                            Livi Home Care is committed to respecting the privacy and dignity of every employee. Providing this information is <strong>voluntary</strong>, and participation in this process will not impact your employment status, compensation, or benefits.
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-2">
-                            All information provided will be kept confidential, used only for lawful tax and reporting purposes, and protected in accordance with applicable privacy and employment laws.
-                        </p>
+        }
 
+        if (form.form_type === 'reference_check') {
+            const minRequired = form.config?.min_references ?? 1
+            const maxReferences = form.config?.max_references ?? 2
+            const firstRef = references[0] || {}
+            const missingRequired = !firstRef.name?.trim() || !firstRef.company?.trim() || !firstRef.relationship?.trim() || !firstRef.phone?.trim()
+
+            return (
+                <>
+                    <FormContent>
+                        <p className="font-medium">Professional References</p>
+                        <p className="text-sm text-muted-foreground">
+                            Please provide at least one professional reference. References should be former supervisors, managers, or colleagues who can speak to your work experience and character.
+                        </p>
+                    </FormContent>
+                    <ReferenceForm references={references.slice(0, maxReferences)} setReferences={setReferences} minRequired={minRequired} />
+                    <SignatureField
+                        formKey={form.form_key}
+                        signatures={signatures}
+                        onSign={updateSignature}
+                        caregiver={caregiver}
+                        label="Type your full name to confirm these references are accurate"
+                    />
+                    <FormButton
+                        isDone={completed[form.form_key]}
+                        disabled={!signatures[form.form_key]?.trim() || completed[form.form_key] || missingRequired}
+                        onClick={() => markComplete(form)}
+                    />
+                </>
+            )
+        }
+
+        if (form.form_type === 'wotc') {
+            const questions = form.config?.questions || []
+            const intro = form.config?.intro || []
+            const acknowledgment = form.config?.acknowledgment || []
+            return (
+                <>
+                    <FormContent>
+                        {intro.map((line, i) => <p key={i} className="text-sm text-muted-foreground">{line}</p>)}
                         <p className="font-medium mt-4">Voluntary Disclosure</p>
                         <p className="text-sm text-muted-foreground mb-3">Please indicate your response to each question below.</p>
-
-                        {[
-                            { id: 'q1', label: 'Are you a veteran of the U.S. Armed Forces?' },
-                            { id: 'q2', label: 'If yes, are you a disabled veteran?', extra: 'Not Applicable' },
-                            { id: 'q3', label: 'Do you currently receive SNAP (Supplemental Nutrition Assistance Program) benefits?' },
-                            { id: 'q4', label: 'Do you currently receive TANF (Temporary Assistance for Needy Families) benefits?' },
-                            { id: 'q5', label: 'Have you ever been convicted of a felony (sometimes referred to as an ex-felon)?' },
-                        ].map((question, i) => (
+                        {questions.map((question, i) => (
                             <div key={question.id} className="py-3 border-b border-border last:border-0">
                                 <p className="text-sm font-medium mb-2">{i + 1}. {question.label}</p>
                                 <div className="flex flex-wrap gap-4">
@@ -681,10 +485,10 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
                                                 checked={wotcAnswers?.[question.id] === option}
                                                 onChange={() => setWotcAnswers(prev => {
                                                     const updated = { ...prev, [question.id]: option }
-                                                    onChange({ signatures, completed, wotcAnswers: updated })
+                                                    onChange({ signatures, completed, wotcAnswers: updated, references })
                                                     return updated
                                                 })}
-                                                className="accent-[#577C09]"
+                                                className="accent-[var(--primary-color)]"
                                             />
                                             <span className="text-sm">{option}</span>
                                         </label>
@@ -692,85 +496,64 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
                                 </div>
                             </div>
                         ))}
-
-                        <div className="mt-4 bg-muted/30 rounded-lg p-4 text-sm text-muted-foreground space-y-1">
-                            <p className="font-medium text-foreground">Acknowledgment</p>
-                            <p>I understand that:</p>
-                            <ul className="space-y-1 pl-4">
-                                {[
-                                    'This information is requested solely for WOTC.',
-                                    'Providing this information is voluntary.',
-                                    'My responses will be kept confidential and will not impact my employment status, job assignments, or opportunities at Livi Home Care.',
-                                ].map((item, i) => (
-                                    <li key={i} className="flex items-start gap-2">
-                                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#577C09] shrink-0" />
-                                        {item}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
+                        {acknowledgment.length > 0 && (
+                            <div className="mt-4 bg-muted/30 rounded-lg p-4 text-sm text-muted-foreground space-y-1">
+                                <p className="font-medium text-foreground">Acknowledgment</p>
+                                <ul className="space-y-1 pl-4">
+                                    {acknowledgment.map((item, i) => (
+                                        <li key={i} className="flex items-start gap-2">
+                                            <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[var(--primary-color)] shrink-0" />
+                                            {item}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
                     </FormContent>
                     <SignatureField
-                        formId="form_8"
+                        formKey={form.form_key}
                         signatures={signatures}
-                        onSign={(formId, value) => updateSignature(formId, value)}
+                        onSign={updateSignature}
                         caregiver={caregiver}
                         label="Type your full name to sign and acknowledge this disclosure"
                     />
                     <FormButton
-                        formId="form_8"
-                        disabled={!signatures['form_8']?.trim() || completed['form_8']}
-                        completed={completed}
-                        markComplete={markComplete}
+                        isDone={completed[form.form_key]}
+                        disabled={!signatures[form.form_key]?.trim() || completed[form.form_key]}
+                        onClick={() => markComplete(form)}
                     />
                 </>
             )
-        },
-        {
-            id: 'form_9',
-            title: 'Reference Check',
-            render: () => (
-                <>
-                    <FormContent>
-                        <p className="font-medium">Professional References</p>
-                        <p className="text-sm text-muted-foreground">
-                            Please provide at least one professional reference. References should be former supervisors, managers, or colleagues who can speak to your work experience and character.
-                        </p>
+        }
 
-                    </FormContent>
-                    <ReferenceForm references={references} setReferences={setReferences} />
-
-                    <SignatureField
-                        formId="form_9"
-                        signatures={signatures}
-                        onSign={(formId, value) => updateSignature(formId, value)}
-                        caregiver={caregiver}
-                        label="Type your full name to confirm these references are accurate"
-                    />
-                    <FormButton
-                        formId="form_9"
-                        disabled={
-                            !signatures['form_9']?.trim() ||
-                            completed['form_9'] ||
-                            !references[0].name.trim() ||
-                            !references[0].company.trim() ||
-                            !references[0].relationship.trim() ||
-                            !references[0].phone.trim()
-                        }
-                        completed={completed}
-                        markComplete={markComplete}
-                    />
-                </>
-            )
-        },
-    ]
+        // default: signature_only — generic content-block renderer
+        return (
+            <>
+                <FormContent>
+                    {(form.content || []).map((block, i) => renderContentBlock(block, i, caregiver))}
+                </FormContent>
+                <SignatureField
+                    formKey={form.form_key}
+                    signatures={signatures}
+                    onSign={updateSignature}
+                    caregiver={caregiver}
+                    label={`Type your full name to sign ${form.title}`}
+                />
+                <FormButton
+                    isDone={completed[form.form_key]}
+                    disabled={!signatures[form.form_key]?.trim() || completed[form.form_key]}
+                    onClick={() => markComplete(form)}
+                />
+            </>
+        )
+    }
 
     return (
         <div className="max-w-2xl mx-auto py-8 md:py-16 px-4 md:px-8">
 
             <div className="flex items-center gap-2 mb-2">
-                <ScrollText className="w-5 h-5 text-[#577C09]" />
-                <span className="text-[#577C09] font-medium">{stepLabel}</span>
+                <ScrollText className="w-5 h-5 text-[var(--primary-color)]" />
+                <span className="text-[var(--primary-color)] font-medium">{stepLabel}</span>
             </div>
             <h1 className="text-3xl font-bold mb-2">Forms & Agreements</h1>
             <p className="text-muted-foreground mb-2">
@@ -780,48 +563,39 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
                 {Object.keys(completed).length} of {forms.length} forms completed
             </p>
 
-            {/* Forms */}
             <div className="space-y-4 mb-8">
                 {forms.map((form, index) => {
-                    const isOpen = expanded[form.id]
-                    const isDone = completed[form.id]
+                    const isOpen = expanded[form.form_key]
+                    const isDone = completed[form.form_key]
 
                     return (
                         <div
-                            key={form.id}
-                            className={`border rounded-xl overflow-hidden transition-colors ${isDone ? 'border-[#577C09]' : 'border-border'
-                                }`}
+                            key={form.form_key}
+                            className={`border rounded-xl overflow-hidden transition-colors ${isDone ? 'border-[var(--primary-color)]' : 'border-border'}`}
                         >
                             <button
-                                onClick={() => toggle(form.id)}
+                                onClick={() => toggle(form.form_key)}
                                 className="w-full flex items-center justify-between px-4 md:px-6 py-4 hover:bg-muted/50 transition-colors"
                             >
                                 <div className="flex items-center gap-3 min-w-0">
-                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 text-xs font-medium ${isDone
-                                        ? 'border-[#577C09] bg-[#577C09] text-white'
-                                        : 'border-muted-foreground text-muted-foreground'
-                                        }`}>
+                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 text-xs font-medium ${isDone ? 'border-[var(--primary-color)] bg-[var(--primary-color)] text-white' : 'border-muted-foreground text-muted-foreground'}`}>
                                         {isDone ? '✓' : index + 1}
                                     </div>
-                                    <span className={`font-medium text-sm ${isDone ? 'text-[#577C09]' : ''}`}>
+                                    <span className={`font-medium text-sm ${isDone ? 'text-[var(--primary-color)]' : ''}`}>
                                         {form.title}
                                     </span>
                                     {isDone && (
-                                        <span className="text-xs text-[#577C09] bg-[#E8F0D0] px-2 py-0.5 rounded-full">
+                                        <span className="text-xs text-[var(--primary-color)] bg-[var(--secondary-bg-color)] px-2 py-0.5 rounded-full">
                                             Signed
                                         </span>
                                     )}
                                 </div>
-                                {isOpen
-                                    ? <ChevronUp className="w-4 h-4 text-muted-foreground" />
-                                    : <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                                }
+                                {isOpen ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                             </button>
 
-                            {/* Form Content */}
                             {isOpen && (
                                 <div className="px-4 md:px-6 pb-6 border-t border-border pt-6">
-                                    {form.render()}
+                                    {renderFormBody(form)}
                                 </div>
                             )}
                         </div>
@@ -838,7 +612,7 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, onNext, in
             <Button
                 onClick={onNext}
                 disabled={!allCompleted}
-                className="bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 Save & Continue
             </Button>

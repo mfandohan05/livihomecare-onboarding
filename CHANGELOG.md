@@ -4,7 +4,9 @@
 - MAJOR UPDATE: support for multiple companies added (admin & caregiver side)
 - Updated login screen with new app logo & color scheme
 - Added address autocomplete for address fields in caregiver view
-- Added disclaimer about caregiver map numbers
+- Added disclaimer about caregiver map
+
+
 ## 1.2.7 - 2026-07-05
 - Added support for uploading criminal background check results, as well as NC Health Care Personnel Registry Check
 - Fixed bug causing completion email to not be sent

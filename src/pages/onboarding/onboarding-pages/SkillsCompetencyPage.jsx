@@ -149,7 +149,7 @@ const sections = [
   },
 ]
 
-export default function SkillsCompetencyPage({ stepLabel, onNext, initialData, onChange }) {
+export default function SkillsCompetencyPage({ stepLabel, onNext, initialData, onChange, companyData }) {
   const [checked, setChecked] = useState(initialData?.checked || {})
   const [lunch, setLunch] = useState(initialData?.lunch || '')
   const [dinner, setDinner] = useState(initialData?.dinner || '')
@@ -180,12 +180,12 @@ export default function SkillsCompetencyPage({ stepLabel, onNext, initialData, o
     <div className="max-w-2xl mx-auto py-16 px-8">
 
       <div className="flex items-center gap-2 mb-2">
-        <ClipboardCheck className="w-5 h-5 text-[#577C09]" />
-        <span className="text-[#577C09] font-medium">{stepLabel}</span>
+        <ClipboardCheck className="w-5 h-5 text-[var(--primary-color)]" />
+        <span className="text-[var(--primary-color)] font-medium">{stepLabel}</span>
       </div>
       <h1 className="text-3xl font-bold mb-2">Competency Checklist</h1>
       <p className="text-muted-foreground mb-8">
-        Check all items you have experience with. This helps Livi Home Care match
+        Check all items you have experience with. This helps {companyData.company_name} match
         you with the right clients. You are not required to check everything —
         only check what you are comfortable and experienced with.
       </p>
@@ -204,12 +204,12 @@ export default function SkillsCompetencyPage({ stepLabel, onNext, initialData, o
                     type="button"
                     onClick={() => toggleItem(section.id, item)}
                     className={`flex items-center gap-3 px-4 py-3 rounded-lg border text-sm text-left transition-colors ${checked_
-                        ? 'border-[#577C09] bg-[#E8F0D0] text-[#3D5906]'
-                        : 'border-border hover:border-[#577C09] hover:bg-[#E8F0D0]/30'
+                        ? 'border-[var(--primary-color)] bg-[var(--secondary-bg-color)] text-[var(--hover-color)]'
+                        : 'border-border hover:border-[var(--primary-color)] hover:bg-[var(--secondary-bg-color)]/30'
                       }`}
                   >
                     <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${checked_
-                        ? 'bg-[#577C09] border-[#577C09]'
+                        ? 'bg-[var(--primary-color)] border-[var(--primary-color)]'
                         : 'border-muted-foreground'
                       }`}>
                       {checked_ && (
@@ -263,14 +263,14 @@ export default function SkillsCompetencyPage({ stepLabel, onNext, initialData, o
                 }}
                 rows={4}
                 placeholder="Describe the meal, ingredients, and why it is nutritious..."
-                className="w-full border border-border rounded-lg px-4 py-3 text-sm resize-none focus:outline-none focus:border-[#577C09] transition-colors"
+                className="w-full border border-border rounded-lg px-4 py-3 text-sm resize-none focus:outline-none focus:border-[var(--primary-color)] transition-colors"
               />
             </div>
           </div>
         </div>
 
-        <div className="bg-[#E8F0D0] rounded-lg p-4">
-          <p className="text-sm text-[#3D5906]">
+        <div className="bg-[var(--secondary-bg-color)] rounded-lg p-4">
+          <p className="text-sm text-[var(--hover-color)]">
             <span className="font-medium">Note: </span>
             In addition to this competency assessment, each Livi Home Care caregiver
             will be trained for the client's specific needs before being assigned to them.
@@ -286,7 +286,7 @@ export default function SkillsCompetencyPage({ stepLabel, onNext, initialData, o
         <Button
           onClick={handleSubmit}
           disabled={!canContinue}
-          className="bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Save & Continue
         </Button>

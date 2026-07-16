@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { FileText, ChevronLeft, ChevronRight, CheckCircle, AlertCircle, AlertTriangle } from 'lucide-react'
+import { FileText, ChevronLeft, ChevronRight, CheckCircle, AlertCircle, AlertTriangle, Loader2 } from 'lucide-react'
 import { saveTaxFormData } from '@/lib/caregiver'
 import { supabase } from '@/lib/supabase'
 import { formatPhone, formatDOB } from '@/lib/formUtils'
@@ -11,6 +11,16 @@ import StateSelect from '@/components/global/StateSelect'
 const today = new Date().toLocaleDateString('en-US', {
     month: '2-digit', day: '2-digit', year: 'numeric'
 }).replace(/\//g, '/')
+
+// Fixed metadata for each supported tax form type. These are standard federal/state
+// forms, not company-customizable content, so this stays a static lookup — what
+// varies per company/role is *which* of these apply, driven by required_tax_forms.
+const STEP_DEFINITIONS = {
+    i9: { title: 'Form I-9', subtitle: 'Employment Eligibility Verification — Section 1' },
+    w4: { title: 'Form W-4', subtitle: 'Federal Employee Withholding Certificate' },
+    w9: { title: 'Form W-9', subtitle: 'Request for Taxpayer Identification Number' },
+    nc4ez: { title: 'NC-4EZ', subtitle: 'North Carolina Employee Withholding Certificate' },
+}
 
 const Field = ({ label, id, children, required }) => (
     <div className="space-y-1.5">
@@ -27,13 +37,13 @@ const RadioOption = ({ value, label, checked, onChange }) => (
         type="button"
         onClick={() => onChange(value)}
         className={`w-full text-left px-4 py-3 rounded-lg border text-sm transition-colors flex items-center gap-3 ${checked
-            ? 'border-[#577C09] bg-[#E8F0D0] text-[#3D5906]'
-            : 'border-border hover:border-[#577C09] hover:bg-[#E8F0D0]/30'
+            ? 'border-[var(--primary-color)] bg-[var(--secondary-bg-color)] text-[var(--hover-color)]'
+            : 'border-border hover:border-[var(--primary-color)] hover:bg-[var(--secondary-bg-color)]/30'
             }`}
     >
-        <div className={`w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center ${checked ? 'border-[#577C09]' : 'border-muted-foreground'
+        <div className={`w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center ${checked ? 'border-[var(--primary-color)]' : 'border-muted-foreground'
             }`}>
-            {checked && <div className="w-2 h-2 rounded-full bg-[#577C09]" />}
+            {checked && <div className="w-2 h-2 rounded-full bg-[var(--primary-color)]" />}
         </div>
         {label}
     </button>
@@ -44,7 +54,7 @@ const Checkbox = ({ checked, onChange, label }) => (
         <button
             type="button"
             onClick={() => onChange(!checked)}
-            className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${checked ? 'bg-[#577C09] border-[#577C09]' : 'border-muted-foreground'
+            className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${checked ? 'bg-[var(--primary-color)] border-[var(--primary-color)]' : 'border-muted-foreground'
                 }`}
         >
             {checked && (
@@ -57,7 +67,7 @@ const Checkbox = ({ checked, onChange, label }) => (
     </div>
 )
 
-function I9Form({ data, onChange, onSave, saved }) {
+function I9Form({ data, onChange, onSave, saved, companyName }) {
     const set = (key) => (e) => onChange({ ...data, [key]: e.target.value })
 
     const citizenshipOptions = [
@@ -66,8 +76,6 @@ function I9Form({ data, onChange, onSave, saved }) {
         { value: '3', label: 'A lawful permanent resident (enter USCIS or A-Number below)' },
         { value: '4', label: 'An alien authorized to work (enter expiration date and number below)' },
     ]
-
-
 
     const alienFieldComplete = data.citizenshipStatus !== '4' || (
         data.alienNumberType && (
@@ -87,7 +95,7 @@ function I9Form({ data, onChange, onSave, saved }) {
                 <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                 <div className="text-sm text-amber-800">
                     <p className="font-medium mb-1">You are completing Section 1 only.</p>
-                    <p>Livi Home Care will complete Section 2 with you directly.</p>
+                    <p>{companyName} will complete Section 2 with you directly.</p>
                 </div>
             </div>
 
@@ -161,7 +169,6 @@ function I9Form({ data, onChange, onSave, saved }) {
                         <Input id="i9_phone" type="tel" inputMode="tel" value={data.phone || ''}
                             onChange={(e) => onChange({ ...data, phone: formatPhone(e.target.value) })}
                             placeholder="(704) 555-0123" />
-
                     </Field>
                 </div>
             </div>
@@ -186,7 +193,6 @@ function I9Form({ data, onChange, onSave, saved }) {
                             <Input id="i9_expDate" value={data.expDate || ''} inputMode="numeric"
                                 onChange={(e) => onChange({ ...data, expDate: formatDOB(e.target.value) })}
                                 placeholder="01/01/2027" />
-
                         </Field>
 
                         <div>
@@ -245,12 +251,12 @@ function I9Form({ data, onChange, onSave, saved }) {
                 </p>
                 <p className="text-xs text-muted-foreground mb-4">Date: {today}</p>
                 {saved ? (
-                    <div className="flex items-center gap-2 text-[#577C09] text-sm font-medium">
+                    <div className="flex items-center gap-2 text-[var(--primary-color)] text-sm font-medium">
                         <CheckCircle className="w-4 h-4" />
                         Section 1 saved successfully
                     </div>
                 ) : (
-                    <Button onClick={onSave} disabled={!canSave} className="bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <Button onClick={onSave} disabled={!canSave} className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed">
                         Save Section 1
                     </Button>
                 )}
@@ -273,8 +279,8 @@ function W4Form({ data, onChange, onSave, saved }) {
 
     return (
         <div className="space-y-6">
-            <div className="bg-[#E8F0D0] rounded-lg p-4">
-                <p className="text-sm text-[#3D5906]">
+            <div className="bg-[var(--secondary-bg-color)] rounded-lg p-4">
+                <p className="text-sm text-[var(--hover-color)]">
                     <span className="font-medium">Steps 2–4 are optional</span> — most employees only need to complete Step 1 and sign.
                 </p>
             </div>
@@ -361,12 +367,12 @@ function W4Form({ data, onChange, onSave, saved }) {
                 <p className="text-xs text-muted-foreground mb-4">Under penalties of perjury, I declare that this certificate, to the best of my knowledge and belief, is true, correct, and complete.</p>
                 <p className="text-xs text-muted-foreground mb-4">Date: {today}</p>
                 {saved ? (
-                    <div className="flex items-center gap-2 text-[#577C09] text-sm font-medium">
+                    <div className="flex items-center gap-2 text-[var(--primary-color)] text-sm font-medium">
                         <CheckCircle className="w-4 h-4" />
                         W-4 saved successfully
                     </div>
                 ) : (
-                    <Button onClick={onSave} disabled={!canSave} className="bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <Button onClick={onSave} disabled={!canSave} className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed">
                         Save W-4
                     </Button>
                 )}
@@ -375,7 +381,7 @@ function W4Form({ data, onChange, onSave, saved }) {
     )
 }
 
-function W9Form({ data, onChange, onSave, saved }) {
+function W9Form({ data, onChange, onSave, saved, companyName }) {
     const set = (key) => (e) => onChange({ ...data, [key]: e.target.value })
 
     const taxClassifications = [
@@ -393,9 +399,9 @@ function W9Form({ data, onChange, onSave, saved }) {
 
     return (
         <div className="space-y-6">
-            <div className="bg-[#E8F0D0] rounded-lg p-4">
-                <p className="text-sm text-[#3D5906]">
-                    <span className="font-medium">W-9 is for independent contractors.</span> As a contractor with Livi Home Care, you are responsible for paying your own taxes. This form provides your taxpayer identification number for 1099 reporting.
+            <div className="bg-[var(--secondary-bg-color)] rounded-lg p-4">
+                <p className="text-sm text-[var(--hover-color)]">
+                    <span className="font-medium">W-9 is for independent contractors.</span> As a contractor with {companyName}, you are responsible for paying your own taxes. This form provides your taxpayer identification number for 1099 reporting.
                 </p>
             </div>
 
@@ -488,12 +494,12 @@ function W9Form({ data, onChange, onSave, saved }) {
                 </ul>
                 <p className="text-xs text-muted-foreground mb-4">Date: {today}</p>
                 {saved ? (
-                    <div className="flex items-center gap-2 text-[#577C09] text-sm font-medium">
+                    <div className="flex items-center gap-2 text-[var(--primary-color)] text-sm font-medium">
                         <CheckCircle className="w-4 h-4" />
                         W-9 saved successfully
                     </div>
                 ) : (
-                    <Button onClick={onSave} disabled={!canSave} className="bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <Button onClick={onSave} disabled={!canSave} className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed">
                         Save W-9
                     </Button>
                 )}
@@ -502,7 +508,7 @@ function W9Form({ data, onChange, onSave, saved }) {
     )
 }
 
-function NC4EZForm({ data, onChange, onSave, saved }) {
+function NC4EZForm({ data, onChange, onSave, saved, companyName }) {
     const set = (key) => (e) => onChange({ ...data, [key]: e.target.value })
 
     const filingOptions = [
@@ -517,9 +523,9 @@ function NC4EZForm({ data, onChange, onSave, saved }) {
 
     return (
         <div className="space-y-6">
-            <div className="bg-[#E8F0D0] rounded-lg p-4">
-                <p className="text-sm text-[#3D5906]">
-                    <span className="font-medium">NC-4EZ</span> is the North Carolina state withholding certificate. It tells Livi Home Care how much NC state income tax to withhold from your paychecks.
+            <div className="bg-[var(--secondary-bg-color)] rounded-lg p-4">
+                <p className="text-sm text-[var(--hover-color)]">
+                    <span className="font-medium">NC-4EZ</span> is the North Carolina state withholding certificate. It tells {companyName} how much NC state income tax to withhold from your paychecks.
                 </p>
             </div>
 
@@ -623,12 +629,12 @@ function NC4EZForm({ data, onChange, onSave, saved }) {
                 </p>
                 <p className="text-xs text-muted-foreground mb-4">Date: {today}</p>
                 {saved ? (
-                    <div className="flex items-center gap-2 text-[#577C09] text-sm font-medium">
+                    <div className="flex items-center gap-2 text-[var(--primary-color)] text-sm font-medium">
                         <CheckCircle className="w-4 h-4" />
                         NC-4EZ saved successfully
                     </div>
                 ) : (
-                    <Button onClick={onSave} disabled={!canSave} className="bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <Button onClick={onSave} disabled={!canSave} className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed">
                         Save NC-4EZ
                     </Button>
                 )}
@@ -637,36 +643,48 @@ function NC4EZForm({ data, onChange, onSave, saved }) {
     )
 }
 
-export default function TaxFormsPage({ stepLabel, role, onNext, caregiver, setSaving, isPreview }) {
+export default function TaxFormsPage({ stepLabel, caregiver, companyId, companyData, onNext, setSaving, isPreview }) {
+    const companyName = companyData?.company_name || 'your employer'
 
-    const isContractor = role === 'nurse'
-
-    const steps = isContractor
-        ? [
-            { id: 'i9', title: 'Form I-9', subtitle: 'Employment Eligibility Verification — Section 1' },
-            { id: 'w9', title: 'Form W-9', subtitle: 'Request for Taxpayer Identification Number' },
-        ]
-        : [
-            { id: 'i9', title: 'Form I-9', subtitle: 'Employment Eligibility Verification — Section 1' },
-            { id: 'w4', title: 'Form W-4', subtitle: 'Federal Employee Withholding Certificate' },
-            { id: 'nc4ez', title: 'NC-4EZ', subtitle: 'North Carolina Employee Withholding Certificate' },
-        ]
-
-    const initialSaved = isContractor
-        ? { i9: false, w9: false }
-        : { i9: false, w4: false, nc4ez: false }
-
+    const [requiredForms, setRequiredForms] = useState(null) // null = not loaded yet
+    const [steps, setSteps] = useState([])
     const [currentStep, setCurrentStep] = useState(0)
-    const [saved, setSaved] = useState(initialSaved);
-    const [confirming, setConfirming] = useState(null);
+    const [saved, setSaved] = useState({})
+    const [confirming, setConfirming] = useState(null)
     const [i9Data, setI9Data] = useState({})
     const [w4Data, setW4Data] = useState({})
     const [w9Data, setW9Data] = useState({})
-    const [nc4ezUpload, setNc4ezUpload] = useState(null)
-    const [nc4ezData, setNc4ezData] = useState({});
+    const [nc4ezData, setNc4ezData] = useState({})
 
+    // Fetch which tax forms this caregiver's role/company requires
+    useEffect(() => {
+        if (!companyId || !caregiver?.role) return
+
+        const loadRequiredForms = async () => {
+            const { data, error } = await supabase
+                .from('role_labels')
+                .select('required_tax_forms')
+                .eq('company_id', companyId)
+                .eq('role_key', caregiver.role)
+                .maybeSingle()
+
+            const forms = (!error && data?.required_tax_forms?.length > 0)
+                ? data.required_tax_forms
+                : ['i9', 'w4', 'nc4ez'] // fallback default if role isn't configured
+
+            setRequiredForms(forms)
+            setSteps(forms.map(id => ({ id, ...STEP_DEFINITIONS[id] })))
+            setSaved(Object.fromEntries(forms.map(id => [id, false])))
+        }
+
+        loadRequiredForms()
+    }, [companyId, caregiver?.role])
+
+    const isContractor = requiredForms?.includes('w9')
 
     useEffect(() => {
+        if (!requiredForms || steps.length === 0) return
+
         const restoreSaved = async () => {
             const [{ data: taxData }, { data: docData }] = await Promise.all([
                 supabase
@@ -683,31 +701,24 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver, setSa
 
             const completedDocs = docData?.map(d => d.document_type) || []
 
-            const restoredSaved = isContractor ? {
-                i9: completedDocs.includes('i9_completed'),
-                w9: completedDocs.includes('w9_completed'),
-            } : {
-                i9: completedDocs.includes('i9_completed'),
-                w4: completedDocs.includes('w4_completed'),
-                nc4ez: completedDocs.includes('nc4ez_completed'),
-            }
+            const restoredSaved = Object.fromEntries(
+                requiredForms.map(id => [id, completedDocs.includes(`${id}_completed`)])
+            )
 
             setSaved(restoredSaved)
 
             const firstUnsaved = steps.findIndex(s => !restoredSaved[s.id])
-            if (firstUnsaved !== -1) {
-                setCurrentStep(firstUnsaved)
-            } else {
-                setCurrentStep(steps.length - 1)
-            }
+            setCurrentStep(firstUnsaved !== -1 ? firstUnsaved : steps.length - 1)
         }
         restoreSaved()
-    }, [caregiver.id])
+    }, [caregiver.id, requiredForms, steps.length])
 
-    const allDone = Object.values(saved).every(Boolean)
+    const allDone = steps.length > 0 && steps.every(s => saved[s.id])
 
     const handleSave = async (formId) => {
         setSaving(true)
+        const filePathPrefix = `${companyId}/${caregiver.id}`
+
         if (formId === 'i9') {
             await supabase.functions.invoke('save-ssn', {
                 body: {
@@ -720,28 +731,24 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver, setSa
             await supabase.functions.invoke('generate-i9', {
                 body: {
                     caregiverId: caregiver.id,
-                    i9Data: {
-                        ...i9Data,
-                        ssn: i9Data.ssn?.replace(/-/g, '') || ''
-                    }
+                    i9Data: { ...i9Data, ssn: i9Data.ssn?.replace(/-/g, '') || '' }
                 }
             })
 
-            await saveTaxFormData(caregiver.id, 'i9', {
-                ...i9Data,
-                ssn: ''
-            })
+            await saveTaxFormData(caregiver.id, companyId, 'i9', { ...i9Data, ssn: '' })
 
             await supabase
                 .from('caregiver_documents')
                 .upsert({
                     caregiver_id: caregiver.id,
+                    company_id: companyId,
                     document_type: 'i9_completed',
                     file_name: `i9_completed.pdf`,
-                    file_path: `${caregiver.id}/i9_completed.pdf`,
+                    file_path: `${filePathPrefix}/i9_completed.pdf`,
                     mime_type: 'application/pdf',
                 }, { onConflict: 'caregiver_id, document_type' });
             await supabase.from('audit_logs').insert({
+                company_id: companyId,
                 admin_id: null,
                 admin_email: null,
                 action: 'completed_i9_section1',
@@ -761,26 +768,23 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver, setSa
                 }
             })
 
-            await saveTaxFormData(caregiver.id, 'w4', w4Data)
+            await saveTaxFormData(caregiver.id, companyId, 'w4', w4Data)
 
             await supabase
                 .from('caregiver_documents')
                 .upsert({
                     caregiver_id: caregiver.id,
+                    company_id: companyId,
                     document_type: 'w4_completed',
                     file_name: `${caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')}_W4_Completed.pdf`,
-                    file_path: `${caregiver.id}/${caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')}_W4_Completed.pdf`,
+                    file_path: `${filePathPrefix}/${caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')}_W4_Completed.pdf`,
                     mime_type: 'application/pdf',
                 }, { onConflict: 'caregiver_id, document_type' })
 
             await supabase.functions.invoke('generate-w4', {
                 body: {
                     caregiverId: caregiver.id,
-                    w4Data: {
-                        ...w4Data,
-                        ssn: w4Data.ssn?.replace(/-/g, '') || '',
-                        employerEIN: "0987654321"
-                    }
+                    w4Data: { ...w4Data, ssn: w4Data.ssn?.replace(/-/g, '') || '' }
                 }
             })
         }
@@ -794,15 +798,16 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver, setSa
                     ein: w9Data.ein?.replace(/-/g, '') || '',
                 }
             })
-            await saveTaxFormData(caregiver.id, 'w9', w9Data)
+            await saveTaxFormData(caregiver.id, companyId, 'w9', w9Data)
 
             await supabase
                 .from('caregiver_documents')
                 .upsert({
                     caregiver_id: caregiver.id,
-                    document_type: 'w4_completed',
-                    file_name: `${caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')}_W4_Completed.pdf`,
-                    file_path: `${caregiver.id}/${caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')}_W4_Completed.pdf`,
+                    company_id: companyId,
+                    document_type: 'w9_completed',
+                    file_name: `${caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')}_W9_Completed.pdf`,
+                    file_path: `${filePathPrefix}/${caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')}_W9_Completed.pdf`,
                     mime_type: 'application/pdf',
                 }, { onConflict: 'caregiver_id, document_type' })
 
@@ -823,10 +828,7 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver, setSa
                 body: {
                     caregiverId: caregiver.id,
                     caregiverName: caregiver.name,
-                    nc4ezData: {
-                        ...nc4ezData,
-                        ssn: nc4ezData.ssn?.replace(/-/g, '') || ''
-                    }
+                    nc4ezData: { ...nc4ezData, ssn: nc4ezData.ssn?.replace(/-/g, '') || '' }
                 }
             })
 
@@ -838,9 +840,10 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver, setSa
                 .from('caregiver_documents')
                 .upsert({
                     caregiver_id: caregiver.id,
+                    company_id: companyId,
                     document_type: 'nc4ez_completed',
                     file_name: `${caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')}_NC4EZ_Completed.pdf`,
-                    file_path: `${caregiver.id}/${caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')}_NC4EZ_Completed.pdf`,
+                    file_path: `${filePathPrefix}/${caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')}_NC4EZ_Completed.pdf`,
                     mime_type: 'application/pdf',
                 }, { onConflict: 'caregiver_id, document_type' })
         }
@@ -853,14 +856,23 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver, setSa
         setSaving(false)
     }
 
+    if (requiredForms === null || steps.length === 0) {
+        return (
+            <div className="max-w-2xl mx-auto py-16 px-8 flex items-center justify-center">
+                <Loader2 className="w-5 h-5 animate-spin text-[var(--primary-color)] mr-2" />
+                <p className="text-muted-foreground">Loading tax forms...</p>
+            </div>
+        )
+    }
+
     const step = steps[currentStep]
 
     if (isPreview) {
         return (
             <div className="max-w-2xl mx-auto py-8 md:py-16 px-4 md:px-8">
                 <div className="flex items-center gap-2 mb-2">
-                    <FileText className="w-5 h-5 text-[#577C09]" />
-                    <span className="text-[#577C09] font-medium">{stepLabel}</span>
+                    <FileText className="w-5 h-5 text-[var(--primary-color)]" />
+                    <span className="text-[var(--primary-color)] font-medium">{stepLabel}</span>
                 </div>
                 <h1 className="text-3xl font-bold mb-2">Tax Forms</h1>
                 <div className="border border-border rounded-xl p-8 mt-6 flex items-center justify-center min-h-[200px]">
@@ -873,8 +885,8 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver, setSa
     return (
         <div className="max-w-2xl mx-auto py-8 md:py-16 px-4 md:px-8">
             <div className="flex items-center gap-2 mb-2">
-                <FileText className="w-5 h-5 text-[#577C09]" />
-                <span className="text-[#577C09] font-medium">{stepLabel}</span>
+                <FileText className="w-5 h-5 text-[var(--primary-color)]" />
+                <span className="text-[var(--primary-color)] font-medium">{stepLabel}</span>
             </div>
             <h1 className="text-3xl font-bold mb-2">Tax Forms</h1>
             <p className="text-muted-foreground mb-6">
@@ -887,9 +899,9 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver, setSa
                         key={s.id}
                         onClick={() => (saved[s.id] || i === currentStep) && setCurrentStep(i)}
                         className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${i === currentStep
-                            ? 'bg-[#577C09] text-white border-[#577C09]'
+                            ? 'bg-[var(--primary-color)] text-white border-[var(--primary-color)]'
                             : saved[s.id]
-                                ? 'bg-[#E8F0D0] text-[#577C09] border-[#577C09] cursor-pointer'
+                                ? 'bg-[var(--secondary-bg-color)] text-[var(--primary-color)] border-[var(--primary-color)] cursor-pointer'
                                 : 'bg-muted text-muted-foreground border-border opacity-50 cursor-not-allowed'
                             }`}
                     >
@@ -905,21 +917,19 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver, setSa
                 </div>
 
                 <div className="relative">
-                    {/* blur overlay when saved */}
                     {saved[step.id] && confirming !== step.id && (
                         <div
                             className="absolute inset-0 z-10 backdrop-blur-sm bg-white/60 rounded-lg flex items-center justify-center cursor-pointer"
                             onClick={() => setConfirming(step.id)}
                         >
                             <div className="text-center px-6">
-                                <CheckCircle className="w-8 h-8 text-[#577C09] mx-auto mb-2" />
-                                <p className="text-sm font-medium text-[#577C09]">Form submitted</p>
+                                <CheckCircle className="w-8 h-8 text-[var(--primary-color)] mx-auto mb-2" />
+                                <p className="text-sm font-medium text-[var(--primary-color)]">Form submitted</p>
                                 <p className="text-xs text-muted-foreground mt-1">Click to modify</p>
                             </div>
                         </div>
                     )}
 
-                    {/* warning dialog */}
                     {confirming === step.id && (
                         <div className="absolute inset-0 z-20 bg-white/95 rounded-lg flex items-center justify-center">
                             <div className="text-center max-w-sm px-6">
@@ -946,7 +956,7 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver, setSa
                                             if (step.id === 'i9') setI9Data({})
                                             if (step.id === 'w4') setW4Data({})
                                             if (step.id === 'w9') setW9Data({})
-                                            if (step.id === 'nc4ez') setNc4ezUpload(null)
+                                            if (step.id === 'nc4ez') setNc4ezData({})
                                         }}
                                         className="px-4 py-2 text-sm bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
                                     >
@@ -957,17 +967,17 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver, setSa
                         </div>
                     )}
 
-                    {currentStep === 0 && (
-                        <I9Form data={i9Data} onChange={setI9Data} onSave={() => handleSave('i9')} saved={saved.i9} />
+                    {step.id === 'i9' && (
+                        <I9Form data={i9Data} onChange={setI9Data} onSave={() => handleSave('i9')} saved={saved.i9} companyName={companyName} />
                     )}
-                    {!isContractor && currentStep === 1 && (
+                    {step.id === 'w4' && (
                         <W4Form data={w4Data} onChange={setW4Data} onSave={() => handleSave('w4')} saved={saved.w4} />
                     )}
-                    {!isContractor && currentStep === 2 && (
-                        <NC4EZForm data={nc4ezData} onChange={setNc4ezData} onSave={() => handleSave('nc4ez')} saved={saved.nc4ez} />
+                    {step.id === 'nc4ez' && (
+                        <NC4EZForm data={nc4ezData} onChange={setNc4ezData} onSave={() => handleSave('nc4ez')} saved={saved.nc4ez} companyName={companyName} />
                     )}
-                    {isContractor && currentStep === 1 && (
-                        <W9Form data={w9Data} onChange={setW9Data} onSave={() => handleSave('w9')} saved={saved.w9} />
+                    {step.id === 'w9' && (
+                        <W9Form data={w9Data} onChange={setW9Data} onSave={() => handleSave('w9')} saved={saved.w9} companyName={companyName} />
                     )}
                 </div>
             </div>
@@ -979,17 +989,17 @@ export default function TaxFormsPage({ stepLabel, role, onNext, caregiver, setSa
                 </Button>
                 <div className="flex gap-1.5">
                     {steps.map((_, i) => (
-                        <div key={i} className={`w-2 h-2 rounded-full transition-colors ${i === currentStep ? 'bg-[#577C09]' : saved[steps[i].id] ? 'bg-[#577C09]/40' : 'bg-muted-foreground/30'}`} />
+                        <div key={i} className={`w-2 h-2 rounded-full transition-colors ${i === currentStep ? 'bg-[var(--primary-color)]' : saved[steps[i].id] ? 'bg-[var(--primary-color)]/40' : 'bg-muted-foreground/30'}`} />
                     ))}
                 </div>
-                <Button onClick={() => setCurrentStep(prev => prev + 1)} disabled={currentStep === steps.length - 1 || !saved[steps[currentStep].id]} className="gap-2 bg-[#577C09] hover:bg-[#3D5906] text-white disabled:opacity-50">
+                <Button onClick={() => setCurrentStep(prev => prev + 1)} disabled={currentStep === steps.length - 1 || !saved[steps[currentStep].id]} className="gap-2 bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white disabled:opacity-50">
                     <span className='hidden sm:inline'>Next</span>
                     <ChevronRight className="w-4 h-4" />
                 </Button>
             </div>
 
             {!allDone && <p className="text-sm text-muted-foreground mb-4">Please complete all tax forms to continue.</p>}
-            <Button onClick={onNext} disabled={!allDone} className="bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed">
+            <Button onClick={onNext} disabled={!allDone} className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed">
                 Save & Continue
             </Button>
         </div>
