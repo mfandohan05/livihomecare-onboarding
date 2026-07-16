@@ -135,7 +135,11 @@ export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver
   }
 
   const requiredIds = requiredDocs.filter(d => d.required).map(d => d.id)
+  const expirationRequiredIds = ['driversLicense', 'carInsurance', 'nursingLicense']
   const allRequiredUploaded = requiredIds.every(id => uploads[id])
+  const allRequiredExpProvided = expirationRequiredIds
+    .filter(id => requiredIds.includes(id))
+    .every(id => Boolean(documentExpirations[id]))
   const anyUploading = Object.values(uploading).some(Boolean)
 
   return (
@@ -219,7 +223,7 @@ export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver
                           className="hidden"
                           onChange={(e) => handleFileChange(doc.id, e)}
                         />
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground border border-dashed border-border rounded-md px-3 py-2 hover:border-[#577C09] hover:text-[#577C09] transition-colors w-fit">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground border border-dashed border-border rounded-md px-3 py-2 hover:border-[var(--primary-color)] hover:text-[var(--primary-color)] transition-colors w-fit">
                           <Upload className="w-3 h-3" />
                           <span>Click to upload — JPG, PNG or PDF</span>
                         </div>
@@ -233,7 +237,7 @@ export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver
                   {['driversLicense', 'carInsurance', 'socialSecurityCard', 'nursingLicense', 'certifications'].includes(doc.id) && (
                     <div className="mt-4">
                       <label htmlFor={`${doc.id}-expiration`} className="text-xs font-semibold mb-1 block text-[var(--hover-color)]">
-                        Expiration Date{doc.id === 'socialSecurityCard' || doc.id === 'certifications' ? ' (optional)' : ''}
+                        Expiration Date{doc.id === 'socialSecurityCard' || doc.id === 'certifications' ? ' (optional)' : (doc.required ? ' (required)' : '')}
                       </label>
                       <input
                         id={`${doc.id}-expiration`}
@@ -241,9 +245,12 @@ export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver
                         value={documentExpirations[doc.id] || ''}
                         onChange={(e) => handleExpirationChange(doc.id, e.target.value)}
                         className={
-                          `rounded-lg px-3 py-2 text-sm bg-white text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-[#577C09]/40 focus:border-[#577C09] md:w-full ${uploaded ? 'border-[#577C09]' : 'border-border'}`
+                          `rounded-lg px-3 py-2 text-sm bg-white text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--primary-color)]/40 focus:border-[var(--primary-color)] md:w-full ${uploaded ? 'border-[var(--primary-color)]' : 'border-border'}`
                         }
                       />
+                      {doc.required && expirationRequiredIds.includes(doc.id) && !documentExpirations[doc.id] && (
+                        <p className="text-xs text-red-600 mt-1">Expiration date is required for this document.</p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -259,9 +266,15 @@ export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver
         </p>
       )}
 
+      {!allRequiredExpProvided && (
+        <p className="text-sm text-red-600 mb-4">
+          Please provide expiration dates for all required documents.
+        </p>
+      )}
+
       <Button
         onClick={onNext}
-        disabled={!allRequiredUploaded || anyUploading}
+        disabled={!allRequiredUploaded || !allRequiredExpProvided || anyUploading}
         className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {anyUploading ? (

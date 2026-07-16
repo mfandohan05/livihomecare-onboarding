@@ -5,6 +5,7 @@
 - Updated login screen with new app logo & color scheme
 - Added address autocomplete for address fields in caregiver view
 - Added disclaimer about caregiver map
+- Fixed bug where expiration dates were not required for documents
 
 
 ## 1.2.7 - 2026-07-05

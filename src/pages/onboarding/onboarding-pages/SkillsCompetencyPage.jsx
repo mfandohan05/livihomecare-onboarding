@@ -246,7 +246,7 @@ export default function SkillsCompetencyPage({ stepLabel, onNext, initialData, o
                 }}
                 rows={4}
                 placeholder="Describe the meal, ingredients, and why it is nutritious..."
-                className="w-full border border-border rounded-lg px-4 py-3 text-sm resize-none focus:outline-none focus:border-[#577C09] transition-colors"
+                className="w-full border border-border rounded-lg px-4 py-3 text-sm resize-none focus:outline-none focus:border-[var(--primary-color)] transition-colors"
               />
             </div>
 

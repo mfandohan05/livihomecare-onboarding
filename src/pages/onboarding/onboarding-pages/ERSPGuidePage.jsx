@@ -47,7 +47,7 @@ export default function ERSPGuidePage({ stepLabel, onNext, initialData, onChange
                     heading: 'Messages',
                     images: [image3, image4],
                     items: [
-                        `All Team Livi messages are accessible from the main screen by clicking the "Messages" button at the bottom of the screen.`,
+                        `All ${(companyData.company_name)} messages are accessible from the main screen by clicking the "Messages" button at the bottom of the screen.`,
                     ]
                 },
             ]
