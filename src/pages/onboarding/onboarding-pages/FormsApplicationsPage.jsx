@@ -163,19 +163,20 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, companyId,
     ])
 
     useEffect(() => {
-        if (!companyId) return
+        if (!companyId || !caregiver?.role) return
 
         const loadForms = async () => {
             setLoadingForms(true)
             const { data, error } = await supabase
                 .from('company_forms')
-                .select('form_key, title, form_order, form_type, content, config, requires_signature')
+                .select('form_key, title, form_order, form_type, content, config, requires_signature, visible_to_roles')
                 .eq('company_id', companyId)
                 .order('form_order')
 
             if (!error && data && data.length > 0) {
-                setForms(data)
-                setExpanded({ [data[0].form_key]: true })
+                const filtered = data.filter(f => !f.visible_to_roles || f.visible_to_roles.includes(caregiver.role))
+                setForms(filtered)
+                setExpanded(filtered.length > 0 ? { [filtered[0].form_key]: true } : {})
             } else {
                 setForms([])
             }
@@ -183,7 +184,7 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, companyId,
         }
 
         loadForms()
-    }, [companyId])
+    }, [companyId, caregiver?.role])
 
     const toggle = (formKey) => {
         setExpanded(prev => ({ ...prev, [formKey]: !prev[formKey] }))
@@ -526,7 +527,6 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, companyId,
             )
         }
 
-        // default: signature_only — generic content-block renderer
         return (
             <>
                 <FormContent>

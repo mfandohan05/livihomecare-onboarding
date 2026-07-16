@@ -14,7 +14,9 @@ const getStatusIcon = (status) => {
 function SidebarComponent({ steps, activeStep, setActiveStep, handleNext, caregiver, resetFormData, isIdle, isCompleted }) {
     const completedCount = steps.filter(s => s.status === "completed").length;
     const progressPercent = Math.round((completedCount / steps.length) * 100);
-    const avatarURL = `https://ui-avatars.com/api/?name=${encodeURIComponent(caregiver.name)}&background=577C09&color=fff`;
+    const htmlElement = document.querySelector("html");
+    const renderedAvatarColor = getComputedStyle(htmlElement).getPropertyValue("--primary-color").trim().replace("#", "");
+    const avatarURL = `https://ui-avatars.com/api/?name=${encodeURIComponent(caregiver.name)}&background=${renderedAvatarColor}&color=fff`;
 
     return (
         <Sidebar>

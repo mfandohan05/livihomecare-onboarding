@@ -62,8 +62,8 @@ export default function BloodbornePathogensPage({ stepLabel, onNext, initialData
     return (
         <div className="max-w-2xl mx-auto py-8 md:py-16 px-4 md:px-8">
             <div className="flex items-center gap-2 mb-2">
-                <Shield className="w-5 h-5 text-[#577C09]" />
-                <span className="text-[#577C09] font-medium">{stepLabel}</span>
+                <Shield className="w-5 h-5 text-[var(--primary-color)]" />
+                <span className="text-[var(--primary-color)] font-medium">{stepLabel}</span>
             </div>
 
             <h1 className="text-3xl font-bold mb-2">Bloodborne Pathogens Training</h1>
@@ -72,9 +72,9 @@ export default function BloodbornePathogensPage({ stepLabel, onNext, initialData
             </p>
 
             {/* Training link card */}
-            <div className="bg-[#F4F7EC] border border-[#577C09]/20 rounded-xl p-4 md:p-6 mb-6">
+            <div className="bg-[var(--secondary-bg-color)] border border-[var(--primary-color)]/20 rounded-xl p-4 md:p-6 mb-6">
                 <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-full bg-[#577C09] flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-[var(--primary-color)] flex items-center justify-center shrink-0">
                         <Shield className="w-5 h-5 text-white" />
                     </div>
                     <div className="flex-1">
@@ -90,7 +90,7 @@ export default function BloodbornePathogensPage({ stepLabel, onNext, initialData
                         </ol>
                         <button
                             onClick={handleOpenTraining}
-                            className="flex items-center gap-2 bg-[#577C09] hover:bg-[#3D5906] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                            className="flex items-center gap-2 bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                         >
                             <ExternalLink className="w-4 h-4" />
                             Open Training Course
@@ -107,13 +107,13 @@ export default function BloodbornePathogensPage({ stepLabel, onNext, initialData
                 </p>
 
                 {uploaded ? (
-                    <div className="flex items-center gap-3 py-3 px-4 rounded-lg bg-[#E8F0D0]">
-                        <CheckCircle className="w-5 h-5 text-[#577C09] shrink-0" />
+                    <div className="flex items-center gap-3 py-3 px-4 rounded-lg bg-[var(--secondary-bg-color)]">
+                        <CheckCircle className="w-5 h-5 text-[var(--primary-color)] shrink-0" />
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-[#577C09]">Certificate uploaded</p>
-                            <p className="text-xs text-[#577C09]/70 truncate">{certificate}</p>
+                            <p className="text-sm font-medium text-[var(--primary-color)]">Certificate uploaded</p>
+                            <p className="text-xs text-[var(--primary-color)]/70 truncate">{certificate}</p>
                         </div>
-                        <label className="cursor-pointer text-xs text-[#577C09] hover:underline shrink-0">
+                        <label className="cursor-pointer text-xs text-[var(--primary-color)] hover:underline shrink-0">
                             <input
                                 type="file"
                                 accept="image/*,.pdf"
@@ -127,7 +127,7 @@ export default function BloodbornePathogensPage({ stepLabel, onNext, initialData
                         </label>
                     </div>
                 ) : (
-                    <label className="flex flex-col items-center justify-center gap-3 border-2 border-dashed border-border rounded-xl py-10 cursor-pointer hover:border-[#577C09] hover:bg-[#F4F7EC]/50 transition-colors">
+                    <label className="flex flex-col items-center justify-center gap-3 border-2 border-dashed border-border rounded-xl py-10 cursor-pointer hover:border-[var(--primary-color)] hover:bg-[#F4F7EC]/50 transition-colors">
                         <input
                             type="file"
                             accept="image/*,.pdf"
@@ -139,7 +139,7 @@ export default function BloodbornePathogensPage({ stepLabel, onNext, initialData
                         />
                         {uploading ? (
                             <>
-                                <Loader2 className="w-8 h-8 text-[#577C09] animate-spin" />
+                                <Loader2 className="w-8 h-8 text-[var(--primary-color)] animate-spin" />
                                 <p className="text-sm text-muted-foreground">Uploading...</p>
                             </>
                         ) : (
@@ -159,7 +159,7 @@ export default function BloodbornePathogensPage({ stepLabel, onNext, initialData
                 <Button
                     onClick={onNext}
                     disabled={!uploaded}
-                    className="bg-[#577C09] hover:bg-[#3D5906] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     Save & Continue
                 </Button>

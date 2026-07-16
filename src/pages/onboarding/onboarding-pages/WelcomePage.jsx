@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Heart, AlertCircle } from "lucide-react"
 
-function WelcomePage({ caregiver, onNext, welcomeSteps, companyData }) {
+function WelcomePage({ caregiver, onNext, companyData }) {
     return (
         <div className="max-w-2xl mx-auto py-16 px-8">
             <div className="flex items-center gap-2 mb-2">
@@ -45,19 +45,6 @@ function WelcomePage({ caregiver, onNext, welcomeSteps, companyData }) {
                         </p>
                     </div>
                 </div>
-            </div>
-
-            <div className="bg-[var(--secondary-bg-color)] rounded-lg p-6 mb-6">
-                <p className="text-sm font-medium text-[var(--primary-color)] mb-3">
-                    Here's what you'll cover:
-                </p>
-                <ul className="space-y-2 text-sm text-[var(--hover-color)] list-none">
-                    {welcomeSteps.map((step, index) => (
-                        <li key={index} className="flex items-center gap-2">
-                            {step}
-                        </li>
-                    ))}
-                </ul>
             </div>
 
             <p className="text-sm text-muted-foreground mb-8">

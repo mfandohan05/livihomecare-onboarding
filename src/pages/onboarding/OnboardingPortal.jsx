@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
-import { welcomeSteps } from '@/data/steps'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import SidebarComponent from '@/components/global/SidebarComponent'
 import WelcomePage from '@/pages/onboarding/onboarding-pages/WelcomePage'
@@ -316,7 +315,7 @@ export default function OnboardingPortal() {
         const loadCompanyInformation = async () => {
             const { data } = await supabase
                 .from('company_branding')
-                .select('company_name, primary_color, secondary_bg_color, hover_color')
+                .select('company_name, primary_color, secondary_bg_color, hover_color, phone, support_email, next_steps, welcome_summary')
                 .eq('company_id', companyId)
                 .single();
 
@@ -452,7 +451,7 @@ export default function OnboardingPortal() {
 
         switch (step.stepName) {
             case 'Welcome':
-                return <WelcomePage caregiver={caregiver} onNext={handleNext} welcomeSteps={welcomeSteps[role]} companyData={companyData} />
+                return <WelcomePage caregiver={caregiver} onNext={handleNext} companyData={companyData} />
             case 'Upload Documents':
                 return <UploadDocumentsPage stepLabel={stepLabel} companyId={companyId} onNext={
                     async () => {
@@ -547,7 +546,7 @@ export default function OnboardingPortal() {
                     )
                 }} />
             case 'Completed!':
-                return <CompletedPage stepLabel={stepLabel} caregiver={caregiver} getHoursWorked={getHoursWorked} updateCaregiverStatus={updateCaregiverStatus} handleOfferLetter={handleOfferLetter} />
+                return <CompletedPage steps={steps} companyData={companyData} stepLabel={stepLabel} caregiver={caregiver} getHoursWorked={getHoursWorked} updateCaregiverStatus={updateCaregiverStatus} handleOfferLetter={handleOfferLetter} />
             default:
                 return null
         }
@@ -559,7 +558,7 @@ export default function OnboardingPortal() {
             {saving && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm">
                     <div className="bg-white rounded-full p-4 shadow-lg">
-                        <div className="w-8 h-8 border-4 border-[#577C09] border-t-transparent rounded-full animate-spin" />
+                        <div className="w-8 h-8 border-4 border-[var(--primary-color)] border-t-transparent rounded-full animate-spin" />
                     </div>
                 </div>
             )}
