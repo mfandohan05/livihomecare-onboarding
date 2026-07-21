@@ -6,6 +6,7 @@
 - Added address autocomplete for address fields in caregiver view
 - Added disclaimer about caregiver map
 - Fixed bug where expiration dates were not required for documents
+- Revamped form signing feature to use fillable fields
 
 
 ## 1.2.7 - 2026-07-05

@@ -44,7 +44,10 @@ const roleLabel = (role) => {
 const docLabel = (type) => {
     const labels = {
         wotc_disclosure: 'WOTC Disclosure Form',
+        independent_contractor_agreement: 'Independent Contractor Agreement',
+        non_compete: "Non-Compete Agreement",
         reference_check: "Reference Check",
+        // non_compete: "Non-Compete Agreement",
         driversLicense: "Driver's License",
         carInsurance: 'Car Insurance',
         tbTest: 'TB Test',
@@ -264,8 +267,8 @@ export default function AdminCaregiverDetail() {
             'i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed',
             'drug_test_policy_signed', 'criminal_background_check_signed',
             'new_hire_notification_signed', 'orientation_checklist_signed',
-            'non_compete_signed', 'hep_b_declination_signed', 'offer_letter_generated',
-            "direct_deposit_authorization", 'wotc_disclosure', "reference_check", "job_description"
+            'non_compete_signed', 'hep_b_declination_signed', 'offer_letter_generated', 'independent_contractor_agreement',
+            "direct_deposit_authorization", 'wotc_disclosure', "reference_check", "job_description", "non_compete"
         ]
 
         const bucket = generatedPdfTypes.includes(doc.document_type)
@@ -313,6 +316,8 @@ export default function AdminCaregiverDetail() {
         "direct_deposit_authorization": 'Direct Deposit Authorization',
         "wotc_disclosure": 'WOTC Disclosure Form',
         "reference_check": 'Reference Check',
+        "non_compete": "Non-Compete Agreement",
+        "independent_contractor_agreement": 'Independent Contractor Agreement',
         "job_description": "Job Description Form",
         "criminal-background-results": "Criminal Background Check Results",
         "nc-healthcare-personnel-check": "NC Health Care Personnel Registry Check"

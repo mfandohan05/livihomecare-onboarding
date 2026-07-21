@@ -202,8 +202,26 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, companyId,
     const markComplete = async (form) => {
         if (form.form_type === 'job_description') {
             setSaving(true)
+            const jobDesc = getJobDescription(caregiver, form);
+            const roleKey = resolveJobDescRoleKey(caregiver);
             await supabase.functions.invoke('generate-job-description', {
-                body: { caregiverId: caregiver.id }
+                body: { caregiverId: caregiver.id,
+                    signature: signatures[form.form_key],
+                     jobDescription: jobDesc,
+                     roleKeyOverride: roleKey, 
+                    }
+            })
+            setSaving(false)
+        }
+        if (form.form_type === 'signature_only') {
+            setSaving(true)
+            await supabase.functions.invoke('generate-generic-signed-document', {
+                body: {
+                    caregiverId: caregiver.id,
+                    documentType: form.form_key,
+                    title: form.title,
+                    contentBlocks: form.content,
+                }
             })
             setSaving(false)
         }
