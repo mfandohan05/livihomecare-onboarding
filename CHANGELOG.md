@@ -1,12 +1,13 @@
 # Changelog
 
-## 2.0.0 - 2026-07-03
+## 2.0.0 - 2026-07-24
 - MAJOR UPDATE: support for multiple companies added (admin & caregiver side)
 - Updated login screen with new app logo & color scheme
 - Added address autocomplete for address fields in caregiver view
 - Added disclaimer about caregiver map
 - Fixed bug where expiration dates were not required for documents
 - Revamped form signing feature to use fillable fields
+- Added error output to UI for easier error tracking/handling
 
 
 ## 1.2.7 - 2026-07-05

@@ -199,28 +199,90 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, companyId,
         onHepBChange(status)
     }
 
+    const resolveFieldValues = (form, caregiver, signature, context = {}) => {
+        const mapping = form.config?.field_mapping || []
+        const today = new Date()
+        const fieldValues = {}
+
+        for (const entry of mapping) {
+            const { pdf_field, source } = entry
+
+            if (source === 'static') {
+                fieldValues[pdf_field] = entry.value
+            }
+            else if (source === 'caregiver_field') {
+                fieldValues[pdf_field] = caregiver[entry.field] ?? ''
+            }
+            else if (source === 'signature') {
+                fieldValues[pdf_field] = signature || ''
+            }
+            else if (source === 'today') {
+                fieldValues[pdf_field] = today.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
+            }
+            else if (source === 'today_part') {
+                if (entry.part === 'day') fieldValues[pdf_field] = String(today.getDate())
+                if (entry.part === 'month_long') fieldValues[pdf_field] = today.toLocaleString('en-US', { month: 'long' })
+                if (entry.part === 'year_short') fieldValues[pdf_field] = String(today.getFullYear()).slice(2)
+                if (entry.part === 'year_long') fieldValues[pdf_field] = String(today.getFullYear())
+            }
+            else if (source === 'formatted_date') {
+                const raw = caregiver[entry.field]
+                fieldValues[pdf_field] = raw
+                    ? new Date(raw).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })
+                    : ''
+            }
+            else if (source === 'checkbox_match') {
+                fieldValues[pdf_field] = context[entry.value_key] === entry.equals
+            }
+            else if (source === 'reference_field') {
+                fieldValues[pdf_field] = context.references?.[entry.index]?.[entry.field] || ''
+            }
+        }
+
+        return fieldValues
+    }
+
     const markComplete = async (form) => {
         if (form.form_type === 'job_description') {
             setSaving(true)
             const jobDesc = getJobDescription(caregiver, form);
             const roleKey = resolveJobDescRoleKey(caregiver);
             await supabase.functions.invoke('generate-job-description', {
-                body: { caregiverId: caregiver.id,
+                body: {
+                    caregiverId: caregiver.id,
                     signature: signatures[form.form_key],
-                     jobDescription: jobDesc,
-                     roleKeyOverride: roleKey, 
-                    }
+                    jobDescription: jobDesc,
+                    roleKeyOverride: roleKey,
+                }
             })
             setSaving(false)
         }
         if (form.form_type === 'signature_only') {
             setSaving(true)
+            const fieldValues = resolveFieldValues(form, caregiver, signatures[form.form_key], {
+                hepBStatus,
+                references,
+            })
             await supabase.functions.invoke('generate-generic-signed-document', {
                 body: {
                     caregiverId: caregiver.id,
                     documentType: form.form_key,
-                    title: form.title,
-                    contentBlocks: form.content,
+                    fieldValues,
+                }
+            })
+            setSaving(false)
+        }
+        if (form.form_type === 'hepb_status') {
+            setSaving(true)
+            const fieldValues = resolveFieldValues(form, caregiver, signatures[form.form_key], {
+                hepBStatus,
+                references,
+            })
+            await supabase.functions.invoke('generate-generic-signed-document', {
+                body: {
+                    caregiverId: caregiver.id,
+                    documentType: form.form_key,
+                    fieldValues,
                 }
             })
             setSaving(false)

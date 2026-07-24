@@ -1,5 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { PDFDocument } from 'https://esm.sh/pdf-lib@1.17.1'
+import { PDFDocument, StandardFonts } from 'https://esm.sh/pdf-lib@1.17.1'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,21 +19,25 @@ Deno.serve(async (req) => {
 
     const { data: caregiver, error: caregiverError } = await supabase
       .from('caregivers')
-      .select('id, name')
+      .select('id, name, company_id')
       .eq('id', caregiverId)
       .single()
 
     if (caregiverError || !caregiver) throw new Error('Caregiver not found')
 
+    const templatePath = `templates/${caregiver.company_id}/reference_check.pdf`
     const { data: templateData, error: templateError } = await supabase.storage
       .from('generated-pdfs')
-      .download('templates/reference_check.pdf')
+      .download(templatePath)
 
-    if (templateError || !templateData) throw new Error('Could not load reference_check.pdf template')
+    if (templateError || !templateData) {
+      throw new Error(`Could not load template at "${templatePath}". Upload a fillable template for this company before generating this document.`)
+    }
 
     const templateBytes = new Uint8Array(await templateData.arrayBuffer())
     const pdfDoc = await PDFDocument.load(templateBytes)
     const form = pdfDoc.getForm()
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
 
     const ref1 = references?.[0] || {}
     const ref2 = references?.[1] || {}
@@ -44,28 +48,35 @@ Deno.serve(async (req) => {
       year: 'numeric',
     })
 
-    // Reference 1
-    form.getTextField('Text1').setText(ref1.name || '')
-    form.getTextField('Text2').setText(ref1.company || '')
-    form.getTextField('Text3').setText(ref1.relationship || '')
-    form.getTextField('Text4').setText([ref1.phone, ref1.email].filter(Boolean).join('\n'))
+    const trySet = (fieldName: string, value: string) => {
+      try {
+        form.getTextField(fieldName).setText(value || '')
+      } catch {
+        console.warn(`Field "${fieldName}" not found on template — skipped`)
+      }
+    }
 
-    // Reference 2
-    form.getTextField('Text5').setText(ref2.name || '')
-    form.getTextField('Text6').setText(ref2.company || '')
-    form.getTextField('Text7').setText(ref2.relationship || '')
-    form.getTextField('Text8').setText([ref2.phone, ref2.email].filter(Boolean).join('\n'))
+    trySet('ref1_name', ref1.name)
+    trySet('ref1_company', ref1.company)
+    trySet('ref1_relationship', ref1.relationship)
+    trySet('ref1_contact', [ref1.phone, ref1.email].filter(Boolean).join('\n'))
 
-    // Applicant section
-    form.getTextField('Text9').setText(caregiver.name)
-    form.getTextField('Text10').setText(signature || caregiver.name)
-    form.getTextField('Text11').setText(today)
+    trySet('ref2_name', ref2.name)
+    trySet('ref2_company', ref2.company)
+    trySet('ref2_relationship', ref2.relationship)
+    trySet('ref2_contact', [ref2.phone, ref2.email].filter(Boolean).join('\n'))
+
+    trySet('employee_name', caregiver.name)
+    trySet('employee_signature', signature || caregiver.name)
+    trySet('employee_date', today)
+
+    form.updateFieldAppearances(font)
 
     form.flatten()
 
     const filledPdfBytes = await pdfDoc.save()
 
-    const filePath = `${caregiverId}/reference_check.pdf`
+    const filePath = `${caregiver.company_id}/${caregiverId}/reference_check.pdf`
     const { error: uploadError } = await supabase.storage
       .from('generated-pdfs')
       .upload(filePath, filledPdfBytes, {
@@ -77,6 +88,7 @@ Deno.serve(async (req) => {
 
     await supabase.from('caregiver_documents').upsert({
       caregiver_id: caregiverId,
+      company_id: caregiver.company_id,
       document_type: 'reference_check',
       file_name: 'reference_check.pdf',
       file_path: filePath,

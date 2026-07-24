@@ -45,6 +45,7 @@ const docLabel = (type) => {
     const labels = {
         wotc_disclosure: 'WOTC Disclosure Form',
         independent_contractor_agreement: 'Independent Contractor Agreement',
+        contractor_agreement: "Contractor Agreement",
         non_compete: "Non-Compete Agreement",
         reference_check: "Reference Check",
         // non_compete: "Non-Compete Agreement",
@@ -63,14 +64,17 @@ const docLabel = (type) => {
         offer_letter_other: 'Offer Letter (Custom)',
         bloodborne_certificate: 'Bloodborne Pathogens Certificate',
         drug_test_policy_signed: 'Drug Test Policy (Signed)',
+        drug_test_policy: 'Drug Test Policy (Signed)',
         criminal_background_check_signed: 'Criminal Background Check (Signed)',
         new_hire_notification_signed: 'New Hire Notification (Signed)',
         orientation_checklist_signed: 'Orientation Checklist (Signed)',
         non_compete_signed: 'Non-Compete Agreement (Signed)',
         hep_b_declination_signed: 'Hep B Declination (Signed)',
+        hepb_status: 'Hep B Declination (Signed)',
         offer_letter_generated: "Generated Offer Letter",
         direct_deposit_authorization: 'Direct Deposit Authorization',
         job_description: "Job Description Form",
+        criminal_background_check: "Criminal Background Check (Signed)",
         "criminal-background-results": "Criminal Background Check Results",
         "nc-healthcare-personnel-check": "NC Health Care Personnel Registry Check"
     }
@@ -267,8 +271,10 @@ export default function AdminCaregiverDetail() {
             'i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed',
             'drug_test_policy_signed', 'criminal_background_check_signed',
             'new_hire_notification_signed', 'orientation_checklist_signed',
-            'non_compete_signed', 'hep_b_declination_signed', 'offer_letter_generated', 'independent_contractor_agreement',
-            "direct_deposit_authorization", 'wotc_disclosure', "reference_check", "job_description", "non_compete"
+            'non_compete_signed', 'hep_b_declination_signed', 'offer_letter_generated', 'hepb_status',
+            'independent_contractor_agreement', "direct_deposit_authorization", 'wotc_disclosure', 
+            "reference_check", "job_description", "non_compete", 'contractor_agreement', 
+            'criminal_background_check', 'drug_test_policy'
         ]
 
         const bucket = generatedPdfTypes.includes(doc.document_type)
@@ -304,21 +310,25 @@ export default function AdminCaregiverDetail() {
         "carInsurance": "Car Insurance",
         "driversLicense": "Driver's License",
         "hep_b_declination_signed": "Hep B Declination/Acknowledgement Form",
+        "hepb_status": 'Hep B Declination (Signed)',
         "non_compete_signed": "Non-Compete (Signed)",
         "orientation_checklist_signed": "Orientation Checklist (Signed)",
         "new_hire_notification_signed": "New Hire Notification (Signed)",
         "criminal_background_check_signed": "Criminal Background Check Consent (Signed)",
         "drug_test_policy_signed": "Drug Test Policy (Signed)",
+        "drug_test_policy": 'Drug Test Policy (Signed)',
         "offer_letter_other": "Offer Letter",
         "nc4ez_completed": "NC-4EZ",
         "certifications": "Certifications",
         "offer_letter_generated": "Generated Employee Offer Letter",
         "direct_deposit_authorization": 'Direct Deposit Authorization',
         "wotc_disclosure": 'WOTC Disclosure Form',
+        "contractor_agreement": "Contractor Agreement",
         "reference_check": 'Reference Check',
         "non_compete": "Non-Compete Agreement",
         "independent_contractor_agreement": 'Independent Contractor Agreement',
         "job_description": "Job Description Form",
+        "criminal_background_check": "Criminal Background Check (Signed)",
         "criminal-background-results": "Criminal Background Check Results",
         "nc-healthcare-personnel-check": "NC Health Care Personnel Registry Check"
     }

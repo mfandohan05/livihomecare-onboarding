@@ -1,7 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://app.livihomecare.com',
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
@@ -26,12 +26,24 @@ Deno.serve(async (req) => {
 
     const { data: adminUser, error: adminError } = await supabase
       .from('admin_users')
-      .select('id')
+      .select('id, company_id')
       .eq('id', user.id)
       .single()
     if (adminError || !adminUser) throw new Error('Unauthorized')
 
     const { caregiverId } = await req.json()
+
+    const { data: caregiver, error: caregiverError } = await supabase
+      .from('caregivers')
+      .select('company_id')
+      .eq('id', caregiverId)
+      .single()
+    if (caregiverError || !caregiver) throw new Error('Caregiver not found')
+
+    if (caregiver.company_id !== adminUser.company_id) {
+      throw new Error('Unauthorized')
+    }
+
     const encryptionKey = Deno.env.get('ENCRYPTION_KEY')!
 
     const { data, error } = await supabase.rpc('get_banking_decrypted', {

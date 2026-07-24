@@ -12,9 +12,6 @@ const today = new Date().toLocaleDateString('en-US', {
     month: '2-digit', day: '2-digit', year: 'numeric'
 }).replace(/\//g, '/')
 
-// Fixed metadata for each supported tax form type. These are standard federal/state
-// forms, not company-customizable content, so this stays a static lookup — what
-// varies per company/role is *which* of these apply, driven by required_tax_forms.
 const STEP_DEFINITIONS = {
     i9: { title: 'Form I-9', subtitle: 'Employment Eligibility Verification — Section 1' },
     w4: { title: 'Form W-4', subtitle: 'Federal Employee Withholding Certificate' },

@@ -1,11 +1,18 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://app.livihomecare.com',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+const allowedOrigins = [
+  'https://app.livihomecare.com',
+  'http://localhost:5173',
+  'http://localhost:5174',
+]
 
 Deno.serve(async (req) => {
+  const origin = req.headers.get('origin') || ''
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': allowedOrigins.includes(origin) ? origin : allowedOrigins[0],
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  }
+
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -21,8 +28,17 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
+    const { data: caregiver, error: caregiverError } = await supabase
+      .from('caregivers')
+      .select('company_id')
+      .eq('id', caregiverId)
+      .single()
+
+    if (caregiverError || !caregiver) throw new Error('Caregiver not found')
+
     const { error } = await supabase.rpc('save_ssn_encrypted', {
       p_caregiver_id: caregiverId,
+      p_company_id: caregiver.company_id,
       p_ssn: ssn || '',
       p_dob: dob || '',
       p_ein: ein || '',

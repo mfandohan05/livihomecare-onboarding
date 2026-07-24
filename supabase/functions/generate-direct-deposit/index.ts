@@ -17,50 +17,53 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
-    // Fetch caregiver
     const { data: caregiver, error: caregiverError } = await supabase
       .from('caregivers')
-      .select('id, name')
+      .select('id, name, company_id')
       .eq('id', caregiverId)
       .single()
 
     if (caregiverError || !caregiver) throw new Error('Caregiver not found')
 
-    // Load template from storage
+    const templatePath = `templates/${caregiver.company_id}/direct_deposit_authorization.pdf`
     const { data: templateData, error: templateError } = await supabase.storage
       .from('generated-pdfs')
-      .download('templates/direct_deposit_form.pdf')
+      .download(templatePath)
 
-    if (templateError || !templateData) throw new Error('Could not load template')
+    if (templateError || !templateData) {
+      throw new Error(`Could not load template at "${templatePath}". Upload a fillable template for this company before generating this document.`)
+    }
 
     const templateBytes = new Uint8Array(await templateData.arrayBuffer())
     const pdfDoc = await PDFDocument.load(templateBytes)
-
-    // Fill form fields
     const form = pdfDoc.getForm()
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica)
+
     const today = new Date().toLocaleDateString('en-US', {
       month: '2-digit',
       day: '2-digit',
       year: 'numeric',
     })
 
-    // Format name as Last, First for legal name field
-    const nameParts = caregiver.name.trim().split(' ')
-    const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : nameParts[0]
-    const firstName = nameParts.length > 1 ? nameParts.slice(0, -1).join(' ') : ''
-    const legalName = lastName && firstName ? `${lastName}, ${firstName}` : caregiver.name
+    const trySet = (fieldName: string, value: string) => {
+      try {
+        form.getTextField(fieldName).setText(value)
+      } catch {
+        console.warn(`Field "${fieldName}" not found on template — skipped`)
+      }
+    }
+    trySet('employee_name_intro', caregiver.name)
+    trySet('employee_name', caregiver.name)
+    trySet('employee_signature', caregiver.name)
+    trySet('employee_date', today)
 
-    form.getTextField('Text1').setText(legalName)
-    form.getTextField('Text2').setText(caregiver.name) // signature as typed name
-    form.getTextField('Text3').setText(today)
+    form.updateFieldAppearances(font)
 
-    // Flatten so fields are baked in and not editable
     form.flatten()
 
     const filledPdfBytes = await pdfDoc.save()
 
-    // Upload to generated-pdfs bucket
-    const filePath = `${caregiverId}/direct_deposit_authorization.pdf`
+    const filePath = `${caregiver.company_id}/${caregiverId}/direct_deposit_authorization.pdf`
     const { error: uploadError } = await supabase.storage
       .from('generated-pdfs')
       .upload(filePath, filledPdfBytes, {
@@ -70,9 +73,9 @@ Deno.serve(async (req) => {
 
     if (uploadError) throw new Error(`Upload error: ${uploadError.message}`)
 
-    // Upsert caregiver_documents row
     await supabase.from('caregiver_documents').upsert({
       caregiver_id: caregiverId,
+      company_id: caregiver.company_id,
       document_type: 'direct_deposit_authorization',
       file_name: 'direct_deposit_authorization.pdf',
       file_path: filePath,
