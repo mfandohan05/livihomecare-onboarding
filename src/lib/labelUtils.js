@@ -1,14 +1,4 @@
-export const job_label = (db_label) => {
-    if (db_label === "nurse_prn") {
-        return "Nurse (PRN)"
-    }
-    else if (db_label === "nurse_director") {
-        return "Nurse (Director)"
-    }
-    else if (db_label === "caregiver") {
-        return "Caregiver"
-    }
-    else {
-        return "Other"
-    }
-} 
+export const job_label = (db_label, roleOptions) => {
+    const match = roleOptions.find(r => r.role_key === db_label)
+    return match?.display_label || db_label
+}

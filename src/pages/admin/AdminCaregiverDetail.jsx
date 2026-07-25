@@ -76,7 +76,8 @@ const docLabel = (type) => {
         job_description: "Job Description Form",
         criminal_background_check: "Criminal Background Check (Signed)",
         "criminal-background-results": "Criminal Background Check Results",
-        "nc-healthcare-personnel-check": "NC Health Care Personnel Registry Check"
+        "nc-healthcare-personnel-check": "NC Health Care Personnel Registry Check",
+        resume: "Resume"
     }
     return labels[type] || type
 }
@@ -206,7 +207,13 @@ export default function AdminCaregiverDetail() {
             supabase.from('caregivers').select('*').eq('id', id).eq('company_id', companyId).single(),
             supabase.from('caregiver_documents').select('*').eq('caregiver_id', id).eq('company_id', companyId).order('created_at', { ascending: false }),
             supabase.from('caregiver_progress').select('*, quiz_scores').eq('caregiver_id', id).eq('company_id', companyId).maybeSingle(),
-            supabase.from('caregiver_time_logs').select('*').eq('caregiver_id', id).eq('company_id', companyId).eq('completed', true).maybeSingle(),
+            supabase.from('caregiver_time_logs')
+                .select('*')
+                .eq('caregiver_id', id)
+                .eq('company_id', companyId)
+                .order('session_start', { ascending: false })
+                .limit(1)
+                .maybeSingle(),
         ])
         const { data: taxData } = await supabase
             .from('caregiver_tax_forms')
@@ -661,8 +668,8 @@ export default function AdminCaregiverDetail() {
     const isNurse = caregiver.role === 'nurse_prn' || caregiver.role === 'nurse_director'
     const isCancelled = caregiver.status === 'cancelled'
     const uploadableDocs = isNurse
-        ? ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'nursingLicense', 'bloodbornePathogens', 'certifications', 'criminal-background-results', 'nc-healthcare-personnel-check']
-        : ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'bloodbornePathogens', 'certifications', 'criminal-background-results', 'nc-healthcare-personnel-check']
+        ? ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'nursingLicense', 'bloodbornePathogens', 'certifications', 'criminal-background-results', 'nc-healthcare-personnel-check', 'resume']
+        : ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'bloodbornePathogens', 'certifications', 'criminal-background-results', 'nc-healthcare-personnel-check', 'resume']
     const groupedSkills = Object.entries(competency?.checked || {})
         .filter(([_, checked]) => checked)
         .reduce((acc, [key]) => {
@@ -695,25 +702,25 @@ export default function AdminCaregiverDetail() {
 
     const ADMIN_SIGNABLE_DOCUMENTS = [
         {
-            id: 'drug_test_policy_signed',
+            ids: ['drug_test_policy_signed', 'drug_test_policy'],
             label: 'Drug Test Policy & Acknowledgement',
             description: 'Sign as LHC Representative to complete the drug test policy acknowledgement.',
             requiresSection2: false,
         },
         {
-            id: 'non_compete_signed',
+            ids: ['non_compete_signed', 'non_compete'],
             label: 'Non-Compete Agreement',
             description: 'Sign as an LHC Representative to complete the non-compete agreement.',
             requiresSection2: false,
         },
         {
-            id: 'orientation_checklist_signed',
+            ids: ['orientation_checklist_signed', 'orientation_checklist', 'pre_employment_orientation'],
             label: 'Pre-Employment Orientation Checklist',
             description: 'Sign as an LHC Representative to complete the orientation checklist.',
             requiresSection2: false,
         },
         {
-            id: 'i9_section2',
+            ids: ['i9_section2'],
             label: 'Form I-9 — Section 2',
             description: 'Complete Section 2 after verifying identity documents in person.',
             requiresSection2: true,
@@ -721,7 +728,7 @@ export default function AdminCaregiverDetail() {
     ]
 
     function AdminSignDialog({ open, onClose, documentId, caregiver, adminName, adminPosition, adminId, adminEmail, onComplete, logAction }) {
-        const doc = ADMIN_SIGNABLE_DOCUMENTS.find(d => d.id === documentId)
+        const doc = ADMIN_SIGNABLE_DOCUMENTS.find(d => d.ids.includes(documentId))
         const [submitting, setSubmitting] = useState(false)
         const [error, setError] = useState(null)
 
@@ -1214,7 +1221,7 @@ export default function AdminCaregiverDetail() {
                     </div>
                     <div>
                         <h1 className="text-2xl font-bold">{caregiver.name}</h1>
-                        <p className="text-muted-foreground">{roleLabel(caregiver.role)} · {caregiver.position_title}</p>
+                        <p className="text-muted-foreground">{caregiver.position_title}</p>
                     </div>
                 </div>
                 <div className='flex flex-row gap-'>
@@ -1321,7 +1328,7 @@ export default function AdminCaregiverDetail() {
                                 <div className="col-span-2">
                                     <p className="text-muted-foreground">Address</p>
                                     <p className="font-medium">
-                                        {personalInfo.streetAddress}, {personalInfo.city}, {personalInfo.state} {personalInfo.zip}
+                                        {personalInfo.streetAddress} {personalInfo.addressLine2 || ''} <br/> {personalInfo.city}, {personalInfo.state} {personalInfo.zip}
                                     </p>
                                 </div>
                             </div>
@@ -1354,7 +1361,7 @@ export default function AdminCaregiverDetail() {
                                             <div>
                                                 <p className="text-muted-foreground">Address</p>
                                                 <p className="font-medium">
-                                                    {personalInfo.primaryEmergencyStreetAddress}, {personalInfo.primaryEmergencyCity}, {personalInfo.primaryEmergencyState} {personalInfo.primaryEmergencyZip}
+                                                    {personalInfo.primaryEmergencyStreetAddress} {personalInfo.primaryEmergencyAddressLine2 || ''} <br></br> {personalInfo.primaryEmergencyCity}, {personalInfo.primaryEmergencyState} {personalInfo.primaryEmergencyZip}
                                                 </p>
                                             </div>
                                         )}
@@ -1390,7 +1397,7 @@ export default function AdminCaregiverDetail() {
                                             <div>
                                                 <p className="text-muted-foreground">Address</p>
                                                 <p className="font-medium">
-                                                    {personalInfo.secondaryEmergencyStreetAddress}, {personalInfo.secondaryEmergencyCity}, {personalInfo.secondaryEmergencyState} {personalInfo.secondaryEmergencyZip}
+                                                    {personalInfo.secondaryEmergencyStreetAddress} {personalInfo.primaryEmergencyAddressLine2 || ''} <br/> {personalInfo.secondaryEmergencyCity}, {personalInfo.secondaryEmergencyState} {personalInfo.secondaryEmergencyZip}
                                                 </p>
                                             </div>
                                         )}
@@ -1564,16 +1571,16 @@ export default function AdminCaregiverDetail() {
                         <h2 className="font-semibold mb-4">Sign / Complete Documents</h2>
                         <div className="space-y-2">
                             {ADMIN_SIGNABLE_DOCUMENTS.map(doc => {
-                                const isCompleted = doc.id === 'i9_section2'
+                                const isCompleted = doc.ids.includes('i9_section2')
                                     ? i9Section2Completed
-                                    : documents.some(d => d.document_type === doc.id && d.admin_signed_at)
+                                    : documents.some(d => doc.ids.includes(d.document_type) && d.admin_signed_at)
 
-                                const caregiverDocExists = doc.id === 'i9_section2'
+                                const caregiverDocExists = doc.ids.includes('i9_section2')
                                     ? documents.some(d => d.document_type === 'i9_completed')
-                                    : documents.some(d => d.document_type === doc.id)
+                                    : documents.some(d => doc.ids.includes(d.document_type))
 
                                 return (
-                                    <div key={doc.id} className="flex items-center justify-between py-2 px-3 rounded-lg border border-border">
+                                    <div key={doc.ids[0]} className="flex items-center justify-between py-2 px-3 rounded-lg border border-border">
                                         <div className="flex items-center gap-2 min-w-0">
                                             {isCompleted
                                                 ? <CheckCircle className="w-4 h-4 text-[#577C09] shrink-0" />
@@ -1583,12 +1590,12 @@ export default function AdminCaregiverDetail() {
                                                 <p className={`text-sm font-medium truncate ${isCompleted ? 'text-[var(--primary-color)]' : ''}`}>
                                                     {doc.label}
                                                 </p>
-                                                {isCompleted && doc.id !== 'i9_section2' && (
+                                                {isCompleted && !doc.ids.includes('i9_section2') && (
                                                     <p className="text-xs text-muted-foreground">
-                                                        Signed by {documents.find(d => d.document_type === doc.id)?.admin_signed_by} · {new Date(documents.find(d => d.document_type === doc.id)?.admin_signed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                        Signed by {documents.find(d => doc.ids.includes(d.document_type))?.admin_signed_by} · {new Date(documents.find(d => doc.ids.includes(d.document_type))?.admin_signed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                                     </p>
                                                 )}
-                                                {isCompleted && doc.id === 'i9_section2' && i9Section2CompletedBy && (
+                                                {isCompleted && doc.ids.includes('i9_section2') && i9Section2CompletedBy && (
                                                     <p className="text-xs text-muted-foreground">
                                                         Signed by {i9Section2CompletedBy} · {new Date(i9Section2CompletedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                                     </p>
@@ -1597,7 +1604,7 @@ export default function AdminCaregiverDetail() {
                                         </div>
                                         {!isCompleted && caregiverDocExists && (
                                             <button
-                                                onClick={() => { setSignDocumentId(doc.id); setSignDialogOpen(true) }}
+                                                onClick={() => { setSignDocumentId(doc.ids[0]); setSignDialogOpen(true) }}
                                                 className="text-xs text-[var(--primary-color)] hover:underline shrink-0 ml-2"
                                             >
                                                 Sign →
@@ -1862,41 +1869,43 @@ export default function AdminCaregiverDetail() {
                         </div>
                     )}
 
-                    <div className="bg-white rounded-xl border border-border p-6">
-                        <h2 className="font-semibold mb-4">Orientation Time & Pay</h2>
-                        {timeLog ? (
-                            <div className="space-y-3">
-                                <div>
-                                    <p className="text-xs text-muted-foreground">Active time</p>
-                                    <p className="text-2xl font-bold">{activeTime}</p>
+                    {caregiver.status === 'completed' && (
+                        <div className="bg-white rounded-xl border border-border p-6">
+                            <h2 className="font-semibold mb-4">Orientation Time & Pay</h2>
+                            {timeLog ? (
+                                <div className="space-y-3">
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">Active time</p>
+                                        <p className="text-2xl font-bold">{activeTime}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">Suggested orientation pay</p>
+                                        <p className="text-2xl font-bold text-[var(--primary-color)]">${orientationPay}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">Started</p>
+                                        <p className="text-sm font-medium">
+                                            {new Date(timeLog.session_start).toLocaleDateString('en-US', {
+                                                month: 'short', day: 'numeric', year: 'numeric',
+                                                hour: '2-digit', minute: '2-digit'
+                                            })}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-muted-foreground">Completed</p>
+                                        <p className="text-sm font-medium">
+                                            {new Date(timeLog.session_end).toLocaleDateString('en-US', {
+                                                month: 'short', day: 'numeric', year: 'numeric',
+                                                hour: '2-digit', minute: '2-digit'
+                                            })}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="text-xs text-muted-foreground">Suggested orientation pay</p>
-                                    <p className="text-2xl font-bold text-[var(--primary-color)]">${orientationPay}</p>
-                                </div>
-                                <div>
-                                    <p className="text-xs text-muted-foreground">Started</p>
-                                    <p className="text-sm font-medium">
-                                        {new Date(timeLog.session_start).toLocaleDateString('en-US', {
-                                            month: 'short', day: 'numeric', year: 'numeric',
-                                            hour: '2-digit', minute: '2-digit'
-                                        })}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-xs text-muted-foreground">Completed</p>
-                                    <p className="text-sm font-medium">
-                                        {new Date(timeLog.session_end).toLocaleDateString('en-US', {
-                                            month: 'short', day: 'numeric', year: 'numeric',
-                                            hour: '2-digit', minute: '2-digit'
-                                        })}
-                                    </p>
-                                </div>
-                            </div>
-                        ) : (
-                            <p className="text-sm text-muted-foreground">No time logged yet</p>
-                        )}
-                    </div>
+                            ) : (
+                                <p className="text-sm text-muted-foreground">No time logged yet</p>
+                            )}
+                        </div>
+                    )}
                     <div className="bg-white rounded-xl border border-border p-6">
                         <h2 className="font-semibold mb-4">New Hire Orientation Quiz Results</h2>
                         {quizProgress && quizProgress.length > 0 ? (

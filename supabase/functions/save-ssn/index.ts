@@ -1,15 +1,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const allowedOrigins = [
-  'https://app.livihomecare.com',
-  'http://localhost:5173',
-  'http://localhost:5174',
-]
-
 Deno.serve(async (req) => {
-  const origin = req.headers.get('origin') || ''
   const corsHeaders = {
-    'Access-Control-Allow-Origin': allowedOrigins.includes(origin) ? origin : allowedOrigins[0],
+    'Access-Control-Allow-Origin': "*",
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   }
 

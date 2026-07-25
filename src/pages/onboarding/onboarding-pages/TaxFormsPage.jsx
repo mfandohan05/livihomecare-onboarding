@@ -7,6 +7,7 @@ import { saveTaxFormData } from '@/lib/caregiver'
 import { supabase } from '@/lib/supabase'
 import { formatPhone, formatDOB } from '@/lib/formUtils'
 import StateSelect from '@/components/global/StateSelect'
+import AddressAutocompleteField from '@/components/global/AddressAutocompleteField'
 
 const today = new Date().toLocaleDateString('en-US', {
     month: '2-digit', day: '2-digit', year: 'numeric'
@@ -117,9 +118,22 @@ function I9Form({ data, onChange, onSave, saved, companyName }) {
             <div>
                 <h3 className="text-sm font-medium mb-4 pb-2 border-b">Address</h3>
                 <div className="space-y-4">
-                    <Field label="Address Line 1" id="i9_address" required>
+                    {/* <Field label="Address Line 1" id="i9_address" required>
                         <Input id="i9_address" value={data.address || ''} onChange={set('address')} placeholder="123 Main St" />
-                    </Field>
+                    </Field> */}
+                    <AddressAutocompleteField
+                        label="Address Line 1"
+                        value={data.address || ''}
+                        onSelect={(parsed) => {
+                            onChange({
+                                ...data,
+                                address: parsed.streetAddress || data.address,
+                                city: parsed.city || data.city,
+                                state: parsed.state || data.state,
+                                zip: parsed.zip || data.zip,
+                            })
+                        }}
+                    />
                     <Field label="Address Line 2" id="i9_apt">
                         <Input id="i9_apt" value={data.apt || ''} onChange={set('apt')} placeholder="Apt 4B (if applicable)" />
                     </Field>
@@ -293,9 +307,17 @@ function W4Form({ data, onChange, onSave, saved }) {
                             <Input id="w4_lastName" value={data.lastName || ''} onChange={set('lastName')} placeholder="Santos" />
                         </Field>
                     </div>
-                    <Field label="Address" id="w4_address" required>
-                        <Input id="w4_address" value={data.address || ''} onChange={set('address')} placeholder="123 Main St" />
-                    </Field>
+                    <AddressAutocompleteField
+                        label="Address"
+                        value={data.address || ''}
+                        onSelect={(parsed) => {
+                            onChange({
+                                ...data,
+                                address: parsed.streetAddress || data.address,
+                                cityStateZip: `${parsed.city || ''}${parsed.city ? ', ' : ''}${parsed.state || ''} ${parsed.zip || ''}`.trim()
+                            })
+                        }}
+                    />
                     <Field label="City, state, and ZIP code" id="w4_cityStateZip" required>
                         <Input id="w4_cityStateZip" value={data.cityStateZip || ''} onChange={set('cityStateZip')} placeholder="Charlotte, NC 28201" />
                     </Field>
@@ -440,8 +462,19 @@ function W9Form({ data, onChange, onSave, saved, companyName }) {
             <div>
                 <h3 className="text-sm font-medium mb-4 pb-2 border-b">Address</h3>
                 <div className="space-y-4">
-                    <Field label="Street address, apt or suite number" id="w9_address" required>
-                        <Input id="w9_address" value={data.address || ''} onChange={set('address')} placeholder="123 Main St" />
+                    <AddressAutocompleteField
+                        label="Street address"
+                        value={data.address || ''}
+                        onSelect={(parsed) => {
+                            onChange({
+                                ...data,
+                                address: parsed.streetAddress || data.address,
+                                cityStateZip: `${parsed.city || ''}${parsed.city ? ', ' : ''}${parsed.state || ''} ${parsed.zip || ''}`.trim()
+                            })
+                        }}
+                    />
+                    <Field label="Address Line 2 (Apt, suite, etc.)" id="w9_address2">
+                        <Input id="w9_address2" value={data.address2 || ''} onChange={set('address2')} placeholder="Apt 4B (if applicable)" />
                     </Field>
                     <Field label="City, state, and ZIP code" id="w9_cityStateZip" required>
                         <Input id="w9_cityStateZip" value={data.cityStateZip || ''} onChange={set('cityStateZip')} placeholder="Charlotte, NC 28201" />
@@ -795,7 +828,14 @@ export default function TaxFormsPage({ stepLabel, caregiver, companyId, companyD
                     ein: w9Data.ein?.replace(/-/g, '') || '',
                 }
             })
-            await saveTaxFormData(caregiver.id, companyId, 'w9', w9Data)
+            // Combine address + address2 into the single address field used by backend
+            const combinedAddress = [w9Data.address || '', w9Data.address2 || '']
+                .filter(Boolean)
+                .join('\n')
+
+            const w9ToSave = { ...w9Data, address: combinedAddress }
+
+            await saveTaxFormData(caregiver.id, companyId, 'w9', w9ToSave)
 
             await supabase
                 .from('caregiver_documents')
@@ -812,7 +852,7 @@ export default function TaxFormsPage({ stepLabel, caregiver, companyId, companyD
                 body: {
                     caregiverId: caregiver.id,
                     w9Data: {
-                        ...w9Data,
+                        ...w9ToSave,
                         ssn: w9Data.ssn?.replace(/-/g, '') || '',
                         ein: w9Data.ein?.replace(/-/g, '') || '',
                     }

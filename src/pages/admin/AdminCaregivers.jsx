@@ -26,7 +26,8 @@ const Field = ({ label, id, children, required }) => (
     </div>
 )
 
-function NewCaregiverDialog({ open, onClose, onCreated, companyId }) {
+
+function NewCaregiverDialog({ open, onClose, onCreated, companyId, roleOptions }) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
     const [offerLetterFile, setOfferLetterFile] = useState(null)
@@ -38,7 +39,7 @@ function NewCaregiverDialog({ open, onClose, onCreated, companyId }) {
         name: '',
         email: '',
         phone: '',
-        role: 'caregiver',
+        role: '',
         position_title: '',
         employment_type: '',
         start_date: '',
@@ -63,7 +64,7 @@ function NewCaregiverDialog({ open, onClose, onCreated, companyId }) {
             setAdminEmail(adminData.email);
             setAdminName(adminData.name);
             setAdminId(adminData.id);
-        }  
+        }
 
     }
 
@@ -109,7 +110,7 @@ function NewCaregiverDialog({ open, onClose, onCreated, companyId }) {
             admin_email: adminEmail,
             admin_id: adminId,
             action: 'created_employee',
-            caregiver_name: form.name, 
+            caregiver_name: form.name,
             company_id: companyId,
         })
         if (form.role === 'other' && offerLetterFile) {
@@ -205,14 +206,13 @@ function NewCaregiverDialog({ open, onClose, onCreated, companyId }) {
                             <Field label="Role" id="role" required>
                                 <Select id="role" className="w-full" value={form.role} onValueChange={setSelect('role')}>
                                     <SelectTrigger id='role' className="w-full">
-                                        <SelectValue placeholder="Select role..."/>
+                                        <SelectValue placeholder="Select role..." />
                                     </SelectTrigger>
                                     <SelectContent>
-                                            <SelectItem value="caregiver">Caregiver</SelectItem>
-                                            <SelectItem value="nurse_prn">Nurse (PRN)</SelectItem>
-                                            <SelectItem value="nurse_director">Nurse (Director)</SelectItem>
-                                            <SelectItem value="other">Other</SelectItem>
-                                        </SelectContent>
+                                        {roleOptions.map(r => (
+                                            <SelectItem key={r.role_key} value={r.role_key}>{r.display_label}</SelectItem>
+                                        ))}
+                                    </SelectContent>
                                 </Select>
                             </Field>
                             <Field label="Position title" id="position_title" required>
@@ -229,7 +229,7 @@ function NewCaregiverDialog({ open, onClose, onCreated, companyId }) {
                             <Field label="Employment type" id="employment_type" required>
                                 <Select id="employment_type" value={form.employment_type} onValueChange={setSelect('employment_type')} placeholder="Select type...">
                                     <SelectTrigger id='employment_type' className="w-full">
-                                        <SelectValue placeholder="Select type..."/>
+                                        <SelectValue placeholder="Select type..." />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="Hourly, Part-Time">Hourly, Part-Time</SelectItem>
@@ -239,7 +239,7 @@ function NewCaregiverDialog({ open, onClose, onCreated, companyId }) {
                                 </Select>
                             </Field>
                             <Field label="Start date" id="start_date" required>
-                                <Input id="start_date" type="date" value={form.start_date} onChange={set('start_date')}  />
+                                <Input id="start_date" type="date" value={form.start_date} onChange={set('start_date')} />
                             </Field>
                         </div>
                     </div>
@@ -276,16 +276,16 @@ function NewCaregiverDialog({ open, onClose, onCreated, companyId }) {
                                 </label>
                             </Field>
                             <Field label="List the job responsibilities for this position." id="job_duties" required>
-                            <textarea
-                                value={jobDutiesDraft}
-                                onChange={(e) => setJobDutiesDraft(e.target.value)}
-                                rows={6}
-                                className="w-full border border-border rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:border-[#577C09]"
-                                placeholder="Enter each duty on a new line, like so:
+                                <textarea
+                                    value={jobDutiesDraft}
+                                    onChange={(e) => setJobDutiesDraft(e.target.value)}
+                                    rows={6}
+                                    className="w-full border border-border rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:border-[#577C09]"
+                                    placeholder="Enter each duty on a new line, like so:
 Assist with personal care
 Medication reminders
 Light housekeeping"
-                            />
+                                />
                             </Field>
                             <p className="text-xs text-muted-foreground">Each line will appear as a bullet point for the employee.</p>
                         </div>
@@ -332,6 +332,7 @@ export default function AdminCaregivers() {
     const [loading, setLoading] = useState(true)
     const [page, setPage] = useState(1);
     const [totalCount, setTotalCount] = useState(0)
+    const [roleOptions, setRoleOptions] = useState([]);
     const { companyId } = useCompany();
     const PER_PAGE = 20;
     const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -350,7 +351,7 @@ export default function AdminCaregivers() {
     const [showSkillDropdown, setShowSkillDropdown] = useState(false);
     const [pendingSkills, setPendingSkills] = useState([]);
     const skillDropdownRef = useRef(null);
-    
+
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -365,7 +366,26 @@ export default function AdminCaregivers() {
         }
         fetchCaregivers()
     }, [page, debouncedSearch, statusFilter, roleFilter, skillFilters, companyId])
-    
+
+    useEffect(() => {
+        if (!companyId) {
+            return;
+        }
+
+        const fetchRoleLabels = async () => {
+            const { data, error } = await supabase
+                .from('role_labels')
+                .select('role_key, display_label')
+                .eq('company_id', companyId)
+
+            if (!error && data) {
+                setRoleOptions(data);
+            }
+        }
+
+        fetchRoleLabels();
+    }, [companyId])
+
     useEffect(() => {
         const handleClickOutside = (e) => {
             if (skillDropdownRef.current && !skillDropdownRef.current.contains(e.target)) {
@@ -444,13 +464,15 @@ export default function AdminCaregivers() {
     }
 
     const roleLabel = (role) => {
-        const labels = {
-            caregiver: 'Caregiver',
-            nurse_prn: 'Nurse (PRN)',
-            nurse_director: 'Nurse (Director)',
-            other: 'Other'
-        }
-        return labels[role] || role;
+        // const labels = {
+        //     caregiver: 'Caregiver',
+        //     nurse_prn: 'Nurse (PRN)',
+        //     nurse_director: 'Nurse (Director)',
+        //     other: 'Other'
+        // }
+        // return labels[role] || role;
+        const match = roleOptions.find(r => r.role_key === role)
+        return match?.display_label || role;
     }
 
     if (loading) {
@@ -471,6 +493,7 @@ export default function AdminCaregivers() {
                     navigate(`/admin/employees/${newCaregiver.id}`)
                 }}
                 companyId={companyId}
+                roleOptions={roleOptions}
             />
 
             <div className="flex items-center justify-between mb-8">
@@ -513,10 +536,9 @@ export default function AdminCaregivers() {
                     className="border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[var(--primary-color)]"
                 >
                     <option value="all">All roles</option>
-                    <option value="caregiver">Caregiver</option>
-                    <option value="nurse_prn">Nurse (PRN)</option>
-                    <option value="nurse_director">Nurse (Director)</option>
-                    <option value="other">Other</option>
+                    {roleOptions.map(r => (
+                        <option key={r.role_key} value={r.role_key}>{r.display_label}</option>
+                    ))}
                 </select>
                 <div className="relative" ref={skillDropdownRef}>
                     <button
@@ -626,7 +648,7 @@ export default function AdminCaregivers() {
                                 const progress = caregiver.caregiver_progress?.[0]
                                 const timeLog = caregiver.caregiver_time_logs?.[0]
                                 const activeSeconds = timeLog?.active_seconds || 0
-                                const activeTime = activeSeconds > 0
+                                const activeTime = caregiver.status === 'completed' && activeSeconds > 0
                                     ? `${Math.floor(activeSeconds / 3600)}h ${Math.floor((activeSeconds % 3600) / 60)}m`
                                     : '—'
 

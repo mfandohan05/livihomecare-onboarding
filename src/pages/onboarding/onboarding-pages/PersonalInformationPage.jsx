@@ -12,6 +12,7 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
         lastName: '',
         firstName: '',
         streetAddress: '',
+        addressLine2: '',
         city: '',
         state: '',
         zip: '',
@@ -22,6 +23,7 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
         primaryEmergencyLastName: '',
         primaryEmergencyFirstName: '',
         primaryEmergencyStreetAddress: '',
+        primaryEmergencyAddressLine2: '',
         primaryEmergencyCity: '',
         primaryEmergencyState: '',
         primaryEmergencyZip: '',
@@ -33,6 +35,7 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
         secondaryEmergencyLastName: '',
         secondaryEmergencyFirstName: '',
         secondaryEmergencyStreetAddress: '',
+        secondaryEmergencyAddressLine2: '',
         secondaryEmergencyCity: '',
         secondaryEmergencyState: '',
         secondaryEmergencyZip: '',
@@ -43,9 +46,9 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
     })
 
     const updateField = (field, value) => {
-        setFormData(prev => ({ ...prev, [field]: value}))
+        setFormData(prev => ({ ...prev, [field]: value }))
     }
-    
+
     useEffect(() => {
         if (initialData && Object.keys(initialData).length > 0) {
             setFormData(initialData)
@@ -129,8 +132,8 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                         </div>
 
                         <div className="space-y-2">
-                            <AddressAutocompleteField 
-                                label="Street Address"
+                            <AddressAutocompleteField
+                                label="Address Line 1"
                                 value={formData.streetAddress}
                                 onSelect={(parsed) => {
                                     setFormData(prev => ({
@@ -142,29 +145,18 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                                     }))
                                 }}
                             />
-                            {/* <Label htmlFor="streetAddress">Street address</Label>
-                            <Input
-                                id="streetAddress"
-                                name="streetAddress"
-                                placeholder="Start typing an address..."
-                                value={query}
-                                onChange={(e) => setQuery(e.target.value)}
-                                required
-                            /> */}
                         </div>
-                        {/* {suggestions.length > 0 && (
-                            <ul className="absolute z-10 bg-white border border-border rounded-lg mt-1 shadow-lg max-h-60 overflow-y-auto">
-                                {suggestions.map((feature) => (
-                                    <li
-                                        key={feature.id}
-                                        onClick={() => handleSelectSuggestion(feature)}
-                                        className="px-3 py-2 text-sm cursor-pointer hover:bg-muted"
-                                    >
-                                        {feature.place_name}
-                                    </li>
-                                ))}
-                            </ul>
-                        )} */}
+
+                        <div className="space-y-2">
+                            <Label htmlFor="addressLine2">Address Line 2</Label>
+                            <Input
+                                id="addressLine2"
+                                name="addressLine2"
+                                placeholder=""
+                                value={formData.addressLine2}
+                                onChange={handleChange}
+                            />
+                        </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="space-y-2 col-span-1">
@@ -279,8 +271,8 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                         </div>
 
                         <div className="space-y-2">
-                            <AddressAutocompleteField 
-                                label="Street Address"
+                            <AddressAutocompleteField
+                                label="Address Line 1"
                                 value={formData.primaryEmergencyStreetAddress}
                                 onSelect={(parsed) => {
                                     setFormData(prev => ({
@@ -291,6 +283,16 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                                         primaryEmergencyZip: parsed.zip,
                                     }))
                                 }}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="primaryEmergencyAddressLine2">Address Line 2</Label>
+                            <Input
+                                id="primaryEmergencyAddressLine2"
+                                name="primaryEmergencyAddressLine2"
+                                placeholder=""
+                                value={formData.primaryEmergencyAddressLine2}
+                                onChange={handleChange}
                             />
                         </div>
 
@@ -416,8 +418,8 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                         </div>
 
                         <div className="space-y-2">
-                            <AddressAutocompleteField 
-                                label="Street Address"
+                            <AddressAutocompleteField
+                                label="Address Line 1"
                                 value={formData.secondaryEmergencyStreetAddress}
                                 onSelect={(parsed) => {
                                     setFormData(prev => ({
@@ -430,7 +432,16 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
                                 }}
                             />
                         </div>
-
+                        <div className="space-y-2">
+                            <Label htmlFor="secondaryEmergencyAddressLine2">Address Line 2</Label>
+                            <Input
+                                id="secondaryEmergencyAddressLine2"
+                                name="secondaryEmergencyAddressLine2"
+                                placeholder=""
+                                value={formData.secondaryEmergencyAddressLine2}
+                                onChange={handleChange}
+                            />
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="space-y-2 col-span-1">
                                 <Label htmlFor="secondaryEmergencyCity">City</Label>

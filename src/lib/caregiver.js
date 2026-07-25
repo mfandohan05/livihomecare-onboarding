@@ -167,7 +167,7 @@ export async function saveTaxFormData(caregiverId, companyId, formType, data) {
   if (error) console.error('Error saving tax form data:', error)
 }
 
-export async function saveTimeLog(caregiverId, companyId, hoursWorked, sessionStart) {
+export async function saveTimeLog(caregiverId, companyId, hoursWorked, sessionStart, completed = false) {
   const { error } = await supabase
     .from('caregiver_time_logs')
     .insert({
@@ -176,8 +176,45 @@ export async function saveTimeLog(caregiverId, companyId, hoursWorked, sessionSt
       session_start: sessionStart || new Date().toISOString,
       session_end: new Date().toISOString(),
       active_seconds: Math.round(hoursWorked * 3600),
-      completed: true
+      completed
     })
 
   if (error) console.error('Error saving time log:', error)
+}
+
+export async function checkpointTimeLog(caregiverId, companyId, token, getHoursWorked, completed = false) {
+  const sessionStart = localStorage.getItem(`livi_session_start_${token}`)
+  if (!sessionStart) return
+
+  const hoursWorked = getHoursWorked()
+  const totalSeconds = Math.round(hoursWorked * 3600)
+
+  try {
+    const { data: existingLog } = await supabase
+      .from('caregiver_time_logs')
+      .select('id')
+      .eq('caregiver_id', caregiverId)
+      .eq('session_start', sessionStart)
+      .maybeSingle()
+
+    if (existingLog) {
+      const updates = {
+        active_seconds: totalSeconds,
+        session_end: new Date().toISOString(),
+      }
+      if (completed) updates.completed = true
+
+      const { error } = await supabase
+        .from('caregiver_time_logs')
+        .update(updates)
+        .eq('caregiver_id', caregiverId)
+        .eq('session_start', sessionStart)
+
+      if (error) console.error('Error saving time log:', error)
+    } else {
+      await saveTimeLog(caregiverId, companyId, hoursWorked, sessionStart, completed)
+    }
+  } catch (err) {
+    console.error('Error saving time log:', err)
+  }
 }

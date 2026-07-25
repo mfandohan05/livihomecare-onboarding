@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { PDFDocument } from "https://esm.sh/pdf-lib@1.17.1";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://app.livihomecare.com",
+  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
@@ -20,12 +20,21 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    const { data: caregiver, error: caregiverError } = await supabase
+      .from("caregivers")
+      .select("id, company_id")
+      .eq("id", caregiverId)
+      .single();
+
+    if (caregiverError || !caregiver) throw new Error("Caregiver not found");
+
+    const templatePath = "templates/default/fw9.pdf";
     const { data: templateFile, error: templateError } = await supabase.storage
       .from("generated-pdfs")
-      .download("templates/fw9.pdf");
+      .download(templatePath);
 
     if (templateError)
-      throw new Error(`Could not load W-9 template: ${templateError.message}`);
+      throw new Error(`Could not load W-9 template at "${templatePath}": ${templateError.message}`);
 
     const templateBytes = await templateFile.arrayBuffer();
     const pdfDoc = await PDFDocument.load(templateBytes, {
@@ -59,13 +68,10 @@ Deno.serve(async (req) => {
       }
     };
 
-    // Line 1 — Full legal name
     setText("topmostSubform[0].Page1[0].f1_01[0]", w9Data.name);
 
-    // Line 2 — Business name/DBA
     setText("topmostSubform[0].Page1[0].f1_02[0]", w9Data.businessName);
 
-    // Line 3a — Tax classification checkboxes
     const classMap: Record<string, number> = {
       individual: 0,
       c_corp: 1,
@@ -85,7 +91,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // LLC classification letter
     if (w9Data.taxClassification === "llc" && w9Data.llcClassification) {
       setText(
         "topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].f1_03[0]",
@@ -93,7 +98,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Other description
     if (w9Data.taxClassification === "other" && w9Data.otherDescription) {
       setText(
         "topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].f1_04[0]",
@@ -101,7 +105,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Address
     setText(
       "topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_07[0]",
       w9Data.address,
@@ -118,18 +121,15 @@ if (w9Data.ssn) {
   setText('topmostSubform[0].Page1[0].f1_13[0]', ssnClean.slice(5))
 }
 
-// EIN — two boxes at y=420
 if (w9Data.ein) {
   const einClean = w9Data.ein.replace(/-/g, '').slice(0, 9)
   setText('topmostSubform[0].Page1[0].f1_14[0]', einClean.slice(0, 2))
   setText('topmostSubform[0].Page1[0].f1_15[0]', einClean.slice(2))
 }
 
-  
-
     form.flatten();
     const filledPdfBytes = await pdfDoc.save();
-    const outputPath = `${caregiverId}/w9_completed.pdf`;
+    const outputPath = `${caregiver.company_id}/${caregiverId}/w9_completed.pdf`;
 
     const { error: uploadError } = await supabase.storage
       .from("generated-pdfs")
@@ -144,6 +144,7 @@ if (w9Data.ein) {
     await supabase.from("caregiver_documents").upsert(
       {
         caregiver_id: caregiverId,
+        company_id: caregiver.company_id,
         document_type: "w9_completed",
         file_name: "W-9_Completed.pdf",
         file_path: outputPath,

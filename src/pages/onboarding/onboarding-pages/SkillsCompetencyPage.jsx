@@ -272,7 +272,7 @@ export default function SkillsCompetencyPage({ stepLabel, onNext, initialData, o
         <div className="bg-[var(--secondary-bg-color)] rounded-lg p-4">
           <p className="text-sm text-[var(--hover-color)]">
             <span className="font-medium">Note: </span>
-            In addition to this competency assessment, each Livi Home Care caregiver
+            In addition to this competency assessment, each {companyData.company_name} employee
             will be trained for the client's specific needs before being assigned to them.
           </p>
         </div>

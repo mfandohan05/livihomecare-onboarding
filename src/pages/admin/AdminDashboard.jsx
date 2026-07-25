@@ -17,11 +17,23 @@ export default function AdminDashboard() {
     const [recentCaregivers, setRecentCaregivers] = useState([])
     const [loading, setLoading] = useState(true)
     const { companyId } = useCompany();
+    const [roleOptions, setRoleOptions] = useState([]);
 
     useEffect(() => {
         if (!companyId) {
             return;
         }
+        const fetchRoleLabels = async () => {
+            const { data, error } = await supabase
+                .from('role_labels')
+                .select('role_key, display_label')
+                .eq('company_id', companyId)
+
+            if (!error && data) {
+                setRoleOptions(data);
+            }
+        }
+
         const fetchData = async () => {
             const { data: caregivers } = await supabase
                 .from('caregivers')
@@ -44,6 +56,7 @@ export default function AdminDashboard() {
             setLoading(false)
         }
         fetchData()
+        fetchRoleLabels();
     }, [companyId])
 
     const statusColor = (status) => {
@@ -121,7 +134,7 @@ export default function AdminDashboard() {
                                     </div>
                                     <div>
                                         <p className="font-medium text-sm">{caregiver.name}</p>
-                                        <p className="text-xs text-muted-foreground"><span className='capitalize'>{job_label(caregiver.role)}</span> · {(caregiver.email).toLowerCase()}</p>
+                                        <p className="text-xs text-muted-foreground"><span className='capitalize'>{job_label(caregiver.role, roleOptions)}</span> · {(caregiver.email).toLowerCase()}</p>
                                     </div>
                                 </div>
                                 <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusColor(caregiver.status)}`}>

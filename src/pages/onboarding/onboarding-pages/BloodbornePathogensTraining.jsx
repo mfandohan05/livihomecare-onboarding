@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Shield, ExternalLink, Upload, CheckCircle, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
-export default function BloodbornePathogensPage({ stepLabel, onNext, initialData, onChange, caregiver, setPopupOpen }) {
+export default function BloodbornePathogensPage({ stepLabel, onNext, initialData, onChange, caregiver, companyId }) {
     const [certificate, setCertificate] = useState(initialData?.certificate || null)
     const [uploading, setUploading] = useState(false)
     const [uploaded, setUploaded] = useState(initialData?.uploaded || false)
@@ -34,7 +34,7 @@ export default function BloodbornePathogensPage({ stepLabel, onNext, initialData
         setUploading(true)
         const fileExt = file.name.split('.').pop()
         const sanitizedName = caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')
-        const filePath = `${caregiver.id}/${sanitizedName}_bloodborne_certificate.${fileExt}`
+        const filePath = `${companyId}/${caregiver.id}/${sanitizedName}_bloodborne_certificate.${fileExt}`
 
         const { error: uploadError } = await supabase.storage
             .from('documents')
@@ -45,6 +45,7 @@ export default function BloodbornePathogensPage({ stepLabel, onNext, initialData
                 .from('caregiver_documents')
                 .upsert({
                     caregiver_id: caregiver.id,
+                    company_id: companyId,
                     document_type: 'bloodborne_certificate',
                     file_name: file.name,
                     file_path: filePath,
@@ -71,7 +72,6 @@ export default function BloodbornePathogensPage({ stepLabel, onNext, initialData
                 All new hires are required to complete Bloodborne Pathogens training and submit a certificate of completion before starting work. If you already have a valid, unexpired certificate, you can skip the training and upload it directly.
             </p>
 
-            {/* Training link card */}
             <div className="bg-[var(--secondary-bg-color)] border border-[var(--primary-color)]/20 rounded-xl p-4 md:p-6 mb-6">
                 <div className="flex items-start gap-4">
                     <div className="w-10 h-10 rounded-full bg-[var(--primary-color)] flex items-center justify-center shrink-0">
@@ -99,7 +99,6 @@ export default function BloodbornePathogensPage({ stepLabel, onNext, initialData
                 </div>
             </div>
 
-            {/* Upload section */}
             <div className="bg-white border border-border rounded-xl p-4 md:p-6">
                 <p className="font-medium mb-1">Upload Certificate</p>
                 <p className="text-sm text-muted-foreground mb-4">

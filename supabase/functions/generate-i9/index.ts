@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { PDFDocument } from "https://esm.sh/pdf-lib@1.17.1";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://app.livihomecare.com",
+  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
@@ -22,21 +22,22 @@ Deno.serve(async (req) => {
 
     const { data: caregiver } = await supabase
       .from("caregivers")
-      .select("name")
+      .select("name, company_id")
       .eq("id", caregiverId)
       .single();
 
     if (!caregiver) throw new Error("Caregiver not found");
 
     const sanitized = caregiver.name.replace(/[^a-zA-Z0-9]/g, "_");
-    const outputPath = `${caregiverId}/i9_completed.pdf`;
+    const outputPath = `${caregiver.company_id}/${caregiverId}/i9_completed.pdf`;
 
+    const templatePath = "templates/default/i-9form.pdf";
     const { data: templateFile, error: templateError } = await supabase.storage
       .from("generated-pdfs")
-      .download("templates/i-9form.pdf");
+      .download(templatePath);
 
     if (templateError)
-      throw new Error(`Could not load I-9 template: ${templateError.message}`);
+      throw new Error(`Could not load I-9 template at "${templatePath}": ${templateError.message}`);
 
     const templateBytes = await templateFile.arrayBuffer();
     const pdfDoc = await PDFDocument.load(templateBytes);
@@ -125,7 +126,6 @@ Deno.serve(async (req) => {
         );
       }
     }
-    // flatten only Section 1 fields, leave Section 2 fields editable
     const section1Fields = [
       "Last Name (Family Name)",
       "First Name Given Name",
@@ -176,6 +176,7 @@ Deno.serve(async (req) => {
     await supabase.from("caregiver_documents").upsert(
       {
         caregiver_id: caregiverId,
+        company_id: caregiver.company_id,
         document_type: "i9_completed",
         file_name: `i9_completed.pdf`,
         file_path: outputPath,

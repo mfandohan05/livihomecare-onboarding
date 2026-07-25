@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { FolderUp, CreditCard, Car, Stethoscope, IdCard, Camera, CheckCircle, Upload, Award, Loader2 } from 'lucide-react'
 import { uploadDocument, updateDocumentExpiration, getDocuments } from '@/lib/caregiver'
 
-export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver, companyId }) {
+export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver, companyId, setSaving }) {
 
   const baseDocs = [
     {
@@ -91,7 +91,7 @@ export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver
   if (loadingDocs) {
     return (
       <div className="max-w-2xl mx-auto py-16 px-8 flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-[#577C09]" />
+        <Loader2 className="w-6 h-6 animate-spin text-[var(--primary-color)]" />
       </div>
     )
   }

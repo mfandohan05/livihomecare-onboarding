@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ScrollText, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { formatPhone } from '@/lib/formUtils'
 
 const today = new Date().toLocaleDateString('en-US', {
     year: 'numeric',
@@ -128,7 +129,7 @@ const ReferenceForm = ({ references, setReferences, minRequired = 1 }) => {
                             </div>
                             <div className="space-y-1.5">
                                 <Label htmlFor={`ref${index}_phone`}>Phone Number {isRequired && <span className="text-red-500">*</span>}</Label>
-                                <Input id={`ref${index}_phone`} placeholder="(555) 000-0000" value={ref.phone} onChange={(e) => updateRef(index, 'phone', e.target.value)} />
+                                <Input id={`ref${index}_phone`} placeholder="(555) 000-0000" value={formatPhone(ref.phone)} onChange={(e) => updateRef(index, 'phone', e.target.value)} />
                             </div>
                             <div className="space-y-1.5 md:col-span-2">
                                 <Label htmlFor={`ref${index}_email`}>Email Address</Label>

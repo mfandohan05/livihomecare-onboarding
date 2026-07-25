@@ -7,7 +7,9 @@
 - Added disclaimer about caregiver map
 - Fixed bug where expiration dates were not required for documents
 - Revamped form signing feature to use fillable fields
-- Added error output to UI for easier error tracking/handling
+- Added loading UI to upload documents screen
+- Added support for uploading resume to employee data
+- Fixed issues with time log counting
 
 
 ## 1.2.7 - 2026-07-05
