@@ -292,7 +292,7 @@ export default function NewHireOrientationPage({ stepLabel, onNext, initialData,
                         className={`px-2 py-1 md:px-3 md:py-1.5 rounded-full text-xs font-medium transition-colors border ${i === currentSection
                             ? 'bg-[var(--primary-color)] text-white border-[var(--primary-color)]'
                             : completedSections.includes(i)
-                                ? 'bg-[var(--secondary-bg-color)] text-[var(--primary-color)] border-[var(--primary-color)]'
+                                ? 'bg-[var(--secondary-bg)] text-[var(--primary-color)] border-[var(--primary-color)]'
                                 : visitedSections.includes(i)
                                     ? 'bg-muted text-[var(--primary-color)] border-[var(--primary-color)] opacity-75'
                                     : 'bg-muted text-muted-foreground border-border opacity-50 cursor-not-allowed'
@@ -353,7 +353,7 @@ export default function NewHireOrientationPage({ stepLabel, onNext, initialData,
                                                 key={ci}
                                                 onClick={() => handleAnswerSelect(qi, ci)}
                                                 className={`w-full text-left px-4 py-3 rounded-lg border text-sm transition-colors ${quizAnswers[qi] === ci
-                                                    ? 'border-[var(--primary-color)] bg-[var(--secondary-bg-color)] text-[var(--hover-color)]'
+                                                    ? 'border-[var(--primary-color)] bg-[var(--secondary-bg)] text-[var(--hover-color)]'
                                                     : 'border-border hover:border-[var(--primary-color)] hover:bg-[var(--secondary-color)]/50'
                                                     }`}
                                             >
@@ -374,7 +374,7 @@ export default function NewHireOrientationPage({ stepLabel, onNext, initialData,
                     ) : (
                         <div>
                             {/* Score */}
-                            <div className={`rounded-lg p-6 mb-8 text-center ${passed ? 'bg-[var(--secondary-bg-color)]' : 'bg-red-50'}`}>
+                            <div className={`rounded-lg p-6 mb-8 text-center ${passed ? 'bg-[var(--secondary-bg)]' : 'bg-red-50'}`}>
                                 <p className={`text-4xl font-bold mb-1 ${passed ? 'text-[var(--primary-color)]' : 'text-red-600'}`}>
                                     {score}/{section.quiz.length}
                                 </p>
@@ -393,7 +393,7 @@ export default function NewHireOrientationPage({ stepLabel, onNext, initialData,
                                         <div
                                             key={qi}
                                             className={`rounded-lg border p-4 ${isCorrect
-                                                ? 'border-[var(--primary-color)] bg-[var(--secondary-bg-color)]/50'
+                                                ? 'border-[var(--primary-color)] bg-[var(--secondary-bg)]/50'
                                                 : 'border-red-200 bg-red-50'
                                                 }`}
                                         >

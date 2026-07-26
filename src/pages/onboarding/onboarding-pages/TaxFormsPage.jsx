@@ -35,8 +35,8 @@ const RadioOption = ({ value, label, checked, onChange }) => (
         type="button"
         onClick={() => onChange(value)}
         className={`w-full text-left px-4 py-3 rounded-lg border text-sm transition-colors flex items-center gap-3 ${checked
-            ? 'border-[var(--primary-color)] bg-[var(--secondary-bg-color)] text-[var(--hover-color)]'
-            : 'border-border hover:border-[var(--primary-color)] hover:bg-[var(--secondary-bg-color)]/30'
+            ? 'border-[var(--primary-color)] bg-[var(--secondary-bg)] text-[var(--hover-color)]'
+            : 'border-border hover:border-[var(--primary-color)] hover:bg-[var(--secondary-bg)]/30'
             }`}
     >
         <div className={`w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center ${checked ? 'border-[var(--primary-color)]' : 'border-muted-foreground'
@@ -290,7 +290,7 @@ function W4Form({ data, onChange, onSave, saved }) {
 
     return (
         <div className="space-y-6">
-            <div className="bg-[var(--secondary-bg-color)] rounded-lg p-4">
+            <div className="bg-[var(--secondary-bg)] rounded-lg p-4">
                 <p className="text-sm text-[var(--hover-color)]">
                     <span className="font-medium">Steps 2–4 are optional</span> — most employees only need to complete Step 1 and sign.
                 </p>
@@ -422,7 +422,7 @@ function W9Form({ data, onChange, onSave, saved, companyName }) {
 
     return (
         <div className="space-y-6">
-            <div className="bg-[var(--secondary-bg-color)] rounded-lg p-4">
+            <div className="bg-[var(--secondary-bg)] rounded-lg p-4">
                 <p className="text-sm text-[var(--hover-color)]">
                     <span className="font-medium">W-9 is for independent contractors.</span> As a contractor with {companyName}, you are responsible for paying your own taxes. This form provides your taxpayer identification number for 1099 reporting.
                 </p>
@@ -557,7 +557,7 @@ function NC4EZForm({ data, onChange, onSave, saved, companyName }) {
 
     return (
         <div className="space-y-6">
-            <div className="bg-[var(--secondary-bg-color)] rounded-lg p-4">
+            <div className="bg-[var(--secondary-bg)] rounded-lg p-4">
                 <p className="text-sm text-[var(--hover-color)]">
                     <span className="font-medium">NC-4EZ</span> is the North Carolina state withholding certificate. It tells {companyName} how much NC state income tax to withhold from your paychecks.
                 </p>
@@ -966,7 +966,7 @@ export default function TaxFormsPage({ stepLabel, caregiver, companyId, companyD
                         className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${i === currentStep
                             ? 'bg-[var(--primary-color)] text-white border-[var(--primary-color)]'
                             : saved[s.id]
-                                ? 'bg-[var(--secondary-bg-color)] text-[var(--primary-color)] border-[var(--primary-color)] cursor-pointer'
+                                ? 'bg-[var(--secondary-bg)] text-[var(--primary-color)] border-[var(--primary-color)] cursor-pointer'
                                 : 'bg-muted text-muted-foreground border-border opacity-50 cursor-not-allowed'
                             }`}
                     >

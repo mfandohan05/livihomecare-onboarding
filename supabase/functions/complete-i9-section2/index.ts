@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { PDFDocument } from "https://esm.sh/pdf-lib@1.17.1";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://app.livihomecare.com",
+  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
@@ -20,10 +20,30 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    // load existing Section 1 PDF
+    const { data: caregiver, error: caregiverError } = await supabase
+      .from("caregivers")
+      .select("name, company_id")
+      .eq("id", caregiverId)
+      .single();
+
+    if (caregiverError || !caregiver) throw new Error("Caregiver not found");
+
+    const { data: companyData, error: companyDataError } = await supabase
+      .from("company_data")
+      .select("legal_name, dba_name, address_line1, city, state, zip")
+      .eq("company_id", caregiver.company_id)
+      .maybeSingle();
+
+    if (companyDataError || !companyData) throw new Error("Company data not found");
+
+    const employerName = companyData.dba_name || companyData.legal_name || "";
+    const employerAddress = `${companyData.address_line1 || ""}, ${companyData.city || ""} ${companyData.state || ""} ${companyData.zip || ""}`.trim();
+
+    const filePath = `${caregiver.company_id}/${caregiverId}/i9_completed.pdf`;
+
     const { data: existingFile, error: loadError } = await supabase.storage
       .from("generated-pdfs")
-      .download(`${caregiverId}/i9_completed.pdf`);
+      .download(filePath);
 
     if (loadError) throw new Error(`Could not load I-9: ${loadError.message}`);
 
@@ -83,7 +103,7 @@ Deno.serve(async (req) => {
     setText("Additional Information", section2Data.additionalInfo);
     setCheckbox("CB_Alt", section2Data.alternativeProcedure || false);
 
-    // Employer certification
+    // Employer certification — now company-driven instead of hardcoded to Livi
     setText("FirstDayEmployed mmddyyyy", section2Data.firstDayOfEmployment);
     setText(
       "Last Name First Name and Title of Employer or Authorized Representative",
@@ -91,27 +111,12 @@ Deno.serve(async (req) => {
     );
     setText("Signature of Employer or AR", adminName);
     setText("S2 Todays Date mmddyyyy", today);
-    setText(
-      "Employers Business or Org Name",
-      "MDC Global Care Solutions dba Livi Home Care",
-    );
-    setText(
-      "Employers Business or Org Address",
-      "179 Gasoline Alley Dr. Suite 203, Mooresville NC 28117",
-    );
+    setText("Employers Business or Org Name", employerName);
+    setText("Employers Business or Org Address", employerAddress);
 
     form.flatten();
     const filledPdfBytes = await pdfDoc.save();
-    const { data: caregiver } = await supabase
-      .from("caregivers")
-      .select("name")
-      .eq("id", caregiverId)
-      .single();
 
-    if (!caregiver) throw new Error("Caregiver not found");
-
-    const sanitized = caregiver.name.replace(/[^a-zA-Z0-9]/g, "_");
-    const filePath = `${caregiverId}/i9_completed.pdf`;
     const { error: uploadError } = await supabase.storage
       .from("generated-pdfs")
       .upload(filePath, filledPdfBytes, {
@@ -125,6 +130,7 @@ Deno.serve(async (req) => {
     await supabase.from("caregiver_documents").upsert(
       {
         caregiver_id: caregiverId,
+        company_id: caregiver.company_id,
         document_type: "i9_completed",
         file_name: `i9_completed.pdf`,
         file_path: filePath,
@@ -136,6 +142,7 @@ Deno.serve(async (req) => {
     await supabase.from("caregiver_tax_forms").upsert(
       {
         caregiver_id: caregiverId,
+        company_id: caregiver.company_id,
         i9_section2_data: section2Data,
         i9_section2_completed_at: new Date().toISOString(),
         i9_section2_completed_by: adminName,

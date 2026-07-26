@@ -168,7 +168,7 @@ export default function UploadDocumentsPage({ stepLabel, onNext, role, caregiver
               key={doc.id}
               className={`border rounded-lg p-4 transition-colors ${
                 uploaded
-                  ? 'border-[var(--primary-color)] bg-[var(--secondary-bg-color)]'
+                  ? 'border-[var(--primary-color)] bg-[var(--secondary-bg)]'
                   : error
                   ? 'border-red-300 bg-red-50'
                   : 'border-border bg-background'

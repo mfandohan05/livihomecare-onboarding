@@ -1,10 +1,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { PDFDocument, rgb, StandardFonts } from "https://esm.sh/pdf-lib@1.17.1";
+import { PDFDocument, StandardFonts } from "https://esm.sh/pdf-lib@1.17.1";
 
-const allowedOrigins = [
-  "https://app.livihomecare.com",
-  "http://localhost:5173",
-];
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
 
 const todayStr = () =>
   new Date().toLocaleDateString("en-US", {
@@ -15,135 +16,79 @@ const todayStr = () =>
   });
 
 Deno.serve(async (req) => {
-  const origin = req.headers.get("origin") || "";
-  const corsHeaders = {
-    "Access-Control-Allow-Origin": allowedOrigins.includes(origin)
-      ? origin
-      : allowedOrigins[0],
-    "Access-Control-Allow-Headers":
-      "authorization, x-client-info, apikey, content-type",
-  };
-
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    const { caregiverId, documentType, adminName, adminId, adminEmail } = await req.json();
+    const { caregiverId, documentType, adminName, adminPosition, adminId, adminEmail } = await req.json();
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    const { data: caregiver } = await supabase
+    const { data: caregiver, error: caregiverError } = await supabase
       .from("caregivers")
-      .select("id, name")
+      .select("id, name, company_id")
       .eq("id", caregiverId)
       .single();
 
-    if (!caregiver) throw new Error("Caregiver not found");
+    if (caregiverError || !caregiver) throw new Error("Caregiver not found");
 
-    const sanitized = caregiver.name.replace(/[^a-zA-Z0-9]/g, "_");
-    const filePath = `${caregiverId}/${sanitized}_${documentType}.pdf`;
+    const filePath = `${caregiver.company_id}/${caregiverId}/${documentType}.pdf`;
 
     const { data: existingFile, error: loadError } = await supabase.storage
       .from("generated-pdfs")
       .download(filePath);
 
     if (loadError)
-      throw new Error(`Could not load document: ${loadError.message}`);
+      throw new Error(`Could not load document at "${filePath}": ${loadError.message}`);
 
     const pdfBytes = await existingFile.arrayBuffer();
     const pdf = await PDFDocument.load(pdfBytes);
-    const italic = await pdf.embedFont(StandardFonts.HelveticaOblique);
-    const regular = await pdf.embedFont(StandardFonts.Helvetica);
+    const form = pdf.getForm();
+    const italicFont = await pdf.embedFont(StandardFonts.HelveticaOblique);
+    const regularFont = await pdf.embedFont(StandardFonts.Helvetica);
 
-    if (documentType === "drug_test_policy_signed") {
-      const page = pdf.getPages()[0];
-      const h = page.getHeight();
-      // LHC Representative signature
-      page.drawText(adminName, {
-        x: 190,
-        y: h - 680,
-        size: 11,
-        font: italic,
-        color: rgb(0, 0, 0),
-      });
-      // LHC Date
-      page.drawText(todayStr(), {
-        x: 410,
-        y: h - 680,
-        size: 11,
-        font: regular,
-        color: rgb(0, 0, 0),
-      });
+    const today = todayStr();
+
+    const trySet = (fieldName: string, value: string) => {
+      try {
+        form.getTextField(fieldName).setText(value);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    trySet('rep_name', adminName);
+    trySet('rep_title', adminPosition || '');
+    const signatureSet = trySet('rep_signature', adminName);
+    trySet('rep_date', today);
+
+    form.updateFieldAppearances(regularFont);
+    if (signatureSet) {
+      try {
+        form.getTextField('rep_signature').updateAppearances(italicFont);
+      } catch {
+      }
     }
 
-    if (documentType === "non_compete_signed") {
-      const page = pdf.getPages()[0];
-      const h = page.getHeight();
-      // LHC Representative Name
-      page.drawText(adminName, {
-        x: 210,
-        y: h - 720,
-        size: 11,
-        font: regular,
-        color: rgb(0, 0, 0),
-      });
-      // LHC Signature
-      page.drawText(adminName, {
-        x: 132,
-        y: h - 746,
-        size: 11,
-        font: italic,
-        color: rgb(0, 0, 0),
-      });
-      // LHC Date
-      page.drawText(todayStr(), {
-        x: 372,
-        y: h - 746,
-        size: 11,
-        font: regular,
-        color: rgb(0, 0, 0),
-      });
-    }
-
-    if (documentType === "orientation_checklist_signed") {
-      const page = pdf.getPages()[1]; // page 2
-      const h = page.getHeight();
-      // LHC Representative Printed Name
-      page.drawText(adminName, {
-        x: 72,
-        y: h - 342,
-        size: 11,
-        font: regular,
-        color: rgb(0, 0, 0),
-      });
-      // LHC Signature
-      page.drawText(adminName, {
-        x: 72,
-        y: h - 440,
-        size: 11,
-        font: italic,
-        color: rgb(0, 0, 0),
-      });
-      // LHC Date
-      page.drawText(todayStr(), {
-        x: 350,
-        y: h - 440,
-        size: 11,
-        font: regular,
-        color: rgb(0, 0, 0),
-      });
-    }
+    form.flatten();
 
     const saved = await pdf.save();
 
-    await supabase.storage.from("generated-pdfs").upload(filePath, saved, {
-      contentType: "application/pdf",
-      upsert: true,
-    });
+    const { error: uploadError } = await supabase.storage
+      .from("generated-pdfs")
+      .upload(filePath, saved, {
+        contentType: "application/pdf",
+        upsert: true,
+      });
+
+    if (uploadError)
+      throw new Error(`Could not save signed document: ${uploadError.message}`);
+
     await supabase
       .from("caregiver_documents")
       .update({
@@ -151,10 +96,11 @@ Deno.serve(async (req) => {
         admin_signed_by: adminName,
       })
       .eq("caregiver_id", caregiverId)
+      .eq("company_id", caregiver.company_id)
       .eq("document_type", documentType);
-      
 
     await supabase.from("audit_logs").insert({
+      company_id: caregiver.company_id,
       admin_email: adminEmail,
       admin_id: adminId,
       action: `signed_${documentType}`,

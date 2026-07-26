@@ -57,7 +57,7 @@ export default function CompletedPage({ caregiver, steps, companyData, getHoursW
         <div className="max-w-2xl mx-auto py-16 px-8">
             <div className="text-center mb-10">
                 <div className="flex justify-center mb-4">
-                    <div className="w-16 h-16 rounded-full bg-[var(--secondary-bg-color)] flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-full bg-[var(--secondary-bg)] flex items-center justify-center">
                         <PartyPopper className="w-8 h-8 text-[var(--primary-color)]" />
                     </div>
                 </div>
@@ -115,7 +115,7 @@ export default function CompletedPage({ caregiver, steps, companyData, getHoursW
                     <div className="space-y-4 text-sm text-muted-foreground">
                         {nextSteps.map((step, i) => (
                             <div key={i} className="flex items-start gap-3">
-                                <div className="w-6 h-6 rounded-full bg-[var(--secondary-bg-color)] text-[var(--primary-color)] flex items-center justify-center text-xs font-medium shrink-0 mt-0.5">
+                                <div className="w-6 h-6 rounded-full bg-[var(--secondary-bg)] text-[var(--primary-color)] flex items-center justify-center text-xs font-medium shrink-0 mt-0.5">
                                     {i + 1}
                                 </div>
                                 <p>{step.text}</p>
@@ -126,7 +126,7 @@ export default function CompletedPage({ caregiver, steps, companyData, getHoursW
             )}
 
             {(supportEmail || supportPhone) && (
-                <div className="bg-[var(--secondary-bg-color)] rounded-xl p-6 mb-8">
+                <div className="bg-[var(--secondary-bg)] rounded-xl p-6 mb-8">
                     <div className="flex items-center gap-2 mb-3">
                         <Heart className="w-4 h-4 text-[var(--primary-color)]" />
                         <p className="font-medium text-[var(--primary-color)]">Questions? We're here to help.</p>

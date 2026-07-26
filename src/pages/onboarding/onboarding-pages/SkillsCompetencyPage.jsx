@@ -204,8 +204,8 @@ export default function SkillsCompetencyPage({ stepLabel, onNext, initialData, o
                     type="button"
                     onClick={() => toggleItem(section.id, item)}
                     className={`flex items-center gap-3 px-4 py-3 rounded-lg border text-sm text-left transition-colors ${checked_
-                        ? 'border-[var(--primary-color)] bg-[var(--secondary-bg-color)] text-[var(--hover-color)]'
-                        : 'border-border hover:border-[var(--primary-color)] hover:bg-[var(--secondary-bg-color)]/30'
+                        ? 'border-[var(--primary-color)] bg-[var(--secondary-bg)] text-[var(--hover-color)]'
+                        : 'border-border hover:border-[var(--primary-color)] hover:bg-[var(--secondary-bg)]/30'
                       }`}
                   >
                     <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${checked_
@@ -269,7 +269,7 @@ export default function SkillsCompetencyPage({ stepLabel, onNext, initialData, o
           </div>
         </div>
 
-        <div className="bg-[var(--secondary-bg-color)] rounded-lg p-4">
+        <div className="bg-[var(--secondary-bg)] rounded-lg p-4">
           <p className="text-sm text-[var(--hover-color)]">
             <span className="font-medium">Note: </span>
             In addition to this competency assessment, each {companyData.company_name} employee

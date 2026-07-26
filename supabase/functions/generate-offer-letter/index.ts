@@ -45,6 +45,15 @@ async function fillOfferLetterTemplate(
   trySet('letter_date', today)
   trySet('hourly_rate', caregiver.pay_rate?.toString() || '')
   trySet('live_in_hourly_rate', caregiver.companion_pay_rate?.toString() || '')
+  trySet('companion_rate', caregiver.companion_pay_rate?.toString() || '')
+  trySet('mileage_rate', caregiver.mileage_rate?.toString() || '')
+
+  const positionIntro = caregiver.position_title
+    ? `${caregiver.position_title}${caregiver.employment_type ? ` (${caregiver.employment_type})` : ''}`
+    : ''
+  trySet('position_intro', positionIntro)
+  trySet('position_title', caregiver.position_title || '')
+  trySet('position_accept', caregiver.position_title || '')
 
   trySet('address', extra.address || '')
   trySet('city', extra.city || '')

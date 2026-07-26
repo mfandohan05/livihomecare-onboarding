@@ -422,8 +422,8 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, companyId,
                                 key={option.value}
                                 onClick={() => updateHepBStatus(option.value)}
                                 className={`w-full text-left px-4 py-3 rounded-lg border text-sm transition-colors flex items-start gap-3 ${hepBStatus === option.value
-                                    ? 'border-[var(--primary-color)] bg-[var(--secondary-bg-color)] text-[var(--hover-color)]'
-                                    : 'border-border hover:border-[var(--primary-color)] hover:bg-[var(--secondary-bg-color)]/30'
+                                    ? 'border-[var(--primary-color)] bg-[var(--secondary-bg)] text-[var(--hover-color)]'
+                                    : 'border-border hover:border-[var(--primary-color)] hover:bg-[var(--secondary-bg)]/30'
                                     }`}
                             >
                                 <div className={`w-4 h-4 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center ${hepBStatus === option.value ? 'border-[var(--primary-color)]' : 'border-muted-foreground'}`}>
@@ -666,7 +666,7 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, companyId,
                                         {form.title}
                                     </span>
                                     {isDone && (
-                                        <span className="text-xs text-[var(--primary-color)] bg-[var(--secondary-bg-color)] px-2 py-0.5 rounded-full">
+                                        <span className="text-xs text-[var(--primary-color)] bg-[var(--secondary-bg)] px-2 py-0.5 rounded-full">
                                             Signed
                                         </span>
                                     )}

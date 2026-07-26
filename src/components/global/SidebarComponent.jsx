@@ -46,7 +46,7 @@ function SidebarComponent({ steps, activeStep, setActiveStep, handleNext, caregi
                                 }}
                                 className={
                                     step.id === activeStep
-                                        ? 'bg-[var(--secondary-bg-color)] text-[var(--primary-color)] font-medium'
+                                        ? 'bg-[var(--secondary-bg)] text-[var(--primary-color)] font-medium'
                                         : step.status === 'locked'
                                             ? 'opacity-50 cursor-not-allowed'
                                             : isCompleted

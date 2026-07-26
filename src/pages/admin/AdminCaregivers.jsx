@@ -588,7 +588,7 @@ export default function AdminCaregivers() {
                                                                 : [...prev, key]
                                                         )
                                                     }}
-                                                    className={`w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors ${isSelected ? 'bg-[var(--secondary-bg-color)] text-[var(--primary-color)]' : 'hover:bg-muted/50'}`}
+                                                    className={`w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors ${isSelected ? 'bg-[var(--secondary-bg)] text-[var(--primary-color)]' : 'hover:bg-muted/50'}`}
                                                 >
                                                     <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${isSelected ? 'bg-[var(--primary-color)] border-[var(--primary-color)]' : 'border-muted-foreground'}`}>
                                                         {isSelected && (

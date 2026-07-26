@@ -6,7 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// Maps each question's answer options to their button field names
 const BUTTON_MAP = {
   q1: { Yes: 'Button4',  No: 'Button5',  'Prefer Not to Answer': 'Button6' },
   q2: { Yes: 'Button9',  No: 'Button10', 'Prefer Not to Answer': 'Button11', 'Not Applicable': 'Button12' },
@@ -26,21 +25,20 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
-    // Fetch caregiver
     const { data: caregiver, error: caregiverError } = await supabase
       .from('caregivers')
-      .select('id, name, position_title')
+      .select('id, name, position_title, company_id')
       .eq('id', caregiverId)
       .single()
 
     if (caregiverError || !caregiver) throw new Error('Caregiver not found')
 
-    // Load template from storage
+    const templatePath = 'templates/default/wotc.pdf'
     const { data: templateData, error: templateError } = await supabase.storage
       .from('generated-pdfs')
-      .download('templates/wotc.pdf')
+      .download(templatePath)
 
-    if (templateError || !templateData) throw new Error('Could not load wotc.pdf template')
+    if (templateError || !templateData) throw new Error(`Could not load WOTC template at "${templatePath}": ${templateError.message}`)
 
     const templateBytes = new Uint8Array(await templateData.arrayBuffer())
     const pdfDoc = await PDFDocument.load(templateBytes)
@@ -52,14 +50,12 @@ Deno.serve(async (req) => {
       year: 'numeric',
     })
 
-    // Fill text fields
     form.getTextField('Text1').setText(caregiver.name)
     form.getTextField('Text2').setText(caregiver.position_title || '')
     form.getTextField('Text3').setText(today)
     form.getTextField('Text22').setText(signature || caregiver.name)
     form.getTextField('Text23').setText(today)
 
-    // Check the correct button for each question answer
     if (wotcAnswers) {
       for (const [questionId, answer] of Object.entries(wotcAnswers)) {
         const questionMap = BUTTON_MAP[questionId as keyof typeof BUTTON_MAP]
@@ -72,19 +68,16 @@ Deno.serve(async (req) => {
           const checkbox = form.getCheckBox(buttonFieldName)
           checkbox.check()
         } catch {
-          // Field might be a different widget type depending on PDF version — skip silently
           console.warn(`Could not check field ${buttonFieldName}`)
         }
       }
     }
 
-    // Flatten so fields are baked in
     form.flatten()
 
     const filledPdfBytes = await pdfDoc.save()
 
-    // Upload to generated-pdfs bucket
-    const filePath = `${caregiverId}/wotc_disclosure.pdf`
+    const filePath = `${caregiver.company_id}/${caregiverId}/wotc_disclosure.pdf`
     const { error: uploadError } = await supabase.storage
       .from('generated-pdfs')
       .upload(filePath, filledPdfBytes, {
@@ -94,9 +87,9 @@ Deno.serve(async (req) => {
 
     if (uploadError) throw new Error(`Upload error: ${uploadError.message}`)
 
-    // Upsert caregiver_documents row
     await supabase.from('caregiver_documents').upsert({
       caregiver_id: caregiverId,
+      company_id: caregiver.company_id,
       document_type: 'wotc_disclosure',
       file_name: 'wotc_disclosure.pdf',
       file_path: filePath,

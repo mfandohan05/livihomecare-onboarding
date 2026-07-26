@@ -127,7 +127,7 @@ export default function SurePayrollGuidePage({ stepLabel, onNext, initialData, o
                                 className="w-full flex items-center justify-between px-4 md:px-6 py-4 hover:bg-muted/50 transition-colors"
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-lg bg-[var(--secondary-bg-color)]">
+                                    <div className="p-2 rounded-lg bg-[var(--secondary-bg)]">
                                         <Icon className="w-4 h-4 text-[var(--primary-color)]" />
                                     </div>
                                     <span className="font-medium text-sm">{section.title}</span>

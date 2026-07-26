@@ -213,7 +213,7 @@ export default function ERSPGuidePage({ stepLabel, onNext, initialData, onChange
                                 <div className="flex items-center gap-3">
                                     <div
                                         className="p-2 rounded-lg"
-                                        style={{ background: section.id === 'telephony' || section.id === 'finalresort' ? '#F2E6D9' : 'var(--secondary-bg-color)' }}
+                                        style={{ background: section.id === 'telephony' || section.id === 'finalresort' ? '#F2E6D9' : 'var(--secondary-bg)' }}
                                     >
                                         <Icon
                                             className="w-4 h-4"

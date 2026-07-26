@@ -306,7 +306,7 @@ export default function OnboardingPortal() {
             if (data) {
                 setCompanyData(data);
                 document.documentElement.style.setProperty('--primary-color', data.primary_color)
-                document.documentElement.style.setProperty('--secondary-bg-color', data.secondary_bg_color)
+                document.documentElement.style.setProperty('--secondary-bg', data.secondary_bg_color)
                 document.documentElement.style.setProperty('--hover-color', data.hover_color)
             }
 

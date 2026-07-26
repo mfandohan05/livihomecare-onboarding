@@ -67,7 +67,9 @@ const docLabel = (type) => {
         drug_test_policy: 'Drug Test Policy (Signed)',
         criminal_background_check_signed: 'Criminal Background Check (Signed)',
         new_hire_notification_signed: 'New Hire Notification (Signed)',
+        new_hire_notification: 'New Hire Notification (Signed)',
         orientation_checklist_signed: 'Orientation Checklist (Signed)',
+        pre_employment_orientation: "Orientation Checklist (Signed)",
         non_compete_signed: 'Non-Compete Agreement (Signed)',
         hep_b_declination_signed: 'Hep B Declination (Signed)',
         hepb_status: 'Hep B Declination (Signed)',
@@ -315,11 +317,11 @@ export default function AdminCaregiverDetail() {
         const generatedPdfTypes = [
             'i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed',
             'drug_test_policy_signed', 'criminal_background_check_signed',
-            'new_hire_notification_signed', 'orientation_checklist_signed',
+            'new_hire_notification_signed', 'orientation_checklist_signed', 'pre_employment_orientation',
             'non_compete_signed', 'hep_b_declination_signed', 'offer_letter_generated', 'hepb_status',
             'independent_contractor_agreement', "direct_deposit_authorization", 'wotc_disclosure', 
             "reference_check", "job_description", "non_compete", 'contractor_agreement', 
-            'criminal_background_check', 'drug_test_policy'
+            'criminal_background_check', 'drug_test_policy', "new_hire_notification"
         ]
 
         const bucket = generatedPdfTypes.includes(doc.document_type)
@@ -349,6 +351,7 @@ export default function AdminCaregiverDetail() {
         "w9_completed": "W-9",
         "i9_completed": "I-9",
         "bloodbornePathogens": "Bloodborne Pathogens Training Certification",
+        "bloodborne_certificate": "Bloodborne Pathogens Training Certificate",
         "nursingLicense": "Nursing License",
         "badgePhoto": "Badge Photo",
         "socialSecurityCard": "Social Security Card / Other I-9 Documentation",
@@ -358,7 +361,9 @@ export default function AdminCaregiverDetail() {
         "hepb_status": 'Hep B Declination (Signed)',
         "non_compete_signed": "Non-Compete (Signed)",
         "orientation_checklist_signed": "Orientation Checklist (Signed)",
+        "pre_employment_orientation": "Orientation Checklist (Signed)",
         "new_hire_notification_signed": "New Hire Notification (Signed)",
+        "new_hire_notification": 'New Hire Notification (Signed)',
         "criminal_background_check_signed": "Criminal Background Check Consent (Signed)",
         "drug_test_policy_signed": "Drug Test Policy (Signed)",
         "drug_test_policy": 'Drug Test Policy (Signed)',
@@ -706,8 +711,9 @@ export default function AdminCaregiverDetail() {
     const isNurse = caregiver.role === 'nurse_prn' || caregiver.role === 'nurse_director'
     const isCancelled = caregiver.status === 'cancelled'
     const uploadableDocs = isNurse
-        ? ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'nursingLicense', 'bloodbornePathogens', 'certifications', 'criminal-background-results', 'nc-healthcare-personnel-check', 'resume']
-        : ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'bloodbornePathogens', 'certifications', 'criminal-background-results', 'nc-healthcare-personnel-check', 'resume']
+        ? ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'nursingLicense', 'bloodborne_certificate', 'certifications', 'criminal-background-results', 'nc-healthcare-personnel-check', 'resume']
+        : ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'bloodborne_certificate', 'certifications', 'criminal-background-results', 'nc-healthcare-personnel-check', 'resume']
+    const adminSignableTypes = signableDocs.filter(d => !d.requiresSection2).flatMap(d => d.ids)
     const groupedSkills = Object.entries(competency?.checked || {})
         .filter(([_, checked]) => checked)
         .reduce((acc, [key]) => {
@@ -787,6 +793,7 @@ export default function AdminCaregiverDetail() {
                             adminId: adminId,
                             adminEmail: adminEmail,
                             adminName: adminName,
+                            adminPosition: adminPosition,
                         }
                     })
                     if (result.error) throw new Error(result.error.message)
@@ -1432,7 +1439,7 @@ export default function AdminCaregiverDetail() {
                                     </p>
                                     <div className="flex flex-wrap gap-2">
                                         {skills.map(skill => (
-                                            <span key={skill} className="text-xs font-medium px-2.5 py-1 rounded-full bg-[var(--secondary-bg-color)] text-[var(--primary-color)]">
+                                            <span key={skill} className="text-xs font-medium px-2.5 py-1 rounded-full bg-[var(--secondary-bg)] text-[var(--primary-color)]">
                                                 {skill}
                                             </span>
                                         ))}
@@ -1478,13 +1485,13 @@ export default function AdminCaregiverDetail() {
                                         <div className="min-w-0">
                                             <p className="text-sm font-medium">{docLabel(doc.document_type)}</p>
                                             <p className="text-xs text-muted-foreground truncate">{doc.file_name}</p>
-                                            {['drug_test_policy_signed', 'non_compete_signed', 'orientation_checklist_signed'].includes(doc.document_type) && !doc.admin_signed_at && (
+                                            {adminSignableTypes.includes(doc.document_type) && !doc.admin_signed_at && (
                                                 <span className="inline-block mt-1 max-w-full text-xs font-medium px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200">
                                                     Notice: Admin signature required
                                                 </span>
                                             )}
-                                            {['drug_test_policy_signed', 'non_compete_signed', 'orientation_checklist_signed'].includes(doc.document_type) && doc.admin_signed_at && (
-                                                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--secondary-bg-color)] text-[var(--primary-color)] shrink-0">
+                                            {adminSignableTypes.includes(doc.document_type) && doc.admin_signed_at && (
+                                                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--secondary-bg)] text-[var(--primary-color)] shrink-0">
                                                     Admin signed
                                                 </span>
                                             )}
@@ -1494,7 +1501,7 @@ export default function AdminCaregiverDetail() {
                                                 </span>
                                             )}
                                             {doc.document_type === 'i9_completed' && i9Section2Completed && (
-                                                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--secondary-bg-color)] text-[var(--primary-color)] shrink-0">
+                                                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--secondary-bg)] text-[var(--primary-color)] shrink-0">
                                                     Section 2 complete
                                                 </span>
                                             )}
@@ -1594,10 +1601,10 @@ export default function AdminCaregiverDetail() {
                                     : documents.some(d => doc.ids.includes(d.document_type))
 
                                 return (
-                                    <div key={doc.ids[0]} className="flex items-center justify-between py-2 px-3 rounded-lg border border-border">
+                                    <div key={doc.ids[0]} className={`flex items-center justify-between py-2 px-3 rounded-lg border border-border ${isCompleted ? 'bg-[var(--secondary-bg)]' : ''}`}>
                                         <div className="flex items-center gap-2 min-w-0">
                                             {isCompleted
-                                                ? <CheckCircle className="w-4 h-4 text-[#577C09] shrink-0" />
+                                                ? <CheckCircle className="w-4 h-4 text-[var(--primary-color)] shrink-0" />
                                                 : <div className="w-4 h-4 rounded-full border-2 border-muted-foreground shrink-0" />
                                             }
                                             <div className="min-w-0">
@@ -1928,15 +1935,15 @@ export default function AdminCaregiverDetail() {
                                     <div key={index} className="flex items-center justify-between gap-2 py-2 px-3 rounded-lg border border-border">
                                         <div className="flex items-center gap-2 min-w-0">
                                             {section.passedStatus
-                                                ? <CheckCircle className="w-4 h-4 text-[#577C09] shrink-0" />
+                                                ? <CheckCircle className="w-4 h-4 text-[var(--primary-color)] shrink-0" />
                                                 : <div className="w-4 h-4 rounded-full border-2 border-muted-foreground shrink-0" />
                                             }
-                                            <p className={`text-sm font-medium truncate ${section.passedStatus ? 'text-[#577C09]' : 'text-foreground'}`}>
+                                            <p className={`text-sm font-medium truncate ${section.passedStatus ? 'text-[var(--primary-color)]' : 'text-foreground'}`}>
                                                 {section.sectionTitle}
                                             </p>
                                         </div>
                                         <span className={`text-xs font-medium px-2.5 py-1 rounded-full shrink-0 ${section.passedStatus
-                                            ? 'bg-[var(--secondary-bg-color)] text-[#577C09]'
+                                            ? 'bg-[var(--secondary-bg)] text-[var(--primary-color)]'
                                             : 'bg-muted text-muted-foreground'
                                             }`}>
                                             {section.passedStatus ? 'Passed' : 'Not passed'}
