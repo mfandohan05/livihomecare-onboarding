@@ -646,8 +646,8 @@ export default function AdminCaregivers() {
                         ) : (
                             filtered.map((caregiver) => {
                                 const progress = caregiver.caregiver_progress?.[0]
-                                const timeLog = caregiver.caregiver_time_logs?.[0]
-                                const activeSeconds = timeLog?.active_seconds || 0
+                                const activeSeconds = (caregiver.caregiver_time_logs || [])
+                                    .reduce((sum, log) => sum + (log.active_seconds || 0), 0)
                                 const activeTime = caregiver.status === 'completed' && activeSeconds > 0
                                     ? `${Math.floor(activeSeconds / 3600)}h ${Math.floor((activeSeconds % 3600) / 60)}m`
                                     : '—'

@@ -37,8 +37,11 @@ async function fillOfferLetterTemplate(
   trySet('contractor_name', caregiver.name)
   trySet('contractor_name_greeting', caregiver.name)
   trySet('contractor_name_print', caregiver.name)
+  trySet('contractor_name_intro', caregiver.name)
   trySet('contractor_signature', signature)
   trySet('contractor_date', today)
+
+  trySet('position', caregiver.position_title || '')
 
   trySet('start_date', caregiver.start_date || '')
   trySet('effective_date', caregiver.start_date || '')

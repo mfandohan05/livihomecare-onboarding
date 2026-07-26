@@ -24,3 +24,11 @@ export const formatDOB = (value) => {
     if (digits.length <= 4) return `${digits.slice(0,2)}/${digits.slice(2)}`
     return `${digits.slice(0,2)}/${digits.slice(2,4)}/${digits.slice(4)}`
 }
+
+export const splitName = (name) => {
+    const parts = (name || '').trim().split(/\s+/).filter(Boolean)
+    return {
+        firstName: parts[0] || '',
+        lastName: parts.slice(1).join(' '),
+    }
+}

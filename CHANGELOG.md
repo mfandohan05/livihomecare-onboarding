@@ -11,6 +11,7 @@
 - Added support for uploading resume to employee data
 - Fixed issues with time log counting
 - Made admin screens responsive
+- Added autofill for personal information and tax form screens
 
 
 ## 1.2.7 - 2026-07-05

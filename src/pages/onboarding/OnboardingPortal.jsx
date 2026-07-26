@@ -160,13 +160,20 @@ export default function OnboardingPortal() {
 
                 const dbProgress = await loadProgress(data.id)
                 if (dbProgress) {
-                    setActiveStep(dbProgress.active_step)
+                    const firstIncompleteStep = roleSteps.find(
+                        step => !dbProgress.completed_steps.includes(step.id)
+                    )
+                    const resolvedActiveStep = firstIncompleteStep
+                        ? firstIncompleteStep.id
+                        : roleSteps[roleSteps.length - 1].id
+
+                    setActiveStep(resolvedActiveStep)
                     setFormData(prev => ({ ...prev, ...dbProgress.form_data }))
                     setSteps(roleSteps.map(step => ({
                         ...step,
                         status: dbProgress.completed_steps.includes(step.id)
                             ? 'completed'
-                            : step.id === dbProgress.active_step
+                            : step.id === resolvedActiveStep
                                 ? 'active'
                                 : 'locked'
                     })))
@@ -407,28 +414,37 @@ export default function OnboardingPortal() {
         setSaving(true);
 
         const lastStepId = steps[steps.length - 1]?.id
-        const nextStepId = activeStep + 1
 
-        const updatedSteps = steps.map(step => {
-            if (step.id === activeStep) {
-                return { ...step, status: 'completed' }
-            }
-            if (step.id === nextStepId) {
-                return { ...step, status: step.id === lastStepId ? 'completed' : 'active' }
-            }
-            return step
-        })
+        const stepsAfterCompletion = steps.map(step =>
+            step.id === activeStep ? { ...step, status: 'completed' } : step
+        )
+
+        const currentIndex = stepsAfterCompletion.findIndex(step => step.id === activeStep)
+        let nextIndex = currentIndex + 1
+        while (
+            nextIndex < stepsAfterCompletion.length - 1 &&
+            stepsAfterCompletion[nextIndex].status === 'completed'
+        ) {
+            nextIndex++
+        }
+        const nextStepId = stepsAfterCompletion[nextIndex].id
+
+        const updatedSteps = stepsAfterCompletion.map(step =>
+            step.id === nextStepId
+                ? { ...step, status: step.id === lastStepId ? 'completed' : 'active' }
+                : step
+        )
 
         const completedStepIds = updatedSteps
             .filter(s => s.status === 'completed')
             .map(s => s.id)
 
         setSteps(updatedSteps)
-        setActiveStep(prev => prev + 1)
+        setActiveStep(nextStepId)
         window.scrollTo({ top: 0, behavior: 'smooth' })
 
         checkpointTimeLog(caregiver.id, companyId, token, getHoursWorked)
-        await saveProgress(caregiver.id, companyId, activeStep + 1, completedStepIds, formData)
+        await saveProgress(caregiver.id, companyId, nextStepId, completedStepIds, formData)
         setSaving(false)
     }
 
@@ -453,7 +469,7 @@ export default function OnboardingPortal() {
                     }
                 } role={caregiver.role} caregiver={caregiver} />
             case 'Personal Information':
-                return <PersonalInformationPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.personalInfo} onChange={(data) => updateFormData('personalInfo', data)} isPreview={isPreview} companyData={companyData} />
+                return <PersonalInformationPage stepLabel={stepLabel} onNext={handleNext} initialData={formData.personalInfo} onChange={(data) => updateFormData('personalInfo', data)} isPreview={isPreview} companyData={companyData} caregiver={caregiver} />
             case 'New Hire Orientation':
                 return <NewHireOrientationPage caregiverId={caregiver.id} stepLabel={stepLabel} onNext={handleNext} companyId={companyId} initialData={formData.orientationQuiz} onChange={async (data) => {
                     updateFormData('orientationQuiz', data)
@@ -526,7 +542,7 @@ export default function OnboardingPortal() {
                     isPreview={isPreview} />
             case 'Tax Forms':
             case 'Tax Forms (W-9)':
-                return <TaxFormsPage stepLabel={stepLabel} onNext={handleNext} role={isNurse ? 'nurse' : role} caregiver={caregiver} companyId={companyId} setSaving={setSaving} isPreview={isPreview} companyData={companyData} />
+                return <TaxFormsPage stepLabel={stepLabel} onNext={handleNext} role={isNurse ? 'nurse' : role} caregiver={caregiver} companyId={companyId} setSaving={setSaving} isPreview={isPreview} companyData={companyData} personalInfo={formData.personalInfo} />
             case 'Offer Letter':
                 return <OfferLetterPage companyId={companyId} companyData={companyData} setSaving={setSaving} stepLabel={stepLabel} caregiver={caregiver} onNext={handleNext} initialData={formData.offerLetter} onChange={async (data) => {
                     updateFormData('offerLetter', data)

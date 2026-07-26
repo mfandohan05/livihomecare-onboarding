@@ -3,22 +3,24 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { UserRound } from 'lucide-react'
-import { formatPhone, formatZip, formatDOB } from '@/lib/formUtils'
+import { formatPhone, formatZip, formatDOB, splitName } from '@/lib/formUtils'
 import StateSelect from '@/components/global/StateSelect'
 import AddressAutocompleteField from '@/components/global/AddressAutocompleteField'
 
-export default function PersonalInformationPage({ stepLabel, onNext, initialData, onChange, isPreview, companyData }) {
-    const [formData, setFormData] = useState(initialData || {
-        lastName: '',
-        firstName: '',
-        streetAddress: '',
-        addressLine2: '',
-        city: '',
-        state: '',
-        zip: '',
-        primaryPhone: '',
-        secondaryPhone: '',
-        email: '',
+const buildInitialFormData = (initialData, caregiver) => {
+    const data = initialData || {}
+    const { firstName, lastName } = splitName(caregiver?.name)
+    return {
+        lastName: data.lastName || lastName,
+        firstName: data.firstName || firstName,
+        streetAddress: data.streetAddress || '',
+        addressLine2: data.addressLine2 || '',
+        city: data.city || '',
+        state: data.state || '',
+        zip: data.zip || '',
+        primaryPhone: data.primaryPhone || caregiver?.phone || '',
+        secondaryPhone: data.secondaryPhone || '',
+        email: data.email || caregiver?.email || '',
 
         primaryEmergencyLastName: '',
         primaryEmergencyFirstName: '',
@@ -43,7 +45,11 @@ export default function PersonalInformationPage({ stepLabel, onNext, initialData
         secondaryEmergencySecondaryPhone: '',
         secondaryEmergencyEmail: '',
         secondaryEmergencyRelationship: '',
-    })
+    }
+}
+
+export default function PersonalInformationPage({ stepLabel, onNext, initialData, onChange, isPreview, companyData, caregiver }) {
+    const [formData, setFormData] = useState(() => buildInitialFormData(initialData, caregiver))
 
     const updateField = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }))

@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label'
 import { FileText, ChevronLeft, ChevronRight, CheckCircle, AlertCircle, AlertTriangle, Loader2 } from 'lucide-react'
 import { saveTaxFormData } from '@/lib/caregiver'
 import { supabase } from '@/lib/supabase'
-import { formatPhone, formatDOB } from '@/lib/formUtils'
+import { formatPhone, formatDOB, splitName } from '@/lib/formUtils'
 import StateSelect from '@/components/global/StateSelect'
 import AddressAutocompleteField from '@/components/global/AddressAutocompleteField'
 
@@ -18,6 +18,54 @@ const STEP_DEFINITIONS = {
     w4: { title: 'Form W-4', subtitle: 'Federal Employee Withholding Certificate' },
     w9: { title: 'Form W-9', subtitle: 'Request for Taxpayer Identification Number' },
     nc4ez: { title: 'NC-4EZ', subtitle: 'North Carolina Employee Withholding Certificate' },
+}
+
+const formatCityStateZip = (city, state, zip) =>
+    `${city || ''}${city ? ', ' : ''}${state || ''} ${zip || ''}`.trim()
+
+const buildI9Autofill = (caregiver, personalInfo) => {
+    const { firstName, lastName } = splitName(caregiver?.name)
+    return {
+        firstName,
+        lastName,
+        address: personalInfo?.streetAddress || '',
+        city: personalInfo?.city || '',
+        state: personalInfo?.state || '',
+        zip: personalInfo?.zip || '',
+        email: caregiver?.email || '',
+        phone: caregiver?.phone || '',
+    }
+}
+
+const buildW4Autofill = (caregiver, personalInfo) => {
+    const { firstName, lastName } = splitName(caregiver?.name)
+    return {
+        firstName,
+        lastName,
+        address: personalInfo?.streetAddress || '',
+        address2: '',
+        cityStateZip: formatCityStateZip(personalInfo?.city, personalInfo?.state, personalInfo?.zip),
+    }
+}
+
+const buildW9Autofill = (caregiver, personalInfo) => ({
+    name: caregiver?.name || '',
+    address: personalInfo?.streetAddress || '',
+    address2: '',
+    cityStateZip: formatCityStateZip(personalInfo?.city, personalInfo?.state, personalInfo?.zip),
+})
+
+const buildNC4EZAutofill = (caregiver, personalInfo) => {
+    const { firstName, lastName } = splitName(caregiver?.name)
+    return {
+        firstName,
+        lastName,
+        address: personalInfo?.streetAddress || '',
+        address2: '',
+        city: personalInfo?.city || '',
+        state: personalInfo?.state || '',
+        zip: personalInfo?.zip || '',
+    }
 }
 
 const Field = ({ label, id, children, required }) => (
@@ -691,7 +739,7 @@ function NC4EZForm({ data, onChange, onSave, saved, companyName }) {
     )
 }
 
-export default function TaxFormsPage({ stepLabel, caregiver, companyId, companyData, onNext, setSaving, isPreview }) {
+export default function TaxFormsPage({ stepLabel, caregiver, companyId, companyData, onNext, setSaving, isPreview, personalInfo }) {
     const companyName = companyData?.company_name || 'your employer'
 
     const [requiredForms, setRequiredForms] = useState(null) // null = not loaded yet
@@ -699,10 +747,10 @@ export default function TaxFormsPage({ stepLabel, caregiver, companyId, companyD
     const [currentStep, setCurrentStep] = useState(0)
     const [saved, setSaved] = useState({})
     const [confirming, setConfirming] = useState(null)
-    const [i9Data, setI9Data] = useState({})
-    const [w4Data, setW4Data] = useState({})
-    const [w9Data, setW9Data] = useState({})
-    const [nc4ezData, setNc4ezData] = useState({})
+    const [i9Data, setI9Data] = useState(() => buildI9Autofill(caregiver, personalInfo))
+    const [w4Data, setW4Data] = useState(() => buildW4Autofill(caregiver, personalInfo))
+    const [w9Data, setW9Data] = useState(() => buildW9Autofill(caregiver, personalInfo))
+    const [nc4ezData, setNc4ezData] = useState(() => buildNC4EZAutofill(caregiver, personalInfo))
 
     // Fetch which tax forms this caregiver's role/company requires
     useEffect(() => {

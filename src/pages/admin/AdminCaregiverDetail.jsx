@@ -250,10 +250,7 @@ export default function AdminCaregiverDetail() {
             supabase.from('caregiver_time_logs')
                 .select('*')
                 .eq('caregiver_id', id)
-                .eq('company_id', companyId)
-                .order('session_start', { ascending: false })
-                .limit(1)
-                .maybeSingle(),
+                .eq('company_id', companyId),
         ])
         const { data: taxData } = await supabase
             .from('caregiver_tax_forms')
@@ -291,7 +288,16 @@ export default function AdminCaregiverDetail() {
         setProgress(progressData)
         const personalInfo = progressData?.form_data?.personalInfo || {};
         setPersonalInfo(personalInfo)
-        setTimeLog(timeData)
+        const timeLogs = timeData || []
+        setTimeLog(timeLogs.length > 0
+            ? {
+                active_seconds: timeLogs.reduce((sum, log) => sum + (log.active_seconds || 0), 0),
+                session_start: timeLogs.reduce((earliest, log) =>
+                    log.session_start && (!earliest || new Date(log.session_start) < new Date(earliest)) ? log.session_start : earliest, null),
+                session_end: timeLogs.reduce((latest, log) =>
+                    log.session_end && (!latest || new Date(log.session_end) > new Date(latest)) ? log.session_end : latest, null),
+            }
+            : null)
         setLoading(false)
 
         setHasSsn(!!taxData?.ssn_encrypted);
