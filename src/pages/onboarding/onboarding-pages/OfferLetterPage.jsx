@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { FileSignature, CheckCircle, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import AddressAutocompleteField from '@/components/global/AddressAutocompleteField'
 
 const today = new Date().toLocaleDateString('en-US', {
   year: 'numeric',
@@ -162,6 +163,7 @@ export default function OfferLetterPage({ stepLabel, caregiver, companyId, compa
 
   const [signature, setSignature] = useState(initialData?.signature || '')
   const [address, setAddress] = useState(initialData?.address || '')
+  const [address2, setAddress2] = useState(initialData?.address2 || '')
   const [city, setCity] = useState(initialData?.city || '')
   const [state, setState] = useState(initialData?.state || '')
   const [zip, setZip] = useState(initialData?.zip || '')
@@ -193,8 +195,10 @@ export default function OfferLetterPage({ stepLabel, caregiver, companyId, compa
   const handleSign = async () => {
     setSaving(true)
 
+    const combinedAddress = [address, address2].filter(Boolean).join(', ')
+
     const { error } = await supabase.functions.invoke('generate-offer-letter', {
-      body: { caregiverId: caregiver.id, signature, address, city, state, zip }
+      body: { caregiverId: caregiver.id, signature, address: combinedAddress, city, state, zip }
     })
 
     if (error) {
@@ -204,7 +208,7 @@ export default function OfferLetterPage({ stepLabel, caregiver, companyId, compa
     }
 
     setSigned(true)
-    onChange({ signature, address, city, state, zip, signed: true })
+    onChange({ signature, address: combinedAddress, address2, city, state, zip, signed: true })
     setSaving(false)
   }
 
@@ -246,11 +250,11 @@ export default function OfferLetterPage({ stepLabel, caregiver, companyId, compa
             signature={signature}
             onSignatureChange={(val) => {
               setSignature(val)
-              onChange({ signature: val, address, city, state, zip, signed })
+              onChange({ signature: val, address, address2, city, state, zip, signed })
             }}
             onSign={() => {
               setSigned(true)
-              onChange({ signature, address, city, state, zip, signed: true })
+              onChange({ signature, address, address2, city, state, zip, signed: true })
             }}
           />
         ) : (
@@ -286,7 +290,7 @@ export default function OfferLetterPage({ stepLabel, caregiver, companyId, compa
                       value={signature}
                       onChange={(e) => {
                         setSignature(e.target.value)
-                        onChange({ signature: e.target.value, address, city, state, zip, signed })
+                        onChange({ signature: e.target.value, address, address2, city, state, zip, signed })
                       }}
                       className="font-serif italic"
                     />
@@ -296,26 +300,41 @@ export default function OfferLetterPage({ stepLabel, caregiver, companyId, compa
                   </div>
                   {template.requires_address && (
                     <>
+                      <AddressAutocompleteField
+                        label="Address Line 1"
+                        value={address}
+                        onSelect={(parsed) => {
+                          const newAddress = parsed.streetAddress || address
+                          const newCity = parsed.city || city
+                          const newState = parsed.state || state
+                          const newZip = parsed.zip || zip
+                          setAddress(newAddress)
+                          setCity(newCity)
+                          setState(newState)
+                          setZip(newZip)
+                          onChange({ signature, address: newAddress, address2, city: newCity, state: newState, zip: newZip, signed })
+                        }}
+                      />
                       <div className="space-y-2">
-                        <Label htmlFor="offerAddress">Street address <span className="text-red-500">*</span></Label>
-                        <Input id="offerAddress" placeholder="123 Main St" value={address}
-                          onChange={(e) => { setAddress(e.target.value); onChange({ signature, address: e.target.value, city, state, zip, signed }) }} />
+                        <Label htmlFor="offerAddress2">Address line 2</Label>
+                        <Input id="offerAddress2" placeholder="Apt 4B (if applicable)" value={address2}
+                          onChange={(e) => { setAddress2(e.target.value); onChange({ signature, address, address2: e.target.value, city, state, zip, signed }) }} />
                       </div>
                       <div className="grid grid-cols-3 gap-4">
                         <div className="space-y-2 col-span-1">
                           <Label htmlFor="offerCity">City <span className="text-red-500">*</span></Label>
                           <Input id="offerCity" placeholder="Charlotte" value={city}
-                            onChange={(e) => { setCity(e.target.value); onChange({ signature, address, city: e.target.value, state, zip, signed }) }} />
+                            onChange={(e) => { setCity(e.target.value); onChange({ signature, address, address2, city: e.target.value, state, zip, signed }) }} />
                         </div>
                         <div className="space-y-2 col-span-1">
                           <Label htmlFor="offerState">State <span className="text-red-500">*</span></Label>
                           <Input id="offerState" placeholder="NC" maxLength={2} value={state}
-                            onChange={(e) => { setState(e.target.value); onChange({ signature, address, city, state: e.target.value, zip, signed }) }} />
+                            onChange={(e) => { setState(e.target.value); onChange({ signature, address, address2, city, state: e.target.value, zip, signed }) }} />
                         </div>
                         <div className="space-y-2 col-span-1">
                           <Label htmlFor="offerZip">Zip <span className="text-red-500">*</span></Label>
                           <Input id="offerZip" placeholder="28201" maxLength={5} value={zip}
-                            onChange={(e) => { setZip(e.target.value); onChange({ signature, address, city, state, zip: e.target.value, signed }) }} />
+                            onChange={(e) => { setZip(e.target.value); onChange({ signature, address, address2, city, state, zip: e.target.value, signed }) }} />
                         </div>
                       </div>
                     </>

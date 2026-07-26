@@ -55,6 +55,7 @@ export default function AdminCaregiverMap() {
     const PER_PAGE = 10;
     const [driveTime, setDriveTime] = useState(null);
     const [loadingDriveTime, setLoadingDriveTime] = useState(false);
+    const [roleOptions, setRoleOptions] = useState([]);
     const { companyId } = useCompany();
 
     useEffect(() => {
@@ -62,6 +63,18 @@ export default function AdminCaregiverMap() {
             return;
         }
         fetchCaregivers()
+
+        const fetchRoleLabels = async () => {
+            const { data, error } = await supabase
+                .from('role_labels')
+                .select('role_key, display_label')
+                .eq('company_id', companyId)
+
+            if (!error && data) {
+                setRoleOptions(data);
+            }
+        }
+        fetchRoleLabels();
     }, [companyId])
 
     useEffect(() => {
@@ -215,8 +228,8 @@ export default function AdminCaregiverMap() {
             </div>
 
             {/* Search bar */}
-            <div className="flex gap-3 mb-6">
-                <div className="relative flex-1 max-w-lg" ref={searchRef}>
+            <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                <div className="relative w-full sm:flex-1 sm:max-w-lg" ref={searchRef}>
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <input
                         type="text"
@@ -255,29 +268,31 @@ export default function AdminCaregiverMap() {
                         </div>
                     )}
                 </div>
-                <button
-                    onClick={handleSearch}
-                    disabled={!searchQuery.trim() || searching}
-                    className="px-4 py-2 bg-[var(--primary-color)] hover:bg-[#3D5906] text-white rounded-lg text-sm font-medium disabled:opacity-50 transition-colors"
-                >
-                    {searching ? 'Searching...' : 'Search'}
-                </button>
-                {clientLocation && (
+                <div className="flex gap-3">
                     <button
-                        onClick={clearSearch}
-                        className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg text-sm text-muted-foreground hover:bg-muted transition-colors"
+                        onClick={handleSearch}
+                        disabled={!searchQuery.trim() || searching}
+                        className="flex-1 sm:flex-none px-4 py-2 bg-[var(--primary-color)] hover:bg-[#3D5906] text-white rounded-lg text-sm font-medium disabled:opacity-50 transition-colors"
                     >
-                        <X className="w-4 h-4" />
-                        Clear
+                        {searching ? 'Searching...' : 'Search'}
                     </button>
-                )}
+                    {clientLocation && (
+                        <button
+                            onClick={clearSearch}
+                            className="flex items-center justify-center gap-2 px-4 py-2 border border-border rounded-lg text-sm text-muted-foreground hover:bg-muted transition-colors"
+                        >
+                            <X className="w-4 h-4" />
+                            Clear
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Split view */}
-            <div className="flex gap-6 h-[600px]">
+            <div className="flex flex-col md:flex-row gap-6 md:h-[600px]">
                 {/* Left — caregiver list */}
-                <div className="w-80 shrink-0 flex flex-col gap-2">
-                    <div className="overflow-y-auto flex-1 space-y-2">
+                <div className="w-full md:w-80 shrink-0 flex flex-col gap-2">
+                    <div className="overflow-y-auto max-h-72 md:max-h-none md:flex-1 space-y-2">
                         {loading ? (
                             <p className="text-sm text-muted-foreground py-4 text-center">Loading caregivers...</p>
                         ) : sortedCaregivers.length === 0 ? (
@@ -315,7 +330,7 @@ export default function AdminCaregiverMap() {
                                                     </span>
                                                 )}
                                             </div>
-                                            <p className="text-xs text-muted-foreground capitalize">{job_label(caregiver.role)}</p>
+                                            <p className="text-xs text-muted-foreground capitalize">{job_label(caregiver.role, roleOptions)}</p>
                                             <p className="text-xs text-muted-foreground truncate mt-0.5">{caregiver.address}</p>
                                         </div>
                                     </div>
@@ -355,7 +370,7 @@ export default function AdminCaregiverMap() {
                 </div>
 
                 {/* Right — map */}
-                <div className="flex-1 rounded-xl overflow-hidden border border-border">
+                <div className="h-[400px] md:h-auto md:flex-1 rounded-xl overflow-hidden border border-border">
                     <Map
                         {...viewState}
                         onMove={e => setViewState(e.viewState)}
@@ -414,7 +429,7 @@ export default function AdminCaregiverMap() {
                                             <X className="w-3.5 h-3.5 text-muted-foreground" />
                                         </button>
                                     </div>
-                                    <p className="text-xs text-muted-foreground capitalize mb-1">{selectedCaregiver.role}</p>
+                                    <p className="text-xs text-muted-foreground capitalize mb-1">{job_label(selectedCaregiver.role, roleOptions)}</p>
                                     <p className="text-xs text-muted-foreground mb-1">{formatPhone(selectedCaregiver.phone) || '—'}</p>
                                     {clientLocation && (
                                         <p className="text-xs font-medium text-[var(--primary-color)] mb-2">

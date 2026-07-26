@@ -181,8 +181,8 @@ export default function AdminLogs() {
                 </div>
             </div>
 
-            <div className="flex gap-3 mb-6 flex-wrap">
-                <div className="relative flex-1 min-w-[200px] max-w-sm">
+            <div className="flex flex-col sm:flex-row gap-3 mb-6 sm:flex-wrap">
+                <div className="relative w-full sm:flex-1 sm:min-w-[200px] sm:max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
                         placeholder="Search by caregiver or admin..."
@@ -194,7 +194,7 @@ export default function AdminLogs() {
                 <select
                     value={actionFilter}
                     onChange={(e) => setActionFilter(e.target.value)}
-                    className="border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[var(--primary-color)]"
+                    className="w-full sm:w-auto border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[var(--primary-color)]"
                 >
                     <option value="all">All actions</option>
                     {Object.entries(ACTION_LABELS).map(([value, label]) => (
@@ -204,7 +204,7 @@ export default function AdminLogs() {
                 <select
                     value={adminFilter}
                     onChange={(e) => setAdminFilter(e.target.value)}
-                    className="border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[var(--primary-color)]"
+                    className="w-full sm:w-auto border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[var(--primary-color)]"
                 >
                     <option value="all">All admins</option>
                     {admins.map(admin => (
@@ -212,18 +212,20 @@ export default function AdminLogs() {
                     ))}
                     <option value="system">System / Caregiver</option>
                 </select>
-                <input
-                    type="date"
-                    value={dateFrom}
-                    onChange={(e) => setDateFrom(e.target.value)}
-                    className="border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[var(--primary-color)]"
-                />
-                <input
-                    type="date"
-                    value={dateTo}
-                    onChange={(e) => setDateTo(e.target.value)}
-                    className="border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[var(--primary-color)]"
-                />
+                <div className="flex gap-3">
+                    <input
+                        type="date"
+                        value={dateFrom}
+                        onChange={(e) => setDateFrom(e.target.value)}
+                        className="w-full sm:w-auto border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[var(--primary-color)]"
+                    />
+                    <input
+                        type="date"
+                        value={dateTo}
+                        onChange={(e) => setDateTo(e.target.value)}
+                        className="w-full sm:w-auto border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[var(--primary-color)]"
+                    />
+                </div>
                 {(actionFilter !== 'all' || adminFilter !== 'all' || dateFrom || dateTo || search) && (
                     <button
                         onClick={() => {
@@ -332,7 +334,7 @@ export default function AdminLogs() {
                     </tbody>
                 </table>
 
-                <div className="flex items-center justify-between px-6 py-4 border-t border-border">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-6 py-4 border-t border-border">
                     <p className="text-sm text-muted-foreground">
                         Showing {Math.min((page - 1) * PER_PAGE + 1, total)}–{Math.min(page * PER_PAGE, total)} of {total}
                     </p>

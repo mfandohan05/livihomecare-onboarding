@@ -308,7 +308,7 @@ function W4Form({ data, onChange, onSave, saved }) {
                         </Field>
                     </div>
                     <AddressAutocompleteField
-                        label="Address"
+                        label="Address Line 1"
                         value={data.address || ''}
                         onSelect={(parsed) => {
                             onChange({
@@ -317,7 +317,11 @@ function W4Form({ data, onChange, onSave, saved }) {
                                 cityStateZip: `${parsed.city || ''}${parsed.city ? ', ' : ''}${parsed.state || ''} ${parsed.zip || ''}`.trim()
                             })
                         }}
+                        required
                     />
+                    <Field label="Address Line 2" id="w4_address2">
+                        <Input id="w4_address2" value={data.address2 || ''} onChange={set('address2')} placeholder="Apt 4B (if applicable)" />
+                    </Field>
                     <Field label="City, state, and ZIP code" id="w4_cityStateZip" required>
                         <Input id="w4_cityStateZip" value={data.cityStateZip || ''} onChange={set('cityStateZip')} placeholder="Charlotte, NC 28201" />
                     </Field>
@@ -588,8 +592,22 @@ function NC4EZForm({ data, onChange, onSave, saved, companyName }) {
                             onChange({ ...data, ssn: formatted })
                         }} placeholder="XXX-XX-XXXX" />
                     </Field>
-                    <Field label="Address" id="nc4ez_address" required>
-                        <Input id="nc4ez_address" value={data.address || ''} onChange={set('address')} placeholder="123 Main St" />
+                    <AddressAutocompleteField
+                        label="Address Line 1"
+                        value={data.address || ''}
+                        onSelect={(parsed) => {
+                            onChange({
+                                ...data,
+                                address: parsed.streetAddress || data.address,
+                                city: parsed.city || data.city,
+                                state: parsed.state || data.state,
+                                zip: parsed.zip || data.zip,
+                            })
+                        }}
+                        required
+                    />
+                    <Field label="Address Line 2" id="nc4ez_address2">
+                        <Input id="nc4ez_address2" value={data.address2 || ''} onChange={set('address2')} placeholder="Apt 4B (if applicable)" />
                     </Field>
                     <div className="grid grid-cols-4 gap-4">
                         <div className="col-span-2">
@@ -798,7 +816,13 @@ export default function TaxFormsPage({ stepLabel, caregiver, companyId, companyD
                 }
             })
 
-            await saveTaxFormData(caregiver.id, companyId, 'w4', w4Data)
+            const combinedAddress = [w4Data.address || '', w4Data.address2 || '']
+                .filter(Boolean)
+                .join(', ')
+
+            const w4ToSave = { ...w4Data, address: combinedAddress }
+
+            await saveTaxFormData(caregiver.id, companyId, 'w4', w4ToSave)
 
             await supabase
                 .from('caregiver_documents')
@@ -814,7 +838,7 @@ export default function TaxFormsPage({ stepLabel, caregiver, companyId, companyD
             await supabase.functions.invoke('generate-w4', {
                 body: {
                     caregiverId: caregiver.id,
-                    w4Data: { ...w4Data, ssn: w4Data.ssn?.replace(/-/g, '') || '' }
+                    w4Data: { ...w4ToSave, ssn: w4Data.ssn?.replace(/-/g, '') || '' }
                 }
             })
         }
@@ -861,11 +885,15 @@ export default function TaxFormsPage({ stepLabel, caregiver, companyId, companyD
         }
 
         if (formId === 'nc4ez') {
+            const combinedAddress = [nc4ezData.address || '', nc4ezData.address2 || '']
+                .filter(Boolean)
+                .join(', ')
+
             const nc4ezResult = await supabase.functions.invoke('generate-nc4ez', {
                 body: {
                     caregiverId: caregiver.id,
                     caregiverName: caregiver.name,
-                    nc4ezData: { ...nc4ezData, ssn: nc4ezData.ssn?.replace(/-/g, '') || '' }
+                    nc4ezData: { ...nc4ezData, address: combinedAddress, ssn: nc4ezData.ssn?.replace(/-/g, '') || '' }
                 }
             })
 

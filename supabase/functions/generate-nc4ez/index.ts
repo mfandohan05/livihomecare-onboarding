@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { PDFDocument, rgb } from "https://esm.sh/pdf-lib@1.17.1";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://app.livihomecare.com",
+  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
@@ -20,9 +20,17 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    const { data: caregiver, error: caregiverError } = await supabase
+      .from("caregivers")
+      .select("id, company_id")
+      .eq("id", caregiverId)
+      .single();
+
+    if (caregiverError || !caregiver) throw new Error("Caregiver not found");
+
     const { data: templateFile, error: templateError } = await supabase.storage
       .from("generated-pdfs")
-      .download("templates/nc4ez.pdf");
+      .download("templates/default/nc4ez.pdf");
 
     if (templateError)
       throw new Error(
@@ -35,7 +43,6 @@ Deno.serve(async (req) => {
 
     const { height } = page.getSize();
 
-    // helper to draw text — converts from top-origin to bottom-origin
     const draw = (text: string, x: number, yFromTop: number, size = 10) => {
       if (!text) return;
       page.drawText(text, {
@@ -46,7 +53,6 @@ Deno.serve(async (req) => {
       });
     };
 
-    // helper to draw X in checkbox
     const drawX = (x: number, yFromTop: number) => {
       page.drawText("X", {
         x,
@@ -63,12 +69,10 @@ Deno.serve(async (req) => {
       timeZone: 'America/New_York'
     });
 
-    // Filing status checkboxes
     if (nc4ezData.filingStatus === "single") drawX(154, 107);
     if (nc4ezData.filingStatus === "head") drawX(306, 107);
     if (nc4ezData.filingStatus === "joint") drawX(403, 107);
 
-    // SSN — format as XXX-XX-XXXX
     const ssn = nc4ezData.ssn?.replace(/-/g, "") || "";
     const ssnFormatted =
       ssn.length === 9
@@ -76,33 +80,26 @@ Deno.serve(async (req) => {
         : nc4ezData.ssn || "";
     draw(ssnFormatted, 50, 140, 10);
 
-    // Name
     draw(nc4ezData.firstName || "", 50, 171, 10);
     draw(nc4ezData.middleInitial || "", 280, 171, 10);
     draw(nc4ezData.lastName || "", 305, 171, 10);
 
-    // Address
     draw(nc4ezData.address || "", 50, 202, 10);
     draw(nc4ezData.county || "", 508, 202, 10);
 
-    // City, State, ZIP
     draw(nc4ezData.city || "", 50, 233, 10);
     draw(nc4ezData.state || "", 372, 233, 10);
     draw(nc4ezData.zip || "", 410, 233, 10);
 
-    // Line 1 — allowances
     draw(nc4ezData.allowances || "0", 550, 510, 10);
 
-    // Line 2 — additional withholding
     if (nc4ezData.additionalWithholding) {
       draw(nc4ezData.additionalWithholding, 510, 530, 10);
     }
 
-    // Exempt checkboxes
     if (nc4ezData.exempt3) drawX(562, 563);
     if (nc4ezData.exempt4) drawX(562, 595);
 
-    // Signature and date
     draw(
       `${nc4ezData.firstName || ""} ${nc4ezData.lastName || ""}`.trim(),
       135,
@@ -113,7 +110,7 @@ Deno.serve(async (req) => {
 
     const filledPdfBytes = await pdfDoc.save();
     const sanitizedName = caregiverName.replace(/[^a-zA-Z0-9]/g, "_");
-    const outputPath = `${caregiverId}/${sanitizedName}_NC4EZ_Completed.pdf`;
+    const outputPath = `${caregiver.company_id}/${caregiverId}/${sanitizedName}_NC4EZ_Completed.pdf`;
 
     const { error: uploadError } = await supabase.storage
       .from("generated-pdfs")
@@ -128,6 +125,7 @@ Deno.serve(async (req) => {
     await supabase.from("caregiver_documents").upsert(
       {
         caregiver_id: caregiverId,
+        company_id: caregiver.company_id,
         document_type: "nc4ez_completed",
         file_name: `${sanitizedName}_NC4EZ_Completed.pdf`,
         file_path: outputPath,

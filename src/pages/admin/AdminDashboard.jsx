@@ -88,7 +88,7 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-5 gap-4 mb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 mb-8">
                 {[
                     { label: 'Total Employees Enrolled', value: stats.total, icon: Users, color: 'text-blue-600 bg-blue-50' },
                     { label: 'Pending', value: stats.pending, icon: AlertCircle, color: 'text-muted-foreground bg-muted' },
@@ -96,7 +96,7 @@ export default function AdminDashboard() {
                     { label: 'Completed', value: stats.completed, icon: CheckCircle, color: 'text-[#577C09] bg-[#E8F0D0]' },
                     { label: 'Cancelled', value: stats.cancelled, icon: XCircle, color: 'text-red-600 bg-red-50' },
                 ].map((stat) => (
-                    <div key={stat.label} className="bg-white rounded-xl border border-border p-6">
+                    <div key={stat.label} className="bg-white rounded-xl border border-border p-4 sm:p-6">
                         <div className={`w-10 h-10 rounded-lg ${stat.color} flex items-center justify-center mb-3`}>
                             <stat.icon className="w-5 h-5" />
                         </div>
@@ -107,18 +107,18 @@ export default function AdminDashboard() {
             </div>
 
             <div className="bg-white rounded-xl border border-border">
-                <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+                <div className="px-4 sm:px-6 py-4 border-b border-border flex items-center justify-between gap-2">
                     <h2 className="font-semibold">Recent Employees</h2>
                     <button
                         onClick={() => navigate('/admin/employees')}
-                        className="text-sm text-[var(--primary-color)] hover:underline cursor-pointer"
+                        className="text-sm text-[var(--primary-color)] hover:underline cursor-pointer shrink-0"
                     >
                         View all
                     </button>
                 </div>
                 <div className="divide-y divide-border">
                     {recentCaregivers.length === 0 ? (
-                        <div className="px-6 py-8 text-center text-muted-foreground text-sm">
+                        <div className="px-4 sm:px-6 py-8 text-center text-muted-foreground text-sm">
                             No caregivers yet. Add your first caregiver to get started.
                         </div>
                     ) : (
@@ -126,18 +126,18 @@ export default function AdminDashboard() {
                             <div
                                 key={caregiver.id}
                                 onClick={() => navigate(`/admin/employees/${caregiver.id}`)}
-                                className="px-6 py-4 flex items-center justify-between hover:bg-muted/30 cursor-pointer transition-colors"
+                                className="px-4 sm:px-6 py-4 flex items-center justify-between gap-3 hover:bg-muted/30 cursor-pointer transition-colors"
                             >
-                                <div className="flex items-center gap-3">
-                                    <div className="w-9 h-9 rounded-full bg-[var(--primary-color)] flex items-center justify-center text-white text-sm font-medium">
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className="w-9 h-9 rounded-full bg-[var(--primary-color)] flex items-center justify-center text-white text-sm font-medium shrink-0">
                                         {caregiver.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                                     </div>
-                                    <div>
-                                        <p className="font-medium text-sm">{caregiver.name}</p>
-                                        <p className="text-xs text-muted-foreground"><span className='capitalize'>{job_label(caregiver.role, roleOptions)}</span> · {(caregiver.email).toLowerCase()}</p>
+                                    <div className="min-w-0">
+                                        <p className="font-medium text-sm truncate">{caregiver.name}</p>
+                                        <p className="text-xs text-muted-foreground truncate"><span className='capitalize'>{job_label(caregiver.role, roleOptions)}</span> · {(caregiver.email).toLowerCase()}</p>
                                     </div>
                                 </div>
-                                <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusColor(caregiver.status)}`}>
+                                <span className={`text-xs font-medium px-2.5 py-1 rounded-full shrink-0 ${statusColor(caregiver.status)}`}>
                                     {statusLabel(caregiver.status)}
                                 </span>
                             </div>

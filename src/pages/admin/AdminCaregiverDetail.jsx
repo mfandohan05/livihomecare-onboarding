@@ -17,7 +17,7 @@ import { logImportantAction } from '@/lib/logAction'
 import { useCompany } from '@/context/CompanyContext'
 
 const statusColor = (status) => {
-    if (status === 'completed') return 'text-[#577C09] bg-[var(--secondary-bg-color)]'
+    if (status === 'completed') return 'text-[#577C09] bg-[#E8F0D0]'
     if (status === 'in_progress') return 'text-amber-700 bg-amber-50'
     if (status === 'cancelled') return 'text-red-700 bg-red-50'
     return 'text-muted-foreground bg-muted'
@@ -136,6 +136,44 @@ export default function AdminCaregiverDetail() {
     const [cancelLoading, setCancelLoading] = useState(false)
     const { companyId } = useCompany();
     const [roleSteps, setRoleSteps] = useState([])
+    const [signableDocs, setSignableDocs] = useState([])
+
+    useEffect(() => {
+        if (!companyId || !caregiver?.role) return
+
+        const fetchSignableDocs = async () => {
+            const { data, error } = await supabase
+                .from('company_forms')
+                .select('form_key, title, visible_to_roles')
+                .eq('company_id', companyId)
+                .eq('admin_signable', true)
+
+            if (error || !data) {
+                setSignableDocs([])
+                return
+            }
+
+            const docs = data
+                .filter(f => !f.visible_to_roles || f.visible_to_roles.includes(caregiver.role))
+                .map(f => ({
+                    ids: [f.form_key],
+                    label: f.title,
+                    description: `Sign as the company representative to complete the ${f.title.toLowerCase()}.`,
+                    requiresSection2: false,
+                }))
+
+            docs.push({
+                ids: ['i9_section2'],
+                label: 'Form I-9 — Section 2',
+                description: 'Complete Section 2 after verifying identity documents in person.',
+                requiresSection2: true,
+            })
+
+            setSignableDocs(docs)
+        }
+
+        fetchSignableDocs()
+    }, [companyId, caregiver?.role])
 
     useEffect(() => {
         if (!companyId || !caregiver?.role) return
@@ -700,35 +738,8 @@ export default function AdminCaregiverDetail() {
         setRegenerating(false);
     }
 
-    const ADMIN_SIGNABLE_DOCUMENTS = [
-        {
-            ids: ['drug_test_policy_signed', 'drug_test_policy'],
-            label: 'Drug Test Policy & Acknowledgement',
-            description: 'Sign as LHC Representative to complete the drug test policy acknowledgement.',
-            requiresSection2: false,
-        },
-        {
-            ids: ['non_compete_signed', 'non_compete'],
-            label: 'Non-Compete Agreement',
-            description: 'Sign as an LHC Representative to complete the non-compete agreement.',
-            requiresSection2: false,
-        },
-        {
-            ids: ['orientation_checklist_signed', 'orientation_checklist', 'pre_employment_orientation'],
-            label: 'Pre-Employment Orientation Checklist',
-            description: 'Sign as an LHC Representative to complete the orientation checklist.',
-            requiresSection2: false,
-        },
-        {
-            ids: ['i9_section2'],
-            label: 'Form I-9 — Section 2',
-            description: 'Complete Section 2 after verifying identity documents in person.',
-            requiresSection2: true,
-        },
-    ]
-
     function AdminSignDialog({ open, onClose, documentId, caregiver, adminName, adminPosition, adminId, adminEmail, onComplete, logAction }) {
-        const doc = ADMIN_SIGNABLE_DOCUMENTS.find(d => d.ids.includes(documentId))
+        const doc = signableDocs.find(d => d.ids.includes(documentId))
         const [submitting, setSubmitting] = useState(false)
         const [error, setError] = useState(null)
 
@@ -805,7 +816,7 @@ export default function AdminCaregiverDetail() {
                                 <p className="font-medium">{adminName}</p>
                                 <p className="text-xs text-muted-foreground mt-1">
                                     By clicking Sign & Complete, you confirm that you have reviewed this document
-                                    and are signing as the LHC Representative.
+                                    and are signing as the company representative.
                                 </p>
                             </div>
                         )}
@@ -814,7 +825,7 @@ export default function AdminCaregiverDetail() {
                             <div className="space-y-6">
                                 <div>
                                     <p className="text-sm font-medium mb-2">Document type presented</p>
-                                    <div className="flex gap-3">
+                                    <div className="flex flex-wrap gap-3">
                                         {[
                                             { value: 'listA', label: 'List A (single document)' },
                                             { value: 'listBC', label: 'List B + List C' },
@@ -836,7 +847,7 @@ export default function AdminCaregiverDetail() {
                                 {docType === 'listA' ? (
                                     <div className="space-y-3">
                                         <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">List A Document</p>
-                                        <div className="grid grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                             <div className="space-y-1.5">
                                                 <Label>Document Title <span className="text-red-500">*</span></Label>
                                                 <Input value={i9Form.listADocTitle} onChange={setI9('listADocTitle')} placeholder="e.g. U.S. Passport" />
@@ -859,7 +870,7 @@ export default function AdminCaregiverDetail() {
                                     <div className="space-y-4">
                                         <div className="space-y-3">
                                             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">List B Document</p>
-                                            <div className="grid grid-cols-2 gap-3">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                 <div className="space-y-1.5">
                                                     <Label>Document Title <span className="text-red-500">*</span></Label>
                                                     <Input value={i9Form.listBDocTitle} onChange={setI9('listBDocTitle')} placeholder="e.g. Driver's License" />
@@ -880,7 +891,7 @@ export default function AdminCaregiverDetail() {
                                         </div>
                                         <div className="space-y-3">
                                             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">List C Document</p>
-                                            <div className="grid grid-cols-2 gap-3">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                 <div className="space-y-1.5">
                                                     <Label>Document Title <span className="text-red-500">*</span></Label>
                                                     <Input value={i9Form.listCDocTitle} onChange={setI9('listCDocTitle')} placeholder="e.g. Social Security Card" />
@@ -902,7 +913,7 @@ export default function AdminCaregiverDetail() {
                                     </div>
                                 )}
 
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div className="space-y-1.5">
                                         <Label>First Day of Employment <span className="text-red-500">*</span></Label>
                                         <Input value={i9Form.firstDayOfEmployment} onChange={setI9('firstDayOfEmployment')} placeholder="MM/DD/YYYY" />
@@ -937,18 +948,18 @@ export default function AdminCaregiverDetail() {
 
                         {error && <p className="text-sm text-red-500">{error}</p>}
 
-                        <div className="flex gap-3">
+                        <div className="flex flex-col sm:flex-row gap-3">
                             <Button
                                 onClick={handleSubmit}
                                 disabled={!canSubmit || submitting}
-                                className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white disabled:opacity-50"
+                                className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white disabled:opacity-50 w-full sm:w-auto"
                             >
                                 {submitting
                                     ? <><Loader2 className="w-4 h-4 animate-spin mr-2" />Processing...</>
                                     : 'Sign & Complete'
                                 }
                             </Button>
-                            <Button variant="outline" onClick={onClose} disabled={submitting}>
+                            <Button variant="outline" onClick={onClose} disabled={submitting} className="w-full sm:w-auto">
                                 Cancel
                             </Button>
                         </div>
@@ -987,11 +998,11 @@ export default function AdminCaregiverDetail() {
                             />
                         </div>
                         {reauthError && <p className="text-sm text-red-500">{reauthError}</p>}
-                        <div className="flex gap-3">
+                        <div className="flex flex-col sm:flex-row gap-3">
                             <Button
                                 onClick={handleReauth}
                                 disabled={!reauthPassword || reauthLoading}
-                                className={`${reauthTarget === 'reset' ? 'bg-red-500 hover:bg-red-600' : 'bg-[var(--primary-color)] hover:bg-[var(--hover-color)]'} text-white disabled:opacity-50`}
+                                className={`${reauthTarget === 'reset' ? 'bg-red-500 hover:bg-red-600' : 'bg-[var(--primary-color)] hover:bg-[var(--hover-color)]'} text-white disabled:opacity-50 w-full sm:w-auto`}
                             >
                                 {reauthLoading ? 'Verifying...' : 'Confirm'}
                             </Button>
@@ -1002,6 +1013,7 @@ export default function AdminCaregiverDetail() {
                                     setReauthPassword('')
                                     setReauthError(null)
                                 }}
+                                className="w-full sm:w-auto"
                             >
                                 Cancel
                             </Button>
@@ -1017,7 +1029,7 @@ export default function AdminCaregiverDetail() {
                             Update {caregiver?.name}'s personal information.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <div className="grid grid-cols-2 gap-4 pt-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                         <div className="space-y-1.5">
                             <Label>Email</Label>
                             <Input value={infoDraft.email || ''} onChange={(e) => {
@@ -1096,11 +1108,11 @@ export default function AdminCaregiverDetail() {
                             }} placeholder="Optional" />
                         </div>
                     </div>
-                    <div className="flex gap-3 pt-4">
-                        <Button onClick={handleSaveInfo} className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white">
+                    <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                        <Button onClick={handleSaveInfo} className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white w-full sm:w-auto">
                             Save Changes
                         </Button>
-                        <Button variant="outline" onClick={() => setEditingInfo(false)}>
+                        <Button variant="outline" onClick={() => setEditingInfo(false)} className="w-full sm:w-auto">
                             Cancel
                         </Button>
                     </div>
@@ -1128,11 +1140,11 @@ export default function AdminCaregiverDetail() {
                             />
                         </div>
                         {cancelError && <p className="text-sm text-red-500">{cancelError}</p>}
-                        <div className="flex gap-3">
+                        <div className="flex flex-col sm:flex-row gap-3">
                             <Button
                                 onClick={handleCancelOnboarding}
                                 disabled={!cancelPassword || cancelLoading}
-                                className="bg-red-500 hover:bg-red-600 text-white disabled:opacity-50"
+                                className="bg-red-500 hover:bg-red-600 text-white disabled:opacity-50 w-full sm:w-auto"
                             >
                                 {cancelLoading ? 'Archiving...' : 'Cancel Onboarding & Archive Data'}
                             </Button>
@@ -1143,6 +1155,7 @@ export default function AdminCaregiverDetail() {
                                     setCancelPassword('')
                                     setCancelError(null)
                                 }}
+                                className="w-full sm:w-auto"
                             >
                                 Cancel
                             </Button>
@@ -1172,11 +1185,11 @@ export default function AdminCaregiverDetail() {
                             />
                         </div>
                         {deleteError && <p className="text-sm text-red-500">{deleteError}</p>}
-                        <div className="flex gap-3">
+                        <div className="flex flex-col sm:flex-row gap-3">
                             <Button
                                 onClick={handleDelete}
                                 disabled={!deletePassword || deleteLoading}
-                                className="bg-red-500 hover:bg-red-600 text-white disabled:opacity-50"
+                                className="bg-red-500 hover:bg-red-600 text-white disabled:opacity-50 w-full sm:w-auto"
                             >
                                 {deleteLoading ? 'Deleting...' : 'Delete Employee'}
                             </Button>
@@ -1187,6 +1200,7 @@ export default function AdminCaregiverDetail() {
                                     setDeletePassword('')
                                     setDeleteError(null)
                                 }}
+                                className="w-full sm:w-auto"
                             >
                                 Cancel
                             </Button>
@@ -1214,18 +1228,18 @@ export default function AdminCaregiverDetail() {
                 Back to employees
             </button>
 
-            <div className="flex items-start justify-between mb-8">
-                <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-full bg-[var(--primary-color)] flex items-center justify-center text-white text-lg font-semibold">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
+                <div className="flex items-center gap-4 min-w-0">
+                    <div className="w-14 h-14 rounded-full bg-[var(--primary-color)] flex items-center justify-center text-white text-lg font-semibold shrink-0">
                         {caregiver.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                     </div>
-                    <div>
-                        <h1 className="text-2xl font-bold">{caregiver.name}</h1>
-                        <p className="text-muted-foreground">{caregiver.position_title}</p>
+                    <div className="min-w-0">
+                        <h1 className="text-2xl font-bold truncate">{caregiver.name}</h1>
+                        <p className="text-muted-foreground truncate">{caregiver.position_title}</p>
                     </div>
                 </div>
-                <div className='flex flex-row gap-'>
-                    <span className={`text-sm font-medium px-3 py-1.5 rounded-full ${statusColor(caregiver.status)}`}>
+                <div className='flex flex-row gap-2'>
+                    <span className={`text-sm font-medium px-3 py-1.5 rounded-full shrink-0 ${statusColor(caregiver.status)}`}>
                         {statusLabel(caregiver.status)}
                     </span>
 
@@ -1234,13 +1248,13 @@ export default function AdminCaregiverDetail() {
 
             </div>
 
-            <div className="grid grid-cols-3 gap-6">
-                <div className="col-span-2 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="md:col-span-2 space-y-6">
 
                     <div className="bg-white rounded-xl border border-border p-6">
                         <h2 className="font-semibold mb-4">Personal Information</h2>
 
-                        <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                             <div>
                                 <p className="text-muted-foreground">Email</p>
                                 <p className="font-medium">{caregiver.email}</p>
@@ -1308,7 +1322,7 @@ export default function AdminCaregiverDetail() {
                     {Object.keys(personalInfo).length > 0 && (
                         <div className="bg-white rounded-xl border border-border p-6">
                             <h2 className="font-semibold mb-4">Personal Information (Caregiver Provided)</h2>
-                            <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                                 <div>
                                     <p className="text-muted-foreground">Full Name</p>
                                     <p className="font-medium">{personalInfo.firstName} {personalInfo.lastName}</p>
@@ -1325,7 +1339,7 @@ export default function AdminCaregiverDetail() {
                                     <p className="text-muted-foreground">Secondary Phone</p>
                                     <p className="font-medium">{formatPhone(personalInfo.secondaryPhone || '') || '—'}</p>
                                 </div>
-                                <div className="col-span-2">
+                                <div className="sm:col-span-2">
                                     <p className="text-muted-foreground">Address</p>
                                     <p className="font-medium">
                                         {personalInfo.streetAddress} {personalInfo.addressLine2 || ''} <br/> {personalInfo.city}, {personalInfo.state} {personalInfo.zip}
@@ -1336,7 +1350,7 @@ export default function AdminCaregiverDetail() {
                             {personalInfo.primaryEmergencyFirstName && (
                                 <div className="mt-6">
                                     <h3 className="text-sm font-medium mb-3 pb-2 border-b">Primary Emergency Contact</h3>
-                                    <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                                         <div>
                                             <p className="text-muted-foreground">Name</p>
                                             <p className="font-medium">{personalInfo.primaryEmergencyFirstName} {personalInfo.primaryEmergencyLastName}</p>
@@ -1372,7 +1386,7 @@ export default function AdminCaregiverDetail() {
                             {personalInfo.secondaryEmergencyFirstName && (
                                 <div className="mt-6">
                                     <h3 className="text-sm font-medium mb-3 pb-2 border-b">Secondary Emergency Contact</h3>
-                                    <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                                         <div>
                                             <p className="text-muted-foreground">Name</p>
                                             <p className="font-medium">{personalInfo.secondaryEmergencyFirstName} {personalInfo.secondaryEmergencyLastName}</p>
@@ -1460,12 +1474,12 @@ export default function AdminCaregiverDetail() {
                                     }
                                     return true;
                                 }).map((doc) => (
-                                    <div key={doc.id} className="flex items-center justify-between py-2 px-3 rounded-lg border border-border hover:bg-muted/30 transition-colors">
-                                        <div>
+                                    <div key={doc.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2 px-3 rounded-lg border border-border hover:bg-muted/30 transition-colors">
+                                        <div className="min-w-0">
                                             <p className="text-sm font-medium">{docLabel(doc.document_type)}</p>
-                                            <p className="text-xs text-muted-foreground">{doc.file_name}</p>
+                                            <p className="text-xs text-muted-foreground truncate">{doc.file_name}</p>
                                             {['drug_test_policy_signed', 'non_compete_signed', 'orientation_checklist_signed'].includes(doc.document_type) && !doc.admin_signed_at && (
-                                                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
+                                                <span className="inline-block mt-1 max-w-full text-xs font-medium px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200">
                                                     Notice: Admin signature required
                                                 </span>
                                             )}
@@ -1475,7 +1489,7 @@ export default function AdminCaregiverDetail() {
                                                 </span>
                                             )}
                                             {doc.document_type === 'i9_completed' && !i9Section2Completed && (
-                                                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
+                                                <span className="inline-block mt-1 max-w-full text-xs font-medium px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200">
                                                     Notice: Please use the Sign/Complete feature to complete Section 2.
                                                 </span>
                                             )}
@@ -1487,7 +1501,7 @@ export default function AdminCaregiverDetail() {
                                         </div>
                                         <button
                                             onClick={() => handleDownload(doc)}
-                                            className="flex items-center gap-1.5 text-xs text-[var(--primary-color)] hover:underline"
+                                            className="flex items-center gap-1.5 text-xs text-[var(--primary-color)] hover:underline shrink-0"
                                         >
                                             <Eye className="w-3.5 h-3.5" />
                                             View Document
@@ -1503,9 +1517,9 @@ export default function AdminCaregiverDetail() {
                                 {uploadableDocs.map((docType) => {
                                     const existing = documents.find(d => d.document_type === docType)
                                     return (
-                                        <div key={docType} className="flex items-center justify-between py-2 px-3 rounded-lg border border-dashed border-border">
-                                            <p className="text-sm text-muted-foreground">{docLabel(docType)}</p>
-                                            <label className="cursor-pointer">
+                                        <div key={docType} className="flex items-center justify-between gap-3 py-2 px-3 rounded-lg border border-dashed border-border">
+                                            <p className="text-sm text-muted-foreground min-w-0 flex-1">{docLabel(docType)}</p>
+                                            <label className="cursor-pointer shrink-0">
                                                 <input
                                                     type="file"
                                                     accept="image/*,.pdf"
@@ -1536,9 +1550,9 @@ export default function AdminCaregiverDetail() {
                                         <p className="text-xs text-muted-foreground mb-3">
                                             Upload a custom offer letter for this employee. They will see it in their portal and sign it digitally.
                                         </p>
-                                        <div className="flex items-center justify-between py-2 px-3 rounded-lg border border-dashed border-border">
-                                            <p className="text-sm text-muted-foreground">Offer Letter (PDF)</p>
-                                            <label className="cursor-pointer">
+                                        <div className="flex items-center justify-between gap-3 py-2 px-3 rounded-lg border border-dashed border-border">
+                                            <p className="text-sm text-muted-foreground min-w-0 flex-1">Offer Letter (PDF)</p>
+                                            <label className="cursor-pointer shrink-0">
                                                 <input
                                                     type="file"
                                                     accept=".pdf"
@@ -1570,7 +1584,7 @@ export default function AdminCaregiverDetail() {
                     <div className="bg-white rounded-xl border border-border p-6">
                         <h2 className="font-semibold mb-4">Sign / Complete Documents</h2>
                         <div className="space-y-2">
-                            {ADMIN_SIGNABLE_DOCUMENTS.map(doc => {
+                            {signableDocs.map(doc => {
                                 const isCompleted = doc.ids.includes('i9_section2')
                                     ? i9Section2Completed
                                     : documents.some(d => doc.ids.includes(d.document_type) && d.admin_signed_at)
@@ -1627,8 +1641,8 @@ export default function AdminCaregiverDetail() {
 
                             <div className="space-y-4">
                                 {hasSsn && (
-                                    <div className="flex items-center justify-between py-3 px-4 rounded-lg bg-muted/30">
-                                        <div>
+                                    <div className="flex items-center justify-between gap-3 py-3 px-4 rounded-lg bg-muted/30">
+                                        <div className="min-w-0">
                                             <p className="text-sm font-medium">Social Security Number</p>
                                             {showSsn && ssn ? (
                                                 <p className="text-sm font-mono mt-0.5">{ssn.ssn || '—'}</p>
@@ -1645,7 +1659,7 @@ export default function AdminCaregiverDetail() {
                                         <button
                                             onClick={handleRevealSsn}
                                             disabled={loadingSsn}
-                                            className="flex items-center gap-1.5 text-xs text-[var(--primary-color)] hover:underline disabled:opacity-50"
+                                            className="flex items-center gap-1.5 text-xs text-[var(--primary-color)] hover:underline disabled:opacity-50 shrink-0"
                                         >
                                             {loadingSsn ? (
                                                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -1658,9 +1672,9 @@ export default function AdminCaregiverDetail() {
                                     </div>)}
 
 
-                                {hasBanking && (<div className="flex items-center justify-between py-3 px-4 rounded-lg bg-muted/30">
+                                {hasBanking && (<div className="flex items-center justify-between gap-3 py-3 px-4 rounded-lg bg-muted/30">
 
-                                    <div>
+                                    <div className="min-w-0">
 
                                         <p className="text-sm font-medium">Direct Deposit</p>
                                         {showBanking && banking ? (
@@ -1677,7 +1691,7 @@ export default function AdminCaregiverDetail() {
                                     <button
                                         onClick={handleRevealBanking}
                                         disabled={loadingBanking}
-                                        className="flex items-center gap-1.5 text-xs text-[var(--primary-color)] hover:underline disabled:opacity-50"
+                                        className="flex items-center gap-1.5 text-xs text-[var(--primary-color)] hover:underline disabled:opacity-50 shrink-0"
                                     >
                                         {loadingBanking ? (
                                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -1820,22 +1834,22 @@ export default function AdminCaregiverDetail() {
                                         return (
                                             <div
                                                 key={stepId}
-                                                className={`flex items-center justify-between py-2 px-3 rounded-lg ${isLatest && caregiver.status !== 'completed' ? 'bg-[#577C09] text-white' : 'bg-[#E8F0D0]'}`}
+                                                className={`flex items-start justify-between gap-2 py-2 px-3 rounded-lg ${isLatest && caregiver.status !== 'completed' ? 'bg-[#577C09] text-white' : 'bg-[#E8F0D0]'}`}
                                             >
-                                                <div className="flex items-center gap-2">
-                                                    <CheckCircle className={`w-4 h-4 ${isLatest && caregiver.status !== 'completed' ? 'text-white' : 'text-[#577C09]'}`} />
-                                                    <span className={`text-sm font-medium ${isLatest && caregiver.status !== 'completed' ? 'text-white' : 'text-[#577C09]'}`}>
+                                                <div className="flex items-start gap-2 min-w-0 flex-1">
+                                                    <CheckCircle className={`w-4 h-4 shrink-0 mt-0.5 ${isLatest && caregiver.status !== 'completed' ? 'text-white' : 'text-[#577C09]'}`} />
+                                                    <p className={`text-sm font-medium min-w-0 flex-1 break-words ${isLatest && caregiver.status !== 'completed' ? 'text-white' : 'text-[#577C09]'}`}>
                                                         Step {stepId} - {stepName}
-                                                    </span>
-                                                    {isLatest && caregiver.status !== 'completed' && (
-                                                        <span className="text-xs text-white/80">current</span>
-                                                    )}
+                                                        {isLatest && caregiver.status !== 'completed' && (
+                                                            <span className="text-xs text-white/80 ml-1">current</span>
+                                                        )}
+                                                    </p>
                                                 </div>
                                                 {managingProgress && (
                                                     <button
                                                         onClick={() => handleDeleteStepProgress(stepId)}
                                                         disabled={deletingStep === stepId}
-                                                        className={`text-xs hover:underline disabled:opacity-50 ${isLatest && caregiver.status !== 'completed' ? 'text-white/80' : 'text-red-500'}`}
+                                                        className={`text-xs hover:underline disabled:opacity-50 shrink-0 ${isLatest && caregiver.status !== 'completed' ? 'text-white/80' : 'text-red-500'}`}
                                                     >
                                                         {deletingStep === stepId ? 'Removing...' : 'Remove'}
                                                     </button>
@@ -1911,17 +1925,17 @@ export default function AdminCaregiverDetail() {
                         {quizProgress && quizProgress.length > 0 ? (
                             <div className="space-y-2">
                                 {quizProgress.map((section, index) => (
-                                    <div key={index} className="flex items-center justify-between py-2 px-3 rounded-lg border border-border">
-                                        <div className="flex items-center gap-2">
+                                    <div key={index} className="flex items-center justify-between gap-2 py-2 px-3 rounded-lg border border-border">
+                                        <div className="flex items-center gap-2 min-w-0">
                                             {section.passedStatus
                                                 ? <CheckCircle className="w-4 h-4 text-[#577C09] shrink-0" />
                                                 : <div className="w-4 h-4 rounded-full border-2 border-muted-foreground shrink-0" />
                                             }
-                                            <p className={`text-sm font-medium ${section.passedStatus ? 'text-[#577C09]' : 'text-foreground'}`}>
+                                            <p className={`text-sm font-medium truncate ${section.passedStatus ? 'text-[#577C09]' : 'text-foreground'}`}>
                                                 {section.sectionTitle}
                                             </p>
                                         </div>
-                                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${section.passedStatus
+                                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full shrink-0 ${section.passedStatus
                                             ? 'bg-[var(--secondary-bg-color)] text-[#577C09]'
                                             : 'bg-muted text-muted-foreground'
                                             }`}>

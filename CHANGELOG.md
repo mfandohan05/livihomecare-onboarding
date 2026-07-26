@@ -10,6 +10,7 @@
 - Added loading UI to upload documents screen
 - Added support for uploading resume to employee data
 - Fixed issues with time log counting
+- Made admin screens responsive
 
 
 ## 1.2.7 - 2026-07-05

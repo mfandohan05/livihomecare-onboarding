@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { PDFDocument } from "https://esm.sh/pdf-lib@1.17.1";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://app.livihomecare.com",
+  "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
@@ -20,19 +20,40 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    const { data: caregiver, error: caregiverError } = await supabase
+      .from("caregivers")
+      .select("id, company_id")
+      .eq("id", caregiverId)
+      .single();
+
+    if (caregiverError || !caregiver) throw new Error("Caregiver not found");
+
+    const { data: companyData, error: companyDataError } = await supabase
+      .from("company_data")
+      .select("legal_name, dba_name, address_line1, city, state, zip")
+      .eq("company_id", caregiver.company_id)
+      .maybeSingle();
+
+    if (companyDataError || !companyData) throw new Error("Company data not found");
+
+    const employerName = companyData.dba_name || companyData.legal_name || "";
+    const employerAddress = `${companyData.address_line1 || ""}, ${companyData.city || ""} ${companyData.state || ""} ${companyData.zip || ""}`.trim();
+    const employerBlock = `${employerName}\n${employerAddress}`;
+
     const companyEncryptionKey = Deno.env.get("COMPANY_ENCRYPTION_KEY");
 
     const { data: companyEIN, error: einError } = await supabase.rpc("get_company_ein", {
+      p_company_id: caregiver.company_id,
       p_encryption_key: companyEncryptionKey,
     });
 
-
+    const templatePath = "templates/default/W4.pdf";
     const { data: templateFile, error: templateError } = await supabase.storage
       .from("generated-pdfs")
-      .download("templates/W4.pdf");
+      .download(templatePath);
 
     if (templateError)
-      throw new Error(`Could not load W-4 template: ${templateError.message}`);
+      throw new Error(`Could not load W-4 template at "${templatePath}": ${templateError.message}`);
 
     const templateBytes = await templateFile.arrayBuffer();
     const pdfDoc = await PDFDocument.load(templateBytes, {
@@ -67,7 +88,6 @@ Deno.serve(async (req) => {
       }
     };
 
-    // Step 1a — Personal info
     setText(
       "topmostSubform[0].Page1[0].Step1a[0].f1_01[0]",
       w4Data.middleInitial
@@ -87,10 +107,8 @@ Deno.serve(async (req) => {
       w4Data.cityStateZip || "",
     );
 
-    // Step 1b — SSN
     setText("topmostSubform[0].Page1[0].f1_05[0]", w4Data.ssn || "");
 
-    // Step 1c — Filing status
     setCheckbox(
       "topmostSubform[0].Page1[0].c1_1[0]",
       w4Data.filingStatus === "single",
@@ -104,10 +122,8 @@ Deno.serve(async (req) => {
       w4Data.filingStatus === "head",
     );
 
-    // Step 2c — Multiple jobs
     setCheckbox("topmostSubform[0].Page1[0].c1_2[0]", !!w4Data.multipleJobs);
 
-    // Step 3 — Dependents
     setText(
       "topmostSubform[0].Page1[0].Step3_ReadOrder[0].f1_06[0]",
       w4Data.childCredit || "",
@@ -118,7 +134,6 @@ Deno.serve(async (req) => {
     );
     setText("topmostSubform[0].Page1[0].f1_08[0]", w4Data.totalCredits || "");
 
-    // Step 4 — Other adjustments
     setText("topmostSubform[0].Page1[0].f1_09[0]", w4Data.otherIncome || "");
     setText("topmostSubform[0].Page1[0].f1_10[0]", w4Data.deductions || "");
     setText(
@@ -126,14 +141,9 @@ Deno.serve(async (req) => {
       w4Data.extraWithholding || "",
     );
 
-    // Exempt
     setCheckbox("topmostSubform[0].Page1[0].c1_3[0]", !!w4Data.exempt);
 
-    // Employer section — f1_12, f1_13, f1_14
-    setText(
-      "topmostSubform[0].Page1[0].f1_12[0]",
-      "MDC Global Care Solutions dba Livi Home Care\n179 Gasoline Alley Dr. Suite 203, Mooresville NC 28117",
-    );
+    setText("topmostSubform[0].Page1[0].f1_12[0]", employerBlock);
     setText("topmostSubform[0].Page1[0].f1_13[0]", w4Data.startDate || "");
     setText("topmostSubform[0].Page1[0].f1_14[0]", companyEIN || "No EIN Provided");
 
@@ -145,7 +155,7 @@ Deno.serve(async (req) => {
 
     form.flatten();
     const filledPdfBytes = await pdfDoc.save();
-    const outputPath = `${caregiverId}/w4_completed.pdf`;
+    const outputPath = `${caregiver.company_id}/${caregiverId}/w4_completed.pdf`;
 
     const { error: uploadError } = await supabase.storage
       .from("generated-pdfs")
@@ -160,6 +170,7 @@ Deno.serve(async (req) => {
     await supabase.from("caregiver_documents").upsert(
       {
         caregiver_id: caregiverId,
+        company_id: caregiver.company_id,
         document_type: "w4_completed",
         file_name: "W-4_Completed.pdf",
         file_path: outputPath,

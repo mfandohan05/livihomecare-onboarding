@@ -265,6 +265,7 @@ export default function OnboardingPortal() {
             setSteps(prev => prev.map(step =>
                 step.id === lastStep.id ? { ...step, status: 'completed' } : step
             ))
+            setCaregiver(prev => prev ? { ...prev, status: 'completed' } : prev)
             updateCaregiverStatus(caregiver.id, 'completed')
 
             const saveLog = async () => {

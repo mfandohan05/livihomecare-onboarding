@@ -172,7 +172,7 @@ function NewCaregiverDialog({ open, onClose, onCreated, companyId, roleOptions }
                             <Field label="Full name" id="name" required>
                                 <Input id="name" value={form.name} onChange={set('name')} placeholder="Maria Santos" />
                             </Field>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <Field label="Email" id="email" required>
                                     <Input id="email" type="email" value={form.email} onChange={set('email')} placeholder="maria@email.com" />
                                 </Field>
@@ -246,7 +246,7 @@ function NewCaregiverDialog({ open, onClose, onCreated, companyId, roleOptions }
 
                     <div>
                         <h3 className="text-sm font-medium mb-4 pb-2 border-b">Compensation</h3>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <Field label="Pay rate ($/hr)" id="pay_rate" required>
                                 <Input id="pay_rate" type="number" value={form.pay_rate} onChange={set('pay_rate')} placeholder="16.00" onWheel={(e) => e.target.blur()} />
                             </Field>
@@ -294,15 +294,15 @@ Light housekeeping"
 
                     {error && <p className="text-sm text-red-500">{error}</p>}
 
-                    <div className="flex gap-3 pt-2">
+                    <div className="flex flex-col sm:flex-row gap-3 pt-2">
                         <Button
                             onClick={handleSubmit}
                             disabled={!canSave || loading}
-                            className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white disabled:opacity-50"
+                            className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white disabled:opacity-50 w-full sm:w-auto"
                         >
                             {loading ? 'Creating...' : 'Create Employee'}
                         </Button>
-                        <Button variant="outline" onClick={() => {
+                        <Button variant="outline" className="w-full sm:w-auto" onClick={() => {
                             setOfferLetterFile(null)
                             setForm({
                                 name: 'email', email: '', phone: '', role: 'caregiver',
@@ -496,21 +496,21 @@ export default function AdminCaregivers() {
                 roleOptions={roleOptions}
             />
 
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
                 <div>
                     <h1 className="text-2xl font-bold">Employees</h1>
                     <p className="text-muted-foreground">{totalCount} total employees</p>
                 </div>
                 <Button
                     onClick={() => setShowNewDialog(true)}
-                    className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white"
+                    className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white w-full sm:w-auto"
                 >
                     + New Employee
                 </Button>
             </div>
 
-            <div className="flex gap-3 mb-6">
-                <div className="relative flex-1 max-w-sm">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 mb-6">
+                <div className="relative w-full sm:flex-1 sm:max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
                         placeholder="Search by name or email..."
@@ -522,7 +522,7 @@ export default function AdminCaregivers() {
                 <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[var(--primary-color)]"
+                    className="w-full sm:w-auto border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[var(--primary-color)]"
                 >
                     <option value="all">All statuses</option>
                     <option value="pending">Pending</option>
@@ -533,17 +533,17 @@ export default function AdminCaregivers() {
                 <select
                     value={roleFilter}
                     onChange={(e) => setRoleFilter(e.target.value)}
-                    className="border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[var(--primary-color)]"
+                    className="w-full sm:w-auto border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[var(--primary-color)]"
                 >
                     <option value="all">All roles</option>
                     {roleOptions.map(r => (
                         <option key={r.role_key} value={r.role_key}>{r.display_label}</option>
                     ))}
                 </select>
-                <div className="relative" ref={skillDropdownRef}>
+                <div className="relative w-full sm:w-auto" ref={skillDropdownRef}>
                     <button
                         onClick={() => setShowSkillDropdown(prev => !prev)}
-                        className={`flex items-center gap-2 border rounded-lg px-3 py-2 text-sm bg-white transition-colors ${skillFilters.length > 0 ? 'border-[var(--primary-color)] text-[var(--primary-color)]' : 'border-border text-foreground'}`}
+                        className={`w-full sm:w-auto flex items-center justify-center sm:justify-start gap-2 border rounded-lg px-3 py-2 text-sm bg-white transition-colors ${skillFilters.length > 0 ? 'border-[var(--primary-color)] text-[var(--primary-color)]' : 'border-border text-foreground'}`}
                     >
                         Skills
                         {skillFilters.length > 0 && (
@@ -555,7 +555,7 @@ export default function AdminCaregivers() {
                     </button>
 
                     {showSkillDropdown && (
-                        <div className="absolute top-full left-0 mt-1 w-72 bg-white border border-border rounded-xl shadow-lg z-50 max-h-96 overflow-y-auto">
+                        <div className="absolute top-full left-0 mt-1 w-72 max-w-[calc(100vw-2rem)] bg-white border border-border rounded-xl shadow-lg z-50 max-h-96 overflow-y-auto">
                             <div className="p-3 border-b border-border flex items-center justify-between">
                                 <p className="text-xs font-medium text-muted-foreground">Filter by skill</p>
                                 {pendingSkills.length > 0 && (
@@ -687,7 +687,7 @@ export default function AdminCaregivers() {
                         )}
                     </tbody>
                 </table>
-                <div className="flex items-center justify-between px-6 py-4 border-t border-border">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-6 py-4 border-t border-border">
                     <p className="text-sm text-muted-foreground">
                         Showing {((page - 1) * PER_PAGE) + 1}–{Math.min(page * PER_PAGE, totalCount)} of {totalCount}
                     </p>

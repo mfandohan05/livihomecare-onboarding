@@ -13,7 +13,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { LayoutDashboard, Users, LogOut, ChevronDown, Map, Logs } from 'lucide-react'
+import { LayoutDashboard, Users, LogOut, ChevronDown, Map, Logs, Menu } from 'lucide-react'
 import { APP_VERSION } from '@/version'
 import { useCompany } from '@/context/CompanyContext'
 
@@ -83,17 +83,17 @@ export default function AdminLayout({ children }) {
 
     return (
         <div className="min-h-screen bg-muted/30">
-            <div className="bg-white border-b border-border px-8 py-3 flex items-center justify-between sticky top-0 z-50">
-                <div className="flex items-center gap-8">
-                    <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => navigate('/admin/dashboard')}>
-                        <img src={logoUrl} alt={companyName + " logo"} className="w-[50px] h-[50px] object-contain" />
-                        <div>
-                            <p className="font-semibold text-sm leading-none">{companyName}</p>
-                            <p className="text-xs text-muted-foreground leading-none mt-0.5">RSOnboard Admin Portal v.{APP_VERSION}</p>
+            <div className="bg-white border-b border-border px-4 sm:px-6 md:px-8 py-3 flex items-center justify-between gap-2 sticky top-0 z-50">
+                <div className="flex items-center gap-3 md:gap-8 min-w-0">
+                    <div className="flex items-center gap-2.5 cursor-pointer min-w-0" onClick={() => navigate('/admin/dashboard')}>
+                        <img src={logoUrl} alt={companyName + " logo"} className="w-9 h-9 md:w-[50px] md:h-[50px] object-contain shrink-0" />
+                        <div className="min-w-0">
+                            <p className="font-semibold text-sm leading-none truncate">{companyName}</p>
+                            <p className="text-xs text-muted-foreground leading-none mt-0.5 hidden sm:block truncate">RSOnboard Admin Portal v.{APP_VERSION}</p>
                         </div>
                     </div>
 
-                    <NavigationMenu>
+                    <NavigationMenu className="hidden md:flex">
                         <NavigationMenuList>
                             {navItems.map((item) => (
                                 <NavigationMenuItem key={item.path}>
@@ -113,29 +113,56 @@ export default function AdminLayout({ children }) {
                     </NavigationMenu>
                 </div>
 
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-md hover:bg-muted outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-color)]">
-                            <div className="w-7 h-7 rounded-full bg-[var(--primary-color)] flex items-center justify-center text-white text-xs font-medium">
-                                {adminName ? adminName.split(' ').map(n => n[0]).join('').slice(0, 2) : '?'}
-                            </div>
-                            <span>Hi, {adminName ? adminName.split(' ')[0] : '...'}</span>
-                            <ChevronDown className="w-3 h-3" />
-                        </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem
-                            onClick={handleSignOut}
-                            className="flex items-center gap-2 text-red-600 focus:bg-[var(--primary-color)] cursor-pointer"
-                        >
-                            <LogOut className="w-4 h-4" />
-                            Sign out
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                    <div className="md:hidden">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <button
+                                    aria-label="Open navigation menu"
+                                    className="flex items-center justify-center w-9 h-9 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-color)]"
+                                >
+                                    <Menu className="w-5 h-5" />
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                                {navItems.map((item) => (
+                                    <DropdownMenuItem
+                                        key={item.path}
+                                        onClick={() => navigate(item.path)}
+                                        className={`flex items-center gap-2 cursor-pointer focus:bg-[var(--primary-color)] focus:text-white ${isActive(item.path) ? 'text-[var(--primary-color)]' : ''}`}
+                                    >
+                                        <item.icon className="w-4 h-4" />
+                                        {item.label}
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-md hover:bg-muted outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-color)]">
+                                <div className="w-7 h-7 rounded-full bg-[var(--primary-color)] flex items-center justify-center text-white text-xs font-medium shrink-0">
+                                    {adminName ? adminName.split(' ').map(n => n[0]).join('').slice(0, 2) : '?'}
+                                </div>
+                                <span className="hidden sm:inline">Hi, {adminName ? adminName.split(' ')[0] : '...'}</span>
+                                <ChevronDown className="w-3 h-3 shrink-0" />
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuItem
+                                onClick={handleSignOut}
+                                className="flex items-center gap-2 text-red-600 focus:bg-[var(--primary-color)] cursor-pointer"
+                            >
+                                <LogOut className="w-4 h-4" />
+                                Sign out
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
             </div>
 
-            <div className="max-w-6xl mx-auto px-8 py-10">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-10">
                 {children}
             </div>
         </div>
