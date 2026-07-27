@@ -1,7 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://app.livihomecare.com',
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
@@ -20,25 +20,48 @@ Deno.serve(async (req) => {
 
     const { data: caregiver, error: cgErr } = await supabase
       .from('caregivers')
-      .select('name, role, position_title, pay_rate')
+      .select('name, role, position_title, pay_rate, company_id')
       .eq('id', caregiverId)
       .single()
 
     if (!caregiver || cgErr) throw new Error(`Caregiver lookup failed: ${cgErr?.message ?? 'not found'}`)
 
-    const { data: timeLog } = await supabase
+    const { data: companyData } = await supabase
+      .from('company_data')
+      .select('company_name, primary_color, logo_path, admin_notification_emails')
+      .eq('company_id', caregiver.company_id)
+      .maybeSingle()
+
+    const companyName = companyData?.company_name || 'your employer'
+    const primaryColor = companyData?.primary_color || '#577C09'
+
+    const fallbackEmail = Deno.env.get('ADMIN_NOTIFICATION_EMAIL')
+    const notificationEmails = companyData?.admin_notification_emails?.length
+      ? companyData.admin_notification_emails
+      : (fallbackEmail ? [fallbackEmail] : [])
+
+    if (notificationEmails.length === 0) throw new Error('No admin notification email configured for this company')
+
+    const { data: timeLogs } = await supabase
       .from('caregiver_time_logs')
       .select('active_seconds')
       .eq('caregiver_id', caregiverId)
-      .eq('completed', true)
-      .maybeSingle()
+      .eq('company_id', caregiver.company_id)
 
-    const activeHours = timeLog ? (timeLog.active_seconds / 3600).toFixed(2) : null
+    const totalActiveSeconds = (timeLogs || []).reduce((sum, log) => sum + (log.active_seconds || 0), 0)
+    const activeHours = timeLogs && timeLogs.length > 0 ? (totalActiveSeconds / 3600).toFixed(2) : null
     const orientationPay = activeHours && caregiver.pay_rate
       ? (parseFloat(activeHours) * caregiver.pay_rate).toFixed(2)
       : null
 
-    const adminLink = `https://app.livihomecare.com/admin/employees/${caregiverId}`
+    const portalDomain = 'app.livihomecare.com'
+    const senderEmail = 'onboarding@livihomecare.com'
+
+    const logoUrl = companyData?.logo_path
+      ? `https://${portalDomain}/${companyData.logo_path}`
+      : `https://${portalDomain}/logo.png`
+
+    const adminLink = `https://${portalDomain}/admin/employees/${caregiverId}`
 
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -47,12 +70,12 @@ Deno.serve(async (req) => {
         'Authorization': `Bearer ${Deno.env.get('RESEND_API_KEY')}`,
       },
       body: JSON.stringify({
-        from: 'Ready, Set, Onboard! <onboarding@livihomecare.com>',
-        to: ['office@livihomecare.com', 'e.fandohan@livihomecare.com'],
+        from: `Ready, Set, Onboard! <${senderEmail}>`,
+        to: notificationEmails,
         subject: `✅ ${caregiver.name} has completed onboarding`,
         html: `
           <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-            <img src="https://app.livihomecare.com/logo.png" alt="Livi Home Care" style="width: 100px; margin-bottom: 32px;" />
+            <img src="${logoUrl}" alt="${companyName}" style="width: 100px; margin-bottom: 32px;" />
             
             <h1 style="font-size: 22px; font-weight: 700; margin-bottom: 8px; color: #111;">
               Onboarding complete 🎉
@@ -74,12 +97,12 @@ Deno.serve(async (req) => {
             </p>
 
             <a href="${adminLink}" 
-              style="background-color: #577C09; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block; margin-bottom: 32px;">
+              style="background-color: ${primaryColor}; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block; margin-bottom: 32px;">
               View ${caregiver.name}'s Profile →
             </a>
 
             <hr style="border: none; border-top: 1px solid #eee; margin-bottom: 24px;" />
-            <p style="color: #888; font-size: 13px;">Ready, Set, Onboard! · Livi Home Care Onboarding System</p>
+            <p style="color: #888; font-size: 13px;">Ready, Set, Onboard! · ${companyName} Onboarding System</p>
           </div>
         `
       })

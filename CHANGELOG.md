@@ -12,6 +12,7 @@
 - Fixed issues with time log counting
 - Made admin screens responsive
 - Added autofill for personal information and tax form screens
+- Added multi-company support for email functions
 
 
 ## 1.2.7 - 2026-07-05

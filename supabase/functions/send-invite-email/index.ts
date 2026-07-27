@@ -1,7 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://app.livihomecare.com',
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
@@ -20,13 +20,31 @@ Deno.serve(async (req) => {
 
     const { data: caregiver } = await supabase
       .from('caregivers')
-      .select('name, email, token, role, position_title')
+      .select('name, email, token, role, position_title, company_id')
       .eq('id', caregiverId)
       .single()
 
     if (!caregiver) throw new Error('Caregiver not found')
 
-    const onboardingLink = `https://app.livihomecare.com/onboard/${caregiver.token}`
+    const { data: companyData } = await supabase
+      .from('company_data')
+      .select('company_name, primary_color, logo_path, phone, support_email')
+      .eq('company_id', caregiver.company_id)
+      .maybeSingle()
+
+    const companyName = companyData?.company_name || 'your employer'
+    const primaryColor = companyData?.primary_color || '#577C09'
+    const supportEmail = companyData?.support_email || 'office@livihomecare.com'
+    const supportPhone = companyData?.phone || ''
+
+    const portalDomain = 'app.livihomecare.com'
+    const senderEmail = 'noreply@livihomecare.com'
+
+    const logoUrl = companyData?.logo_path
+      ? `https://${portalDomain}/${companyData.logo_path}`
+      : `https://${portalDomain}/logo.png`
+
+    const onboardingLink = `https://${portalDomain}/onboard/${caregiver.token}`
 
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -35,18 +53,18 @@ Deno.serve(async (req) => {
         'Authorization': `Bearer ${Deno.env.get('RESEND_API_KEY')}`,
       },
       body: JSON.stringify({
-        from: 'Livi Home Care Onboarding System <noreply@livihomecare.com>',
+        from: `${companyName} Onboarding System <${senderEmail}>`,
         to: caregiver.email,
-        subject: 'Welcome to Livi Home Care — Complete Your Onboarding',
+        subject: `Welcome to ${companyName} — Complete Your Onboarding`,
         html: `
           <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-            <img src="https://app.livihomecare.com/logo.png" alt="Livi Home Care" style="width: 100px; margin-bottom: 32px;" />
+            <img src="${logoUrl}" alt="${companyName}" style="width: 100px; margin-bottom: 32px;" />
             
             <h1 style="font-size: 24px; font-weight: 700; margin-bottom: 8px; color: #111;">
               Welcome to the team, ${caregiver.name.split(' ')[0]}!
             </h1>
             <p style="color: #555; margin-bottom: 24px;">
-              We're excited to have you join Livi Home Care as a <strong>${caregiver.position_title}</strong>. 
+              We're excited to have you join ${companyName} as a <strong>${caregiver.position_title}</strong>. 
               Please complete your onboarding by clicking the button below.
             </p>
 
@@ -60,7 +78,7 @@ Deno.serve(async (req) => {
 
             <div style="margin-bottom: 32px;">
               <a href="${onboardingLink}" 
-                style="background-color: #577C09; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">
+                style="background-color: ${primaryColor}; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">
                 Start Onboarding →
               </a>
             </div>
@@ -68,7 +86,7 @@ Deno.serve(async (req) => {
             <p style="color: #888; font-size: 13px; margin-bottom: 8px;">
               Or copy this link into your browser:
             </p>
-            <p style="color: #577C09; font-size: 13px; word-break: break-all; margin-bottom: 32px;">
+            <p style="color: ${primaryColor}; font-size: 13px; word-break: break-all; margin-bottom: 32px;">
               ${onboardingLink}
             </p>
 
@@ -76,11 +94,11 @@ Deno.serve(async (req) => {
 
             <p style="color: #888; font-size: 13px;">
               Questions? Contact us at 
-              <a href="mailto:office@livihomecare.com" style="color: #577C09;">office@livihomecare.com</a> 
-              or call <a href="tel:9804166127" style="color: #577C09;">980-416-6127</a>.
+              <a href="mailto:${supportEmail}" style="color: ${primaryColor};">${supportEmail}</a>
+              ${supportPhone ? ` or call <a href="tel:${supportPhone.replace(/\D/g, '')}" style="color: ${primaryColor};">${supportPhone}</a>` : ''}.
             </p>
             <p style="color: #888; font-size: 13px;">
-              Livi Home Care · 179 Gasoline Alley Dr. Suite 203, Mooresville NC 28117
+              ${companyName}
             </p>
           </div>
         `
