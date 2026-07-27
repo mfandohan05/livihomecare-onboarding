@@ -40,9 +40,7 @@ Deno.serve(async (req) => {
     const portalDomain = 'app.livihomecare.com'
     const senderEmail = 'noreply@livihomecare.com'
 
-    const logoUrl = companyData?.logo_path
-      ? `https://${portalDomain}/${companyData.logo_path}`
-      : `https://${portalDomain}/logo.png`
+    const logoUrl = `https://${portalDomain}/logo.png`
 
     const onboardingLink = `https://${portalDomain}/onboard/${caregiver.token}`
 
