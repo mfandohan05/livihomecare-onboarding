@@ -42,8 +42,8 @@ Deno.serve(async (req) => {
 
     if (notificationEmails.length === 0) throw new Error('No admin notification email configured for this company')
 
-    const portalDomain = 'app.livihomecare.com'
-    const senderEmail = 'onboarding@livihomecare.com'
+    const portalDomain = 'rsonboard.com'
+    const senderEmail = 'onboarding@rsonboard.com'
 
     const logoUrl = `https://${portalDomain}/logo.png`
 

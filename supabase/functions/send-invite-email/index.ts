@@ -37,8 +37,8 @@ Deno.serve(async (req) => {
     const supportEmail = companyData?.support_email || 'office@livihomecare.com'
     const supportPhone = companyData?.phone || ''
 
-    const portalDomain = 'app.livihomecare.com'
-    const senderEmail = 'noreply@livihomecare.com'
+    const portalDomain = 'rsonboard.com'
+    const senderEmail = 'onboarding@rsonboard.com'
 
     const logoUrl = `https://${portalDomain}/logo.png`
 
