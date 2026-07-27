@@ -626,3 +626,153 @@ entrypoint = "./functions/generate-generic-signed-document/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/generate-generic-signed-document/*.html" ]
+
+[functions.studio-whoami]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-whoami/deno.json"
+entrypoint = "./functions/studio-whoami/index.ts"
+
+[functions.studio-list-companies]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-list-companies/deno.json"
+entrypoint = "./functions/studio-list-companies/index.ts"
+
+[functions.studio-get-company]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-get-company/deno.json"
+entrypoint = "./functions/studio-get-company/index.ts"
+
+[functions.studio-create-company]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-create-company/deno.json"
+entrypoint = "./functions/studio-create-company/index.ts"
+
+[functions.studio-update-company]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-update-company/deno.json"
+entrypoint = "./functions/studio-update-company/index.ts"
+
+[functions.studio-upload-logo]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-upload-logo/deno.json"
+entrypoint = "./functions/studio-upload-logo/index.ts"
+
+[functions.studio-list-role-labels]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-list-role-labels/deno.json"
+entrypoint = "./functions/studio-list-role-labels/index.ts"
+
+[functions.studio-create-role-label]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-create-role-label/deno.json"
+entrypoint = "./functions/studio-create-role-label/index.ts"
+
+[functions.studio-update-role-label]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-update-role-label/deno.json"
+entrypoint = "./functions/studio-update-role-label/index.ts"
+
+[functions.studio-delete-role-label]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-delete-role-label/deno.json"
+entrypoint = "./functions/studio-delete-role-label/index.ts"
+
+[functions.studio-list-onboarding-steps]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-list-onboarding-steps/deno.json"
+entrypoint = "./functions/studio-list-onboarding-steps/index.ts"
+
+[functions.studio-create-onboarding-step]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-create-onboarding-step/deno.json"
+entrypoint = "./functions/studio-create-onboarding-step/index.ts"
+
+[functions.studio-update-onboarding-step]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-update-onboarding-step/deno.json"
+entrypoint = "./functions/studio-update-onboarding-step/index.ts"
+
+[functions.studio-delete-onboarding-step]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-delete-onboarding-step/deno.json"
+entrypoint = "./functions/studio-delete-onboarding-step/index.ts"
+
+[functions.studio-reorder-onboarding-step]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-reorder-onboarding-step/deno.json"
+entrypoint = "./functions/studio-reorder-onboarding-step/index.ts"
+
+[functions.studio-list-company-forms]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-list-company-forms/deno.json"
+entrypoint = "./functions/studio-list-company-forms/index.ts"
+
+[functions.studio-get-company-form]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-get-company-form/deno.json"
+entrypoint = "./functions/studio-get-company-form/index.ts"
+
+[functions.studio-create-company-form]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-create-company-form/deno.json"
+entrypoint = "./functions/studio-create-company-form/index.ts"
+
+[functions.studio-update-company-form]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-update-company-form/deno.json"
+entrypoint = "./functions/studio-update-company-form/index.ts"
+
+[functions.studio-delete-company-form]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-delete-company-form/deno.json"
+entrypoint = "./functions/studio-delete-company-form/index.ts"
+
+[functions.studio-reorder-company-form]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-reorder-company-form/deno.json"
+entrypoint = "./functions/studio-reorder-company-form/index.ts"
+
+[functions.studio-upload-form-template]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-upload-form-template/deno.json"
+entrypoint = "./functions/studio-upload-form-template/index.ts"
+
+[functions.studio-list-form-template-fields]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-list-form-template-fields/deno.json"
+entrypoint = "./functions/studio-list-form-template-fields/index.ts"
+
+[functions.studio-list-test-caregivers]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-list-test-caregivers/deno.json"
+entrypoint = "./functions/studio-list-test-caregivers/index.ts"
+
+[functions.studio-preview-fill-form]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-preview-fill-form/deno.json"
+entrypoint = "./functions/studio-preview-fill-form/index.ts"
