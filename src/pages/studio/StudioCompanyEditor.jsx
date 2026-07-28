@@ -63,6 +63,7 @@ export default function StudioCompanyEditor() {
 
     useEffect(() => {
         fetchCompany()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id])
 
     const update = (key) => (e) => setCompany((prev) => ({ ...prev, [key]: e.target.value }))
@@ -195,6 +196,28 @@ export default function StudioCompanyEditor() {
                 </div>
                 <Button type="button" variant="outline" size="sm" onClick={() => navigate(`/studio/companies/${id}/forms`)}>
                     Manage forms
+                    <ChevronRight className="w-4 h-4" />
+                </Button>
+            </div>
+
+            <div className="bg-white rounded-xl border border-border p-4 mb-8 flex items-center justify-between">
+                <div>
+                    <p className="text-sm font-medium">Offer letter templates</p>
+                    <p className="text-xs text-muted-foreground">Per-role offer letters, field checks, and preview fill</p>
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={() => navigate(`/studio/companies/${id}/offer-letters`)}>
+                    Manage offer letters
+                    <ChevronRight className="w-4 h-4" />
+                </Button>
+            </div>
+
+            <div className="bg-white rounded-xl border border-border p-4 mb-8 flex items-center justify-between">
+                <div>
+                    <p className="text-sm font-medium">Orientation</p>
+                    <p className="text-xs text-muted-foreground">Sections, slides, and quiz questions</p>
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={() => navigate(`/studio/companies/${id}/orientation`)}>
+                    Manage orientation
                     <ChevronRight className="w-4 h-4" />
                 </Button>
             </div>

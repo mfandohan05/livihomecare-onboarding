@@ -186,6 +186,7 @@ export default function StudioRoleLabels() {
 
     useEffect(() => {
         fetchRoles()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [companyId])
 
     const openCreate = () => {

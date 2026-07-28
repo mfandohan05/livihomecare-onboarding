@@ -776,3 +776,135 @@ enabled = true
 verify_jwt = true
 import_map = "./functions/studio-preview-fill-form/deno.json"
 entrypoint = "./functions/studio-preview-fill-form/index.ts"
+
+[functions.studio-list-offer-letter-templates]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-list-offer-letter-templates/deno.json"
+entrypoint = "./functions/studio-list-offer-letter-templates/index.ts"
+
+[functions.studio-get-offer-letter-template]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-get-offer-letter-template/deno.json"
+entrypoint = "./functions/studio-get-offer-letter-template/index.ts"
+
+[functions.studio-create-offer-letter-template]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-create-offer-letter-template/deno.json"
+entrypoint = "./functions/studio-create-offer-letter-template/index.ts"
+
+[functions.studio-update-offer-letter-template]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-update-offer-letter-template/deno.json"
+entrypoint = "./functions/studio-update-offer-letter-template/index.ts"
+
+[functions.studio-delete-offer-letter-template]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-delete-offer-letter-template/deno.json"
+entrypoint = "./functions/studio-delete-offer-letter-template/index.ts"
+
+[functions.studio-upload-offer-letter-template]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-upload-offer-letter-template/deno.json"
+entrypoint = "./functions/studio-upload-offer-letter-template/index.ts"
+
+[functions.studio-list-offer-letter-template-fields]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-list-offer-letter-template-fields/deno.json"
+entrypoint = "./functions/studio-list-offer-letter-template-fields/index.ts"
+
+[functions.studio-preview-fill-offer-letter]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-preview-fill-offer-letter/deno.json"
+entrypoint = "./functions/studio-preview-fill-offer-letter/index.ts"
+
+[functions.studio-list-orientation-sections]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-list-orientation-sections/deno.json"
+entrypoint = "./functions/studio-list-orientation-sections/index.ts"
+
+[functions.studio-create-orientation-section]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-create-orientation-section/deno.json"
+entrypoint = "./functions/studio-create-orientation-section/index.ts"
+
+[functions.studio-update-orientation-section]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-update-orientation-section/deno.json"
+entrypoint = "./functions/studio-update-orientation-section/index.ts"
+
+[functions.studio-delete-orientation-section]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-delete-orientation-section/deno.json"
+entrypoint = "./functions/studio-delete-orientation-section/index.ts"
+
+[functions.studio-reorder-orientation-section]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-reorder-orientation-section/deno.json"
+entrypoint = "./functions/studio-reorder-orientation-section/index.ts"
+
+[functions.studio-get-orientation-section-detail]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-get-orientation-section-detail/deno.json"
+entrypoint = "./functions/studio-get-orientation-section-detail/index.ts"
+
+[functions.studio-create-orientation-slide]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-create-orientation-slide/deno.json"
+entrypoint = "./functions/studio-create-orientation-slide/index.ts"
+
+[functions.studio-update-orientation-slide]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-update-orientation-slide/deno.json"
+entrypoint = "./functions/studio-update-orientation-slide/index.ts"
+
+[functions.studio-delete-orientation-slide]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-delete-orientation-slide/deno.json"
+entrypoint = "./functions/studio-delete-orientation-slide/index.ts"
+
+[functions.studio-reorder-orientation-slide]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-reorder-orientation-slide/deno.json"
+entrypoint = "./functions/studio-reorder-orientation-slide/index.ts"
+
+[functions.studio-create-orientation-quiz-question]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-create-orientation-quiz-question/deno.json"
+entrypoint = "./functions/studio-create-orientation-quiz-question/index.ts"
+
+[functions.studio-update-orientation-quiz-question]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-update-orientation-quiz-question/deno.json"
+entrypoint = "./functions/studio-update-orientation-quiz-question/index.ts"
+
+[functions.studio-delete-orientation-quiz-question]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-delete-orientation-quiz-question/deno.json"
+entrypoint = "./functions/studio-delete-orientation-quiz-question/index.ts"
+
+[functions.studio-reorder-orientation-quiz-question]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-reorder-orientation-quiz-question/deno.json"
+entrypoint = "./functions/studio-reorder-orientation-quiz-question/index.ts"

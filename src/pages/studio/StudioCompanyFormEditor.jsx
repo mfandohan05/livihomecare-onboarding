@@ -407,6 +407,7 @@ export default function StudioCompanyFormEditor() {
 
     useEffect(() => {
         fetchAll()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [formId, companyId])
 
     const toggleRole = (roleKey) => {

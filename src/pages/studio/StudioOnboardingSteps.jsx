@@ -238,6 +238,7 @@ export default function StudioOnboardingSteps() {
 
     useEffect(() => {
         fetchAll()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [companyId])
 
     const roleLabel = (roleKey) => roles.find((r) => r.role_key === roleKey)?.display_label || roleKey

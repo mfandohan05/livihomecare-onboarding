@@ -16,6 +16,11 @@ import StudioRoleLabels from './pages/studio/StudioRoleLabels';
 import StudioOnboardingSteps from './pages/studio/StudioOnboardingSteps';
 import StudioCompanyForms from './pages/studio/StudioCompanyForms';
 import StudioCompanyFormEditor from './pages/studio/StudioCompanyFormEditor';
+import StudioOfferLetterTemplates from './pages/studio/StudioOfferLetterTemplates';
+import StudioOfferLetterTemplateEditor from './pages/studio/StudioOfferLetterTemplateEditor';
+import StudioOrientationSections from './pages/studio/StudioOrientationSections';
+import StudioOrientationSectionEditor from './pages/studio/StudioOrientationSectionEditor';
+import StudioOrientationPreview from './pages/studio/StudioOrientationPreview';
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from './components/ui/sonner';
 import { Navigate } from 'react-router-dom';
@@ -69,6 +74,11 @@ function App() {
                     <Route path="companies/:id/steps" element={<StudioOnboardingSteps />} />
                     <Route path="companies/:id/forms" element={<StudioCompanyForms />} />
                     <Route path="companies/:id/forms/:formId" element={<StudioCompanyFormEditor />} />
+                    <Route path="companies/:id/offer-letters" element={<StudioOfferLetterTemplates />} />
+                    <Route path="companies/:id/offer-letters/:templateId" element={<StudioOfferLetterTemplateEditor />} />
+                    <Route path="companies/:id/orientation" element={<StudioOrientationSections />} />
+                    <Route path="companies/:id/orientation/:sectionId" element={<StudioOrientationSectionEditor />} />
+                    <Route path="companies/:id/orientation/:sectionId/preview" element={<StudioOrientationPreview />} />
                 </Route>
             </Routes>
         </BrowserRouter>
