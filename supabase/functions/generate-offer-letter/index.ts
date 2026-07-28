@@ -44,6 +44,7 @@ async function fillOfferLetterTemplate(
   trySet('position', caregiver.position_title || '')
 
   trySet('start_date', caregiver.start_date || '')
+  trySet('effective_date_intro', caregiver.start_date || '')
   trySet('effective_date', caregiver.start_date || '')
   trySet('letter_date', today)
   trySet('hourly_rate', caregiver.pay_rate?.toString() || '')
