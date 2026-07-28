@@ -241,7 +241,7 @@ export default function StudioOrientationSectionEditor() {
     const [loading, setLoading] = useState(true)
 
     const [title, setTitle] = useState('')
-    const [passingScore, setPassingScore] = useState(0.8)
+    const [passingScore, setPassingScore] = useState(80)
     const [savingBasics, setSavingBasics] = useState(false)
 
     const [slideDialogOpen, setSlideDialogOpen] = useState(false)
@@ -262,7 +262,7 @@ export default function StudioOrientationSectionEditor() {
             const data = await callStudioFunction('studio-get-orientation-section-detail', { id: sectionId, companyId })
             setSection(data.section)
             setTitle(data.section.title)
-            setPassingScore(data.section.passing_score)
+            setPassingScore(Math.round((data.section.passing_score ?? 0.8) * 100))
             setSlides(data.slides)
             setQuestions(data.questions)
         } catch (err) {
@@ -274,14 +274,13 @@ export default function StudioOrientationSectionEditor() {
 
     useEffect(() => {
         fetchAll()
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [sectionId, companyId])
 
     const saveBasics = async () => {
         setSavingBasics(true)
         try {
             const updated = await callStudioFunction('studio-update-orientation-section', {
-                id: sectionId, companyId, title, passing_score: Number(passingScore),
+                id: sectionId, companyId, title, passing_score: Number(passingScore) / 100,
             })
             setSection((prev) => ({ ...prev, ...updated }))
             toast.success('Saved')
@@ -373,7 +372,14 @@ export default function StudioOrientationSectionEditor() {
                     <h1 className="text-xl font-semibold">{section.title}</h1>
                     <p className="text-sm text-muted-foreground font-mono">{section.section_key}</p>
                 </div>
-                <Button variant="outline" onClick={() => navigate(`/studio/companies/${companyId}/orientation/${sectionId}/preview`)}>
+                <Button
+                    variant="outline"
+                    onClick={() => window.open(
+                        `/studio/companies/${companyId}/orientation/${sectionId}/preview`,
+                        'orientationPreview',
+                        'width=900,height=800,noopener,noreferrer'
+                    )}
+                >
                     <Eye className="w-4 h-4" />
                     Preview as caregiver
                 </Button>
@@ -387,7 +393,10 @@ export default function StudioOrientationSectionEditor() {
                     </div>
                     <div className="space-y-1.5">
                         <Label>Passing score</Label>
-                        <Input type="number" min="0.01" max="1" step="0.01" value={passingScore} onChange={(e) => setPassingScore(e.target.value)} />
+                        <div className="relative">
+                            <Input type="number" min="1" max="100" step="1" value={passingScore} onChange={(e) => setPassingScore(e.target.value)} className="pr-8" />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
+                        </div>
                     </div>
                 </div>
                 <Button onClick={saveBasics} disabled={savingBasics}>{savingBasics ? 'Saving...' : 'Save basics'}</Button>

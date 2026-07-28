@@ -1,3 +1,4 @@
+import LandingPage from './pages/LandingPage'
 import OnboardingPortal from './pages/onboarding/OnboardingPortal'
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminRoute from './components/admin/AdminRoute';
@@ -12,6 +13,7 @@ import PlatformAdminRoute from './components/studio/PlatformAdminRoute';
 import StudioLayout from './components/studio/StudioLayout';
 import StudioCompanies from './pages/studio/StudioCompanies';
 import StudioCompanyEditor from './pages/studio/StudioCompanyEditor';
+import StudioCompanyAdmins from './pages/studio/StudioCompanyAdmins';
 import StudioRoleLabels from './pages/studio/StudioRoleLabels';
 import StudioOnboardingSteps from './pages/studio/StudioOnboardingSteps';
 import StudioCompanyForms from './pages/studio/StudioCompanyForms';
@@ -55,7 +57,7 @@ function App() {
         <BrowserRouter>
             <Toaster position="bottom-center" />
             <Routes>
-                <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
+                <Route path="/" element={<LandingPage />} />
                 <Route path='/onboard/:token' element={<OnboardingPortal />} />
                 <Route path='/admin/login' element={<AdminLogin />} />
                 <Route path='/admin' element={<AdminLayoutWrapper />}>
@@ -70,6 +72,7 @@ function App() {
                     <Route index element={<Navigate to="/studio/companies" replace />} />
                     <Route path="companies" element={<StudioCompanies />} />
                     <Route path="companies/:id" element={<StudioCompanyEditor />} />
+                    <Route path="companies/:id/admins" element={<StudioCompanyAdmins />} />
                     <Route path="companies/:id/roles" element={<StudioRoleLabels />} />
                     <Route path="companies/:id/steps" element={<StudioOnboardingSteps />} />
                     <Route path="companies/:id/forms" element={<StudioCompanyForms />} />

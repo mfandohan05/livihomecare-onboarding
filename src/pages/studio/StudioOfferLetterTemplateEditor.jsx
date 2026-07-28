@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ArrowLeft, Plus, X, ChevronUp, ChevronDown, Upload, RefreshCw, PlayCircle, TriangleAlert, CircleCheck } from 'lucide-react'
@@ -143,12 +144,21 @@ function OfferLetterContentEditor({ content, onChange }) {
                         </div>
                     )}
 
-                    {(block.type === 'heading' || block.type === 'text') && (
-                        <Input
-                            value={block.text || ''}
-                            onChange={(e) => updateBlock(i, { text: e.target.value })}
-                            placeholder={block.type === 'heading' ? 'Heading text' : 'Paragraph text'}
-                        />
+                    {block.type !== 'list' && block.type !== 'numbered_list' && (
+                        block.type === 'heading' ? (
+                            <Input
+                                value={block.text || ''}
+                                onChange={(e) => updateBlock(i, { text: e.target.value })}
+                                placeholder="Heading text"
+                            />
+                        ) : (
+                            <Textarea
+                                value={block.text || ''}
+                                onChange={(e) => updateBlock(i, { text: e.target.value })}
+                                placeholder="Paragraph text"
+                                rows={4}
+                            />
+                        )
                     )}
                 </div>
             ))}
@@ -399,7 +409,7 @@ export default function StudioOfferLetterTemplateEditor() {
                     </SectionCard>
 
                     <SectionCard title="Acknowledgment text" description="Shown just above the signature field">
-                        <Input value={acknowledgmentText} onChange={(e) => setAcknowledgmentText(e.target.value)} />
+                        <Textarea value={acknowledgmentText} onChange={(e) => setAcknowledgmentText(e.target.value)} rows={3} />
                         <p className="text-xs text-muted-foreground">Placeholders: {OFFER_LETTER_PLACEHOLDERS.join(', ')}</p>
                         <Button onClick={saveAcknowledgment} disabled={savingAck}>{savingAck ? 'Saving...' : 'Save acknowledgment text'}</Button>
                     </SectionCard>

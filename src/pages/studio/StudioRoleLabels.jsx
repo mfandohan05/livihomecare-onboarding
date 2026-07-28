@@ -285,8 +285,8 @@ export default function StudioRoleLabels() {
                                                 <span className="text-sm text-muted-foreground">—</span>
                                             ) : (
                                                 role.required_tax_forms.map((f) => (
-                                                    <span key={f} className="text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground uppercase">
-                                                        {f}
+                                                    <span key={f} className="text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                                                        {TAX_FORM_OPTIONS.find((opt) => opt.key === f)?.label || f}
                                                     </span>
                                                 ))
                                             )}

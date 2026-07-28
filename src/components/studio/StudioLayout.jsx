@@ -13,6 +13,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Building2, LogOut, ChevronDown } from 'lucide-react'
+import { useStudioBodyTheme } from '@/hooks/useStudioBodyTheme'
 
 const navItems = [
     { label: 'Companies', path: '/studio/companies', icon: Building2 },
@@ -21,6 +22,7 @@ const navItems = [
 export default function StudioLayout({ children }) {
     const navigate = useNavigate()
     const location = useLocation()
+    useStudioBodyTheme()
 
     const handleSignOut = async () => {
         await supabase.auth.signOut()
@@ -30,11 +32,11 @@ export default function StudioLayout({ children }) {
     const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/')
 
     return (
-        <div className="min-h-screen bg-muted/30">
+        <div className="studio-theme min-h-screen bg-muted/30">
             <div className="bg-white border-b border-border px-4 sm:px-6 md:px-8 py-3 flex items-center justify-between gap-2 sticky top-0 z-50">
                 <div className="flex items-center gap-3 md:gap-8 min-w-0">
                     <div className="flex items-center gap-2.5 cursor-pointer min-w-0" onClick={() => navigate('/studio/companies')}>
-                        <div className="w-9 h-9 rounded-md bg-foreground flex items-center justify-center text-white shrink-0">
+                        <div className="w-9 h-9 rounded-md bg-[var(--primary-color)] flex items-center justify-center text-white shrink-0">
                             <Building2 className="w-5 h-5" />
                         </div>
                         <div className="min-w-0">
@@ -50,7 +52,7 @@ export default function StudioLayout({ children }) {
                                     <NavigationMenuLink
                                         onClick={() => navigate(item.path)}
                                         className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium cursor-pointer transition-colors ${isActive(item.path)
-                                                ? 'bg-muted text-foreground'
+                                                ? 'bg-[var(--secondary-bg)] text-[var(--primary-color)]'
                                                 : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                                             }`}
                                     >

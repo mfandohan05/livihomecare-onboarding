@@ -1,7 +1,5 @@
 import { requirePlatformAdmin, studioCorsHeaders } from '../_shared/platformAdmin.ts'
 
-const COLUMNS = 'company_id, created_at, company_name, legal_name, dba_name, primary_color, secondary_bg_color, hover_color, logo_path, address_line1, city, state, zip, phone, support_email, admin_notification_emails, company_ein'
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: studioCorsHeaders })
 
@@ -11,18 +9,15 @@ Deno.serve(async (req) => {
     if (!companyId) throw new Error('companyId is required')
 
     const { data, error } = await supabase
-      .from('company_data')
-      .select(COLUMNS)
+      .from('admin_users')
+      .select('id, name, email, role, position, created_at')
       .eq('company_id', companyId)
-      .single()
+      .order('name')
 
     if (error) throw error
 
-    const { company_ein, ...rest } = data
-    const company = { ...rest, has_ein: !!company_ein }
-
     return new Response(
-      JSON.stringify(company),
+      JSON.stringify(data),
       { headers: { ...studioCorsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (err) {

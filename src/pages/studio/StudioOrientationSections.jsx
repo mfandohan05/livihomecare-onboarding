@@ -33,13 +33,13 @@ const Field = ({ label, id, children, hint }) => (
 )
 
 function NewSectionDialog({ open, onClose, onCreated }) {
-    const [form, setForm] = useState({ section_key: '', title: '', passing_score: 0.8 })
+    const [form, setForm] = useState({ section_key: '', title: '', passing_score: 80 })
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState(null)
 
     useEffect(() => {
         if (open) {
-            setForm({ section_key: '', title: '', passing_score: 0.8 })
+            setForm({ section_key: '', title: '', passing_score: 80 })
             setError(null)
         }
     }, [open])
@@ -70,17 +70,21 @@ function NewSectionDialog({ open, onClose, onCreated }) {
                     <Field label="Title" id="title">
                         <Input id="title" value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} required />
                     </Field>
-                    <Field label="Passing score" id="passing_score" hint="Fraction of quiz questions that must be correct to pass (e.g. 0.8 = 80%).">
-                        <Input
-                            id="passing_score"
-                            type="number"
-                            min="0.01"
-                            max="1"
-                            step="0.01"
-                            value={form.passing_score}
-                            onChange={(e) => setForm((p) => ({ ...p, passing_score: e.target.value }))}
-                            required
-                        />
+                    <Field label="Passing score" id="passing_score" hint="Percentage of quiz questions that must be correct to pass (e.g. 80 = 80%).">
+                        <div className="relative">
+                            <Input
+                                id="passing_score"
+                                type="number"
+                                min="1"
+                                max="100"
+                                step="1"
+                                value={form.passing_score}
+                                onChange={(e) => setForm((p) => ({ ...p, passing_score: e.target.value }))}
+                                required
+                                className="pr-8"
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
+                        </div>
                     </Field>
 
                     {error && <p className="text-sm text-red-500">{error}</p>}
@@ -126,7 +130,7 @@ export default function StudioOrientationSections() {
             companyId,
             section_key: form.section_key,
             title: form.title,
-            passing_score: Number(form.passing_score),
+            passing_score: Number(form.passing_score) / 100,
         })
         toast.success('Section created')
         setDialogOpen(false)

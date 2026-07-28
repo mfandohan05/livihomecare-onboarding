@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ArrowLeft, Plus, X, ChevronUp, ChevronDown, Upload, RefreshCw, PlayCircle, TriangleAlert, CircleCheck } from 'lucide-react'
@@ -118,11 +119,18 @@ function ContentBlocksEditor({ content, onChange }) {
                                 Add line
                             </Button>
                         </div>
-                    ) : (
+                    ) : block.type === 'heading' ? (
                         <Input
                             value={block.text || ''}
                             onChange={(e) => updateBlock(i, { text: e.target.value })}
-                            placeholder={block.type === 'heading' ? 'Heading text' : 'Paragraph text'}
+                            placeholder="Heading text"
+                        />
+                    ) : (
+                        <Textarea
+                            value={block.text || ''}
+                            onChange={(e) => updateBlock(i, { text: e.target.value })}
+                            placeholder="Paragraph text"
+                            rows={4}
                         />
                     )}
                 </div>

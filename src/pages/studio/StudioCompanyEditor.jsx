@@ -63,7 +63,6 @@ export default function StudioCompanyEditor() {
 
     useEffect(() => {
         fetchCompany()
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id])
 
     const update = (key) => (e) => setCompany((prev) => ({ ...prev, [key]: e.target.value }))
@@ -118,6 +117,7 @@ export default function StudioCompanyEditor() {
                 dba_name: company.dba_name,
                 primary_color: company.primary_color,
                 secondary_bg_color: company.secondary_bg_color,
+                hover_color: company.hover_color,
                 logo_path: company.logo_path,
                 address_line1: company.address_line1,
                 city: company.city,
@@ -166,6 +166,17 @@ export default function StudioCompanyEditor() {
             </button>
 
             <h1 className="text-xl font-semibold mb-6">{company.company_name}</h1>
+
+            <div className="bg-white rounded-xl border border-border p-4 mb-8 flex items-center justify-between">
+                <div>
+                    <p className="text-sm font-medium">Admins</p>
+                    <p className="text-xs text-muted-foreground">Manage who can sign in to this company's /admin portal</p>
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={() => navigate(`/studio/companies/${id}/admins`)}>
+                    Manage admins
+                    <ChevronRight className="w-4 h-4" />
+                </Button>
+            </div>
 
             <div className="bg-white rounded-xl border border-border p-4 mb-8 flex items-center justify-between">
                 <div>
@@ -285,6 +296,17 @@ export default function StudioCompanyEditor() {
                                     className="w-9 h-9 rounded border border-border shrink-0"
                                 />
                                 <Input id="secondary_bg_color" value={company.secondary_bg_color || ''} onChange={update('secondary_bg_color')} placeholder="#000000" />
+                            </div>
+                        </Field>
+                        <Field label="Hover color" id="hover_color" hint="Used for hover states on this company's branded buttons/links">
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="color"
+                                    value={company.hover_color || '#000000'}
+                                    onChange={update('hover_color')}
+                                    className="w-9 h-9 rounded border border-border shrink-0"
+                                />
+                                <Input id="hover_color" value={company.hover_color || ''} onChange={update('hover_color')} placeholder="#000000" />
                             </div>
                         </Field>
                     </div>

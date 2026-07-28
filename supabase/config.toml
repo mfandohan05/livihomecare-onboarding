@@ -908,3 +908,27 @@ enabled = true
 verify_jwt = true
 import_map = "./functions/studio-reorder-orientation-quiz-question/deno.json"
 entrypoint = "./functions/studio-reorder-orientation-quiz-question/index.ts"
+
+[functions.studio-list-company-admins]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-list-company-admins/deno.json"
+entrypoint = "./functions/studio-list-company-admins/index.ts"
+
+[functions.studio-create-company-admin]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-create-company-admin/deno.json"
+entrypoint = "./functions/studio-create-company-admin/index.ts"
+
+[functions.studio-update-company-admin]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-update-company-admin/deno.json"
+entrypoint = "./functions/studio-update-company-admin/index.ts"
+
+[functions.studio-delete-company-admin]
+enabled = true
+verify_jwt = true
+import_map = "./functions/studio-delete-company-admin/deno.json"
+entrypoint = "./functions/studio-delete-company-admin/index.ts"

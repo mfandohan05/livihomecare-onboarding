@@ -2,12 +2,12 @@ import { requirePlatformAdmin, studioCorsHeaders } from '../_shared/platformAdmi
 
 const EDITABLE_FIELDS = [
   'company_name', 'legal_name', 'dba_name',
-  'primary_color', 'secondary_bg_color', 'logo_path',
+  'primary_color', 'secondary_bg_color', 'hover_color', 'logo_path',
   'address_line1', 'city', 'state', 'zip',
   'phone', 'support_email', 'admin_notification_emails',
 ]
 
-const COLUMNS = 'company_id, created_at, company_name, legal_name, dba_name, primary_color, secondary_bg_color, logo_path, address_line1, city, state, zip, phone, support_email, admin_notification_emails, company_ein'
+const COLUMNS = 'company_id, created_at, company_name, legal_name, dba_name, primary_color, secondary_bg_color, hover_color, logo_path, address_line1, city, state, zip, phone, support_email, admin_notification_emails, company_ein'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: studioCorsHeaders })
