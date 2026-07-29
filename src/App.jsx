@@ -25,6 +25,7 @@ import StudioOrientationSectionEditor from './pages/studio/StudioOrientationSect
 import StudioOrientationPreview from './pages/studio/StudioOrientationPreview';
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from './components/ui/sonner';
+import ErrorDialogProvider from './components/global/ErrorDialogProvider';
 import { Navigate } from 'react-router-dom';
 
 import { Outlet } from 'react-router-dom'
@@ -56,6 +57,7 @@ function App() {
     return (
         <BrowserRouter>
             <Toaster position="bottom-center" />
+            <ErrorDialogProvider />
             <Routes>
                 <Route path="/" element={<LandingPage />} />
                 <Route path='/onboard/:token' element={<OnboardingPortal />} />
