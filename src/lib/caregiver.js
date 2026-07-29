@@ -1,21 +1,18 @@
 import { supabase } from './supabase'
 
 export async function getCaregiverByToken(token) {
-  const { data, error } = await supabase
-    .from('caregivers')
-    .select('*, company_id')
-    .eq('token', token)
-    .maybeSingle()
+  const { data, error } = await supabase.functions.invoke('get-caregiver-by-token', {
+    body: { token }
+  })
 
   if (error) return null
   return data
 }
 
-export async function updateCaregiverStatus(caregiverId, status) {
-  const { error } = await supabase
-    .from('caregivers')
-    .update({ status })
-    .eq('id', caregiverId)
+export async function updateCaregiverStatus(token, status) {
+  const { error } = await supabase.functions.invoke('update-caregiver-status', {
+    body: { token, status }
+  })
 
   if (error) console.error('Error updating status:', error)
 }
