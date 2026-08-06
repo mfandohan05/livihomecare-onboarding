@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.0 - 2026-07-28
+- Added studio mode (admin builder/manager)
+- Added error output to UI
+
+
+
 ## 2.0.0 - 2026-07-26
 - MAJOR UPDATE: support for multiple companies added (admin & caregiver side)
 - Updated login screen with new app logo & color scheme
