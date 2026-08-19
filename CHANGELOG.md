@@ -1,9 +1,9 @@
 # Changelog
 
-## 2.1.0 - 2026-07-28
+## 2.1.0 - 2026-08-19
 - Added studio mode (admin builder/manager)
 - Added error output to UI
-
+- Routed caregiver/admin data via Supabase edge functions
 
 
 ## 2.0.0 - 2026-07-26
