@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { ArrowLeft } from 'lucide-react'
 import companyLogo from '@/assets/logo.png'
 
 export default function AdminLogin() {
@@ -49,6 +50,14 @@ export default function AdminLogin() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
             <div className="w-full max-w-sm">
+                <button
+                    onClick={() => navigate('/')}
+                    className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                    Back to home
+                </button>
+
                 <div className="flex justify-center mb-8">
                     <img src={companyLogo} alt="Ready, Set, Onboard!" className="w-[200px]" />
                 </div>

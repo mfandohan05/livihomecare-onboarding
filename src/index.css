@@ -6,6 +6,9 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  --primary-color: #577c09;
+  --hover-color: #3d5906;
+  --secondary-bg: #e8f0d0;
   --brand-green: #577c09;
   --brand-green-light: #e8f0d0;
   --brand-green-dark: #3d5906;
@@ -44,6 +47,17 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+}
+
+.studio-theme {
+  --primary: #0a2e73;
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: #08265d;
+  --accent: #0a2e73;
+  --accent-foreground: oklch(0.985 0 0);
+  --primary-color: #0a2e73;
+  --hover-color: #14449c;
+  --secondary-bg: #e7ecf6;
 }
 
 @theme inline {

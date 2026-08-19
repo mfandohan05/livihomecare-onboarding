@@ -122,10 +122,9 @@ export default function OnboardingPortal() {
                 const expiry = new Date(data.link_expires_at);
 
                 if (new Date() > expiry) {
-                    await supabase
-                        .from('caregivers')
-                        .update({ token: null })
-                        .eq('id', data.id)
+                    await supabase.functions.invoke('expire-caregiver-token', {
+                        body: { token }
+                    })
 
                     setCaregiver(null)
                     setLoading(false)
@@ -198,7 +197,7 @@ export default function OnboardingPortal() {
             return;
         }
         if (!isPreview) {
-            updateCaregiverStatus(caregiver.id, 'in_progress')
+            updateCaregiverStatus(token, 'in_progress')
         }
 
     }, [caregiver?.id])
@@ -240,7 +239,7 @@ export default function OnboardingPortal() {
 
     const isNurse = caregiver?.role === 'nurse_prn' || caregiver?.role === "nurse_director";
 
-    const saveCoordinates = async (caregiverId, personalInfo) => {
+    const saveCoordinates = async (token, personalInfo) => {
         if (!personalInfo?.streetAddress) return
         try {
             const address = `${personalInfo.streetAddress}, ${personalInfo.city}, ${personalInfo.state} ${personalInfo.zip}`
@@ -252,7 +251,9 @@ export default function OnboardingPortal() {
             const data = await res.json()
             if (data.features?.length > 0) {
                 const [lng, lat] = data.features[0].center
-                await supabase.from('caregivers').update({ lat, lng }).eq('id', caregiverId)
+                await supabase.functions.invoke('save-caregiver-location', {
+                    body: { token, lat, lng }
+                })
             }
         } catch (e) {
             console.error('saveCoordinates failed', e)
@@ -273,13 +274,13 @@ export default function OnboardingPortal() {
                 step.id === lastStep.id ? { ...step, status: 'completed' } : step
             ))
             setCaregiver(prev => prev ? { ...prev, status: 'completed' } : prev)
-            updateCaregiverStatus(caregiver.id, 'completed')
+            updateCaregiverStatus(token, 'completed')
 
             const saveLog = async () => {
                 await checkpointTimeLog(caregiver.id, companyId, token, getHoursWorked, true);
 
                 try {
-                    await saveCoordinates(caregiver.id, formData.personalInfo)
+                    await saveCoordinates(token, formData.personalInfo)
                 } catch (err) {
                     console.error('Error saving coordinates:', err)
                 }
