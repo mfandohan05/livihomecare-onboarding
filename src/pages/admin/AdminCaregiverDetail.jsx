@@ -79,7 +79,10 @@ const docLabel = (type) => {
         criminal_background_check: "Criminal Background Check (Signed)",
         "criminal-background-results": "Criminal Background Check Results",
         "nc-healthcare-personnel-check": "NC Health Care Personnel Registry Check",
-        resume: "Resume"
+        resume: "Resume",
+        competency_skills_assessment: "Competency Skills Assessment",
+        oig_exclusion: "OIG Exclusion Screening Result",
+        drug_test_results: "Drug Test Result",
     }
     return labels[type] || type
 }
@@ -327,7 +330,7 @@ export default function AdminCaregiverDetail() {
             'non_compete_signed', 'hep_b_declination_signed', 'offer_letter_generated', 'hepb_status',
             'independent_contractor_agreement', "direct_deposit_authorization", 'wotc_disclosure', 
             "reference_check", "job_description", "non_compete", 'contractor_agreement', 
-            'criminal_background_check', 'drug_test_policy', "new_hire_notification"
+            'criminal_background_check', 'drug_test_policy', "new_hire_notification",
         ]
 
         const bucket = generatedPdfTypes.includes(doc.document_type)
@@ -386,7 +389,10 @@ export default function AdminCaregiverDetail() {
         "job_description": "Job Description Form",
         "criminal_background_check": "Criminal Background Check (Signed)",
         "criminal-background-results": "Criminal Background Check Results",
-        "nc-healthcare-personnel-check": "NC Health Care Personnel Registry Check"
+        "nc-healthcare-personnel-check": "NC Health Care Personnel Registry Check",
+        'competency_skills_assessment': "Competency Skills Assessment",
+        'drug_test_results': 'Drug Test Result',
+        'oig_exclusion': 'OIG Exclusion Screening Result',
     }
 
     const handleUpload = async (documentType, file) => {
@@ -717,8 +723,8 @@ export default function AdminCaregiverDetail() {
     const isNurse = caregiver.role === 'nurse_prn' || caregiver.role === 'nurse_director'
     const isCancelled = caregiver.status === 'cancelled'
     const uploadableDocs = isNurse
-        ? ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'nursingLicense', 'bloodborne_certificate', 'certifications', 'criminal-background-results', 'nc-healthcare-personnel-check', 'resume']
-        : ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'bloodborne_certificate', 'certifications', 'criminal-background-results', 'nc-healthcare-personnel-check', 'resume']
+        ? ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'nursingLicense', 'bloodborne_certificate', 'certifications', 'criminal-background-results', 'nc-healthcare-personnel-check', 'resume', 'competency_skills_assessment', 'drug_test_results', 'oig_exclusion']
+        : ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'bloodborne_certificate', 'certifications', 'criminal-background-results', 'nc-healthcare-personnel-check', 'resume', 'competency_skills_assessment', 'drug_test_results', 'oig_exclusion']
     const adminSignableTypes = signableDocs.filter(d => !d.requiresSection2).flatMap(d => d.ids)
     const groupedSkills = Object.entries(competency?.checked || {})
         .filter(([_, checked]) => checked)
