@@ -962,6 +962,12 @@ export default function TaxFormsPage({ stepLabel, caregiver, companyId, companyD
 
         setSaved(prev => ({ ...prev, [formId]: true }))
         setConfirming(null);
+
+        if (step.id === 'i9') setI9Data({})
+        if (step.id === 'w4') setW4Data({})
+        if (step.id === 'w9') setW9Data({})
+        if (step.id === 'nc4ez') setNc4ezData({})
+
         if (currentStep < steps.length - 1) {
             setCurrentStep(prev => prev + 1)
         }
