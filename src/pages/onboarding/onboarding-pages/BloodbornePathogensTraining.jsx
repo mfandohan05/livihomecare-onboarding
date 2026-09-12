@@ -29,6 +29,27 @@ export default function BloodbornePathogensPage({ stepLabel, onNext, initialData
         loadExistingCertificate()
     }, [caregiver?.id, companyId])
 
+    useEffect(() => {
+        if (!caregiver?.id || !companyId) return
+
+        const loadExistingCertificate = async () => {
+            const { data, error } = await supabase
+                .from('caregiver_documents')
+                .select('file_name')
+                .eq('caregiver_id', caregiver.id)
+                .eq('company_id', companyId)
+                .eq('document_type', 'bloodborne_certificate')
+                .maybeSingle()
+
+            if (!error && data) {
+                setCertificate(data.file_name)
+                setUploaded(true)
+            }
+        }
+
+        loadExistingCertificate()
+    }, [caregiver?.id, companyId])
+
     const supportEmail = companyData?.support_email
 
     const isMobile = !window.matchMedia('(hover: hover)').matches || window.matchMedia('(max-width: 768px)').matches
