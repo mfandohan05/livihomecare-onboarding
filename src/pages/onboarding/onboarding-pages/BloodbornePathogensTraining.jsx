@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Shield, ExternalLink, Upload, CheckCircle, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -7,6 +7,27 @@ export default function BloodbornePathogensPage({ stepLabel, onNext, initialData
     const [certificate, setCertificate] = useState(initialData?.certificate || null)
     const [uploading, setUploading] = useState(false)
     const [uploaded, setUploaded] = useState(initialData?.uploaded || false)
+
+    useEffect(() => {
+        if (!caregiver?.id || !companyId) return
+
+        const loadExistingCertificate = async () => {
+            const { data, error } = await supabase
+                .from('caregiver_documents')
+                .select('file_name')
+                .eq('caregiver_id', caregiver.id)
+                .eq('company_id', companyId)
+                .eq('document_type', 'bloodborne_certificate')
+                .maybeSingle()
+
+            if (!error && data) {
+                setCertificate(data.file_name)
+                setUploaded(true)
+            }
+        }
+
+        loadExistingCertificate()
+    }, [caregiver?.id, companyId])
 
     const isMobile = !window.matchMedia('(hover: hover)').matches || window.matchMedia('(max-width: 768px)').matches
 
