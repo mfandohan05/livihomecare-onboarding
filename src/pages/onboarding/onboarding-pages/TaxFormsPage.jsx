@@ -859,7 +859,7 @@ export default function TaxFormsPage({ stepLabel, caregiver, companyId, companyD
                 body: {
                     caregiverId: caregiver.id,
                     ssn: w4Data.ssn?.replace(/-/g, '') || '',
-                    dob: '',
+                    dob: i9Data.dob || '',
                     ein: '',
                 }
             })
@@ -896,11 +896,10 @@ export default function TaxFormsPage({ stepLabel, caregiver, companyId, companyD
                 body: {
                     caregiverId: caregiver.id,
                     ssn: w9Data.ssn?.replace(/-/g, '') || '',
-                    dob: '',
+                    dob: i9Data.dob || '',
                     ein: w9Data.ein?.replace(/-/g, '') || '',
                 }
             })
-            // Combine address + address2 into the single address field used by backend
             const combinedAddress = [w9Data.address || '', w9Data.address2 || '']
                 .filter(Boolean)
                 .join('\n')

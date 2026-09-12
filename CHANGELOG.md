@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.2.0 - 2026-09-06
+- Fixed bug where birthday was not being properly collected on tax forms step
+- Added support for 3 more types of documents attached to RSOnboard Employee Profile
+
+
 ## 2.1.0 - 2026-08-19
 - Added studio mode (admin builder/manager)
 - Added error output to UI
