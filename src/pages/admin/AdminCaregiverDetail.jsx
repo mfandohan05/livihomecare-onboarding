@@ -125,6 +125,7 @@ export default function AdminCaregiverDetail() {
     const [i9Section2CompletedBy, setI9Section2CompletedBy] = useState(null)
     const [i9Section2CompletedAt, setI9Section2CompletedAt] = useState(null)
     const [resending, setResending] = useState(false);
+    const [markingPayroll, setMarkingPayroll] = useState(false);
     const [hasSsn, setHasSsn] = useState(false);
     const [hasBanking, setHasBanking] = useState(false);
     const [adminEmail, setAdminEmail] = useState('');
@@ -519,6 +520,21 @@ export default function AdminCaregiverDetail() {
             body: { caregiverId: id }
         })
         setResending(false);
+    }
+
+    const handleMarkReadyForPayroll = async () => {
+        setMarkingPayroll(true);
+        await supabase
+            .from('caregivers')
+            .update({ ready_for_payroll: true, ready_for_payroll_at: new Date().toISOString() })
+            .eq('id', id)
+            .eq('company_id', companyId)
+        await supabase.functions.invoke('send-ready-for-payroll-notification', {
+            body: { caregiverId: id }
+        })
+        await fetchAll()
+        await logAction('marked_ready_for_payroll', { admin_name: adminName })
+        setMarkingPayroll(false);
     }
 
     const openCaregiverView = async () => {
@@ -1939,6 +1955,42 @@ export default function AdminCaregiverDetail() {
                             )}
                         </div>
                     )}
+
+                    {caregiver.status === 'completed' && (
+                        <div className="bg-white rounded-xl border border-border p-6">
+                            <h2 className="font-semibold mb-4">Payroll Readiness</h2>
+                            {caregiver.ready_for_payroll ? (
+                                <div className="flex items-center gap-2 text-sm text-[var(--primary-color)]">
+                                    <CheckCircle className="w-4 h-4 shrink-0" />
+                                    <span>
+                                        Marked ready for payroll
+                                        {caregiver.ready_for_payroll_at && ` on ${new Date(caregiver.ready_for_payroll_at).toLocaleDateString('en-US', {
+                                            month: 'short', day: 'numeric', year: 'numeric',
+                                            hour: '2-digit', minute: '2-digit'
+                                        })}`}
+                                    </span>
+                                </div>
+                            ) : (
+                                <>
+                                    <p className="text-sm text-muted-foreground mb-4">
+                                        Once all onboarding paperwork has been reviewed and confirmed complete, mark this new hire ready for payroll. Accounting will be notified automatically.
+                                    </p>
+                                    <Button
+                                        onClick={handleMarkReadyForPayroll}
+                                        disabled={markingPayroll}
+                                        className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white disabled:opacity-50"
+                                    >
+                                        {markingPayroll ? (
+                                            <><Loader2 className="w-4 h-4 animate-spin mr-2" />Marking...</>
+                                        ) : (
+                                            'Mark Ready for Payroll'
+                                        )}
+                                    </Button>
+                                </>
+                            )}
+                        </div>
+                    )}
+
                     <div className="bg-white rounded-xl border border-border p-6">
                         <h2 className="font-semibold mb-4">New Hire Orientation Quiz Results</h2>
                         {quizProgress && quizProgress.length > 0 ? (

@@ -1,8 +1,12 @@
 # Changelog
 
-## 2.2.0 - 2026-09-06
+## 2.2.0 - 2026-09-11
 - Fixed bug where birthday was not being properly collected on tax forms step
 - Added support for 3 more types of documents attached to RSOnboard Employee Profile
+- Fixed bug where bloodborne pathogens certificate being uploaded by the admin was not being properly reflected on the caregiver side
+- Added "Ready for Payroll" status for employees where admins can mark employees that are ready to review by payroll
+- Added audit logging for "Ready for Payroll" status
+
 
 
 ## 2.1.0 - 2026-08-19
