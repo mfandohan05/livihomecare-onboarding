@@ -8,7 +8,7 @@
 - Added audit logging for "Ready for Payroll" status
 - Fixed bug where audit logs were not showing correct names for important actions, only emails
 - Added Employee Policy Manual to Forms & Agreements w/scrollspy
-
+- Made it so that tax form values are cleared immediately from HTML after submissions
 
 ## 2.1.0 - 2026-08-19
 - Added studio mode (admin builder/manager)
