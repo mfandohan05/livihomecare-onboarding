@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.2.0 - 2026-09-11
+## 2.2.0 - 2026-09-13
 - Fixed bug where birthday was not being properly collected on tax forms step
 - Added support for 3 more types of documents attached to RSOnboard Employee Profile
 - Fixed bug where bloodborne pathogens certificate being uploaded by the admin was not being properly reflected on the caregiver side

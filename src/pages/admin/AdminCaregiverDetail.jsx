@@ -398,12 +398,16 @@ export default function AdminCaregiverDetail() {
 
     const handleUpload = async (documentType, file) => {
         setUploadingDoc(documentType)
+
+        const isReferenceCheck = documentType === 'reference_check'
+        const bucket = isReferenceCheck ? 'generated-pdfs' : 'documents'
         const fileExt = file.name.split('.').pop()
         const sanitizedName = caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')
-        const filePath = `${companyId}/${id}/${sanitizedName}_${documentType}.${fileExt}`
+        const fileName = isReferenceCheck ? 'reference_check.pdf' : `${sanitizedName}_${documentType}.${fileExt}`
+        const filePath = isReferenceCheck ? `${companyId}/${id}/reference_check.pdf` : `${companyId}/${id}/${fileName}`
 
         const { error: uploadError } = await supabase.storage
-            .from('documents')
+            .from(bucket)
             .upload(filePath, file, { upsert: true })
 
         if (!uploadError) {
@@ -412,10 +416,10 @@ export default function AdminCaregiverDetail() {
                 .upsert({
                     caregiver_id: id,
                     document_type: documentType,
-                    file_name: `${sanitizedName}_${documentType}.${fileExt}`,
+                    file_name: fileName,
                     file_path: filePath,
                     file_size: file.size,
-                    mime_type: file.type,
+                    mime_type: isReferenceCheck ? 'application/pdf' : file.type,
                     company_id: companyId,
                 }, { onConflict: 'caregiver_id, document_type' })
                 .eq('company_id', companyId)
@@ -739,8 +743,8 @@ export default function AdminCaregiverDetail() {
     const isNurse = caregiver.role === 'nurse_prn' || caregiver.role === 'nurse_director'
     const isCancelled = caregiver.status === 'cancelled'
     const uploadableDocs = isNurse
-        ? ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'nursingLicense', 'bloodborne_certificate', 'certifications', 'criminal-background-results', 'nc-healthcare-personnel-check', 'resume', 'competency_skills_assessment', 'drug_test_results', 'oig_exclusion']
-        : ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'bloodborne_certificate', 'certifications', 'criminal-background-results', 'nc-healthcare-personnel-check', 'resume', 'competency_skills_assessment', 'drug_test_results', 'oig_exclusion']
+        ? ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'nursingLicense', 'bloodborne_certificate', 'certifications', 'criminal-background-results', 'nc-healthcare-personnel-check', 'resume', 'competency_skills_assessment', 'drug_test_results', 'oig_exclusion', 'reference_check']
+        : ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'bloodborne_certificate', 'certifications', 'criminal-background-results', 'nc-healthcare-personnel-check', 'resume', 'competency_skills_assessment', 'drug_test_results', 'oig_exclusion', 'reference_check']
     const adminSignableTypes = signableDocs.filter(d => !d.requiresSection2).flatMap(d => d.ids)
     const groupedSkills = Object.entries(competency?.checked || {})
         .filter(([_, checked]) => checked)
@@ -1557,7 +1561,7 @@ export default function AdminCaregiverDetail() {
                                             <label className="cursor-pointer shrink-0">
                                                 <input
                                                     type="file"
-                                                    accept="image/*,.pdf"
+                                                    accept={docType === 'reference_check' ? '.pdf' : 'image/*,.pdf'}
                                                     className="hidden"
                                                     onChange={(e) => {
                                                         const file = e.target.files[0]
