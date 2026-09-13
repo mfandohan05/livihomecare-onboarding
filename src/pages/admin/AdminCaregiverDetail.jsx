@@ -83,6 +83,7 @@ const docLabel = (type) => {
         competency_skills_assessment: "Competency Skills Assessment",
         oig_exclusion: "OIG Exclusion Screening Result",
         drug_test_results: "Drug Test Result",
+        employee_policy_manual: "Employee Policy Manual (Signed)",
     }
     return labels[type] || type
 }
@@ -330,8 +331,9 @@ export default function AdminCaregiverDetail() {
             'new_hire_notification_signed', 'orientation_checklist_signed', 'pre_employment_orientation',
             'non_compete_signed', 'hep_b_declination_signed', 'offer_letter_generated', 'hepb_status',
             'independent_contractor_agreement', "direct_deposit_authorization", 'wotc_disclosure', 
-            "reference_check", "job_description", "non_compete", 'contractor_agreement', 
+            "reference_check", "job_description", "non_compete", 'contractor_agreement',
             'criminal_background_check', 'drug_test_policy', "new_hire_notification",
+            'employee_policy_manual',
         ]
 
         const bucket = generatedPdfTypes.includes(doc.document_type)
@@ -394,6 +396,7 @@ export default function AdminCaregiverDetail() {
         'competency_skills_assessment': "Competency Skills Assessment",
         'drug_test_results': 'Drug Test Result',
         'oig_exclusion': 'OIG Exclusion Screening Result',
+        'employee_policy_manual': 'Employee Policy Manual (Signed)',
     }
 
     const handleUpload = async (documentType, file) => {
