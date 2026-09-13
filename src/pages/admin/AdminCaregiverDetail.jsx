@@ -87,49 +87,6 @@ const docLabel = (type) => {
     return labels[type] || type
 }
 
-const DOCUMENT_CATEGORIES = [
-    {
-        key: 'caregiver_uploaded',
-        label: 'Caregiver-Uploaded Documents',
-        types: ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'certifications', 'nursingLicense', 'bloodborne_certificate'],
-    },
-    {
-        key: 'screening',
-        label: 'Screening & Background Check Results',
-        types: ['criminal-background-results', 'nc-healthcare-personnel-check', 'resume', 'competency_skills_assessment', 'drug_test_results', 'oig_exclusion', 'reference_check'],
-    },
-    {
-        key: 'tax',
-        label: 'Tax Documents',
-        types: ['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'],
-    },
-    {
-        key: 'employment',
-        label: 'Offer Letter & Employment Agreement',
-        types: ['offer_letter_generated', 'offer_letter_other', 'job_description', 'independent_contractor_agreement'],
-    },
-    {
-        key: 'signed_forms',
-        label: 'Signed Forms & Agreements',
-        types: [
-            'non_compete', 'non_compete_signed',
-            'drug_test_policy', 'drug_test_policy_signed',
-            'hepb_status', 'hep_b_declination_signed',
-            'criminal_background_check', 'criminal_background_check_signed',
-            'new_hire_notification', 'new_hire_notification_signed',
-            'pre_employment_orientation', 'orientation_checklist_signed',
-            'wotc_disclosure', 'direct_deposit_authorization', 'contractor_agreement',
-        ],
-    },
-]
-
-const categorizeDocument = (documentType, signableTypeIds) => {
-    const match = DOCUMENT_CATEGORIES.find(cat => cat.types.includes(documentType))
-    if (match) return match.key
-    if (signableTypeIds.includes(documentType)) return 'signed_forms'
-    return 'other'
-}
-
 export default function AdminCaregiverDetail() {
     const { id } = useParams()
     const navigate = useNavigate()
@@ -789,21 +746,6 @@ export default function AdminCaregiverDetail() {
         ? ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'nursingLicense', 'bloodborne_certificate', 'certifications', 'criminal-background-results', 'nc-healthcare-personnel-check', 'resume', 'competency_skills_assessment', 'drug_test_results', 'oig_exclusion', 'reference_check']
         : ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'bloodborne_certificate', 'certifications', 'criminal-background-results', 'nc-healthcare-personnel-check', 'resume', 'competency_skills_assessment', 'drug_test_results', 'oig_exclusion', 'reference_check']
     const adminSignableTypes = signableDocs.filter(d => !d.requiresSection2).flatMap(d => d.ids)
-    const visibleDocuments = documents.filter(doc => {
-        if (doc.document_type === 'w4_completed') {
-            return caregiver.role !== 'nurse_prn' && caregiver.role !== 'nurse_director'
-        }
-        return true;
-    })
-    const documentGroups = [
-        ...DOCUMENT_CATEGORIES,
-        { key: 'other', label: 'Other Documents' },
-    ]
-        .map(cat => ({
-            ...cat,
-            docs: visibleDocuments.filter(d => categorizeDocument(d.document_type, adminSignableTypes) === cat.key),
-        }))
-        .filter(cat => cat.docs.length > 0)
     const groupedSkills = Object.entries(competency?.checked || {})
         .filter(([_, checked]) => checked)
         .reduce((acc, [key]) => {
@@ -1563,50 +1505,46 @@ export default function AdminCaregiverDetail() {
                         )}
                         <h2 className="font-semibold mb-4">Documents</h2>
 
-                        {documentGroups.length > 0 && (
-                            <div className="space-y-5 mb-6">
-                                {documentGroups.map(group => (
-                                    <div key={group.key}>
-                                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-                                            {group.label}
-                                        </p>
-                                        <div className="space-y-2">
-                                            {group.docs.map((doc) => (
-                                                <div key={doc.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2 px-3 rounded-lg border border-border hover:bg-muted/30 transition-colors">
-                                                    <div className="min-w-0">
-                                                        <p className="text-sm font-medium">{docLabel(doc.document_type)}</p>
-                                                        <p className="text-xs text-muted-foreground truncate">{doc.file_name}</p>
-                                                        {adminSignableTypes.includes(doc.document_type) && !doc.admin_signed_at && (
-                                                            <span className="inline-block mt-1 max-w-full text-xs font-medium px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200">
-                                                                Notice: Admin signature required
-                                                            </span>
-                                                        )}
-                                                        {adminSignableTypes.includes(doc.document_type) && doc.admin_signed_at && (
-                                                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--secondary-bg)] text-[var(--primary-color)] shrink-0">
-                                                                Admin signed
-                                                            </span>
-                                                        )}
-                                                        {doc.document_type === 'i9_completed' && !i9Section2Completed && (
-                                                            <span className="inline-block mt-1 max-w-full text-xs font-medium px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200">
-                                                                Notice: Please use the Sign/Complete feature to complete Section 2.
-                                                            </span>
-                                                        )}
-                                                        {doc.document_type === 'i9_completed' && i9Section2Completed && (
-                                                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--secondary-bg)] text-[var(--primary-color)] shrink-0">
-                                                                Section 2 complete
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <button
-                                                        onClick={() => handleDownload(doc)}
-                                                        className="flex items-center gap-1.5 text-xs text-[var(--primary-color)] hover:underline shrink-0"
-                                                    >
-                                                        <Eye className="w-3.5 h-3.5" />
-                                                        View Document
-                                                    </button>
-                                                </div>
-                                            ))}
+                        {documents.length > 0 && (
+                            <div className="space-y-2 mb-6">
+                                {documents.filter(doc => {
+                                    if (doc.document_type === 'w4_completed') {
+                                        return caregiver.role !== 'nurse_prn' && caregiver.role !== 'nurse_director'
+                                    }
+                                    return true;
+                                }).map((doc) => (
+                                    <div key={doc.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2 px-3 rounded-lg border border-border hover:bg-muted/30 transition-colors">
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-medium">{docLabel(doc.document_type)}</p>
+                                            <p className="text-xs text-muted-foreground truncate">{doc.file_name}</p>
+                                            {adminSignableTypes.includes(doc.document_type) && !doc.admin_signed_at && (
+                                                <span className="inline-block mt-1 max-w-full text-xs font-medium px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200">
+                                                    Notice: Admin signature required
+                                                </span>
+                                            )}
+                                            {adminSignableTypes.includes(doc.document_type) && doc.admin_signed_at && (
+                                                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--secondary-bg)] text-[var(--primary-color)] shrink-0">
+                                                    Admin signed
+                                                </span>
+                                            )}
+                                            {doc.document_type === 'i9_completed' && !i9Section2Completed && (
+                                                <span className="inline-block mt-1 max-w-full text-xs font-medium px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200">
+                                                    Notice: Please use the Sign/Complete feature to complete Section 2.
+                                                </span>
+                                            )}
+                                            {doc.document_type === 'i9_completed' && i9Section2Completed && (
+                                                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--secondary-bg)] text-[var(--primary-color)] shrink-0">
+                                                    Section 2 complete
+                                                </span>
+                                            )}
                                         </div>
+                                        <button
+                                            onClick={() => handleDownload(doc)}
+                                            className="flex items-center gap-1.5 text-xs text-[var(--primary-color)] hover:underline shrink-0"
+                                        >
+                                            <Eye className="w-3.5 h-3.5" />
+                                            View Document
+                                        </button>
                                     </div>
                                 ))}
                             </div>
