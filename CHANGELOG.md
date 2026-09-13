@@ -7,6 +7,7 @@
 - Added "Ready for Payroll" status for employees where admins can mark employees that are ready to review by payroll
 - Added audit logging for "Ready for Payroll" status
 - Fixed bug where audit logs were not showing correct names for important actions, only emails
+- Added Employee Policy Manual to Forms & Agreements w/scrollspy
 
 
 ## 2.1.0 - 2026-08-19
