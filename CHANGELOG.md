@@ -6,7 +6,7 @@
 - Fixed bug where bloodborne pathogens certificate being uploaded by the admin was not being properly reflected on the caregiver side
 - Added "Ready for Payroll" status for employees where admins can mark employees that are ready to review by payroll
 - Added audit logging for "Ready for Payroll" status
-
+- Fixed bug where audit logs were not showing correct names for important actions, only emails
 
 
 ## 2.1.0 - 2026-08-19
