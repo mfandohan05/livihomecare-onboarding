@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label'
 import { ScrollText, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { formatPhone } from '@/lib/formUtils'
+import PdfScrollViewer from '@/components/global/PdfScrollViewer'
 
 const today = new Date().toLocaleDateString('en-US', {
     year: 'numeric',
@@ -163,6 +164,9 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, companyId,
         { name: '', company: '', relationship: '', phone: '', email: '' },
     ])
 
+    const [templateUrls, setTemplateUrls] = useState({})
+    const [scrollConfirmed, setScrollConfirmed] = useState({})
+
     useEffect(() => {
         if (!companyId || !caregiver?.role) return
 
@@ -186,6 +190,23 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, companyId,
 
         loadForms()
     }, [companyId, caregiver?.role])
+
+    useEffect(() => {
+        if (!caregiver?.id) return
+        const needsTemplate = forms.filter(
+            (f) => f.config?.requires_scroll_confirmation && expanded[f.form_key] && !templateUrls[f.form_key]
+        )
+        if (needsTemplate.length === 0) return
+
+        needsTemplate.forEach(async (form) => {
+            const { data, error } = await supabase.functions.invoke('get-form-template-url', {
+                body: { caregiverId: caregiver.id, formKey: form.form_key },
+            })
+            if (!error && data?.signedUrl) {
+                setTemplateUrls((prev) => ({ ...prev, [form.form_key]: data.signedUrl }))
+            }
+        })
+    }, [expanded, forms, caregiver?.id, templateUrls])
 
     const toggle = (formKey) => {
         setExpanded(prev => ({ ...prev, [formKey]: !prev[formKey] }))
@@ -608,11 +629,38 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, companyId,
             )
         }
 
+        const requiresScrollConfirmation = !!form.config?.requires_scroll_confirmation
+        const hasScrolledThrough = !requiresScrollConfirmation || scrollConfirmed[form.form_key]
+
         return (
             <>
-                <FormContent>
-                    {(form.content || []).map((block, i) => renderContentBlock(block, i, caregiver))}
-                </FormContent>
+                {requiresScrollConfirmation ? (
+                    <div className="mb-4">
+                        <p className="text-sm text-muted-foreground mb-3">
+                            Please scroll through and review the entire document below before signing.
+                        </p>
+                        {templateUrls[form.form_key] ? (
+                            <PdfScrollViewer
+                                fileUrl={templateUrls[form.form_key]}
+                                onComplete={() => setScrollConfirmed((prev) => (prev[form.form_key] ? prev : { ...prev, [form.form_key]: true }))}
+                            />
+                        ) : (
+                            <div className="flex items-center justify-center py-16 border border-border rounded-lg">
+                                <Loader2 className="w-5 h-5 animate-spin text-muted-foreground mr-2" />
+                                <span className="text-sm text-muted-foreground">Loading document...</span>
+                            </div>
+                        )}
+                        {!hasScrolledThrough && (
+                            <p className="text-xs text-muted-foreground mt-2">
+                                Scroll through the full document above to enable signing.
+                            </p>
+                        )}
+                    </div>
+                ) : (
+                    <FormContent>
+                        {(form.content || []).map((block, i) => renderContentBlock(block, i, caregiver))}
+                    </FormContent>
+                )}
                 <SignatureField
                     formKey={form.form_key}
                     signatures={signatures}
@@ -622,7 +670,7 @@ export default function FormsApplicationsPage({ stepLabel, caregiver, companyId,
                 />
                 <FormButton
                     isDone={completed[form.form_key]}
-                    disabled={!signatures[form.form_key]?.trim() || completed[form.form_key]}
+                    disabled={!signatures[form.form_key]?.trim() || completed[form.form_key] || !hasScrolledThrough}
                     onClick={() => markComplete(form)}
                 />
             </>
