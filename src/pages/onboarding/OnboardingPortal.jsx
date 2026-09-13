@@ -479,6 +479,7 @@ export default function OnboardingPortal() {
             case 'Bloodborne Pathogens':
                 return <BloodbornePathogensTraining
                     companyId={companyId}
+                    companyData={companyData}
                     stepLabel={stepLabel}
                     onNext={handleNext}
                     initialData={formData.bloodborne}
