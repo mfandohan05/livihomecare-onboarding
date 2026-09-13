@@ -1,6 +1,3 @@
-// Mirrors interpolate() in src/pages/onboarding/onboarding-pages/OfferLetterPage.jsx —
-// the exact placeholder strings that page recognizes inside content blocks and
-// acknowledgment_text. Anything else typed as {{...}} is left as literal text.
 export const OFFER_LETTER_PLACEHOLDERS = [
     '{{today}}',
     '{{caregiver.name}}',

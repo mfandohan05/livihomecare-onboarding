@@ -46,6 +46,7 @@ export default function StudioCompanyEditor() {
     const [saving, setSaving] = useState(false)
     const [uploadingLogo, setUploadingLogo] = useState(false)
     const [emailDraft, setEmailDraft] = useState('')
+    const [accountingEmailDraft, setAccountingEmailDraft] = useState('')
     const [einDraft, setEinDraft] = useState('')
     const [editingEin, setEditingEin] = useState(false)
 
@@ -53,7 +54,11 @@ export default function StudioCompanyEditor() {
         setLoading(true)
         try {
             const data = await callStudioFunction('studio-get-company', { companyId: id })
-            setCompany({ ...data, admin_notification_emails: data.admin_notification_emails || [] })
+            setCompany({
+                ...data,
+                admin_notification_emails: data.admin_notification_emails || [],
+                accounting_notification_emails: data.accounting_notification_emails || [],
+            })
         } catch (err) {
             toast.error(err.message)
         } finally {
@@ -82,6 +87,24 @@ export default function StudioCompanyEditor() {
         setCompany((prev) => ({
             ...prev,
             admin_notification_emails: prev.admin_notification_emails.filter((e) => e !== email),
+        }))
+    }
+
+    const addAccountingEmail = () => {
+        const email = accountingEmailDraft.trim()
+        if (!email) return
+        if (company.accounting_notification_emails.includes(email)) {
+            setAccountingEmailDraft('')
+            return
+        }
+        setCompany((prev) => ({ ...prev, accounting_notification_emails: [...prev.accounting_notification_emails, email] }))
+        setAccountingEmailDraft('')
+    }
+
+    const removeAccountingEmail = (email) => {
+        setCompany((prev) => ({
+            ...prev,
+            accounting_notification_emails: prev.accounting_notification_emails.filter((e) => e !== email),
         }))
     }
 
@@ -126,13 +149,18 @@ export default function StudioCompanyEditor() {
                 phone: company.phone,
                 support_email: company.support_email,
                 admin_notification_emails: company.admin_notification_emails,
+                accounting_notification_emails: company.accounting_notification_emails,
             }
             if (editingEin && einDraft.trim()) {
                 payload.ein = einDraft.trim()
             }
 
             const updated = await callStudioFunction('studio-update-company', payload)
-            setCompany({ ...updated, admin_notification_emails: updated.admin_notification_emails || [] })
+            setCompany({
+                ...updated,
+                admin_notification_emails: updated.admin_notification_emails || [],
+                accounting_notification_emails: updated.accounting_notification_emails || [],
+            })
             setEinDraft('')
             setEditingEin(false)
             toast.success('Company saved')
@@ -365,6 +393,45 @@ export default function StudioCompanyEditor() {
                                 placeholder="add an email and press Enter"
                             />
                             <Button type="button" variant="outline" onClick={addEmail}>
+                                <Plus className="w-4 h-4" />
+                                Add
+                            </Button>
+                        </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <Label>Accounting notification emails</Label>
+                        <p className="text-xs text-muted-foreground">
+                            Notified when a new hire is marked "Ready for Payroll", and in the Friday weekly digest.
+                        </p>
+                        <div className="flex flex-wrap gap-2 mb-2">
+                            {company.accounting_notification_emails.map((email) => (
+                                <span key={email} className="flex items-center gap-1.5 bg-muted rounded-full pl-3 pr-1 py-1 text-sm">
+                                    {email}
+                                    <button
+                                        type="button"
+                                        onClick={() => removeAccountingEmail(email)}
+                                        className="w-5 h-5 rounded-full flex items-center justify-center hover:bg-background/80 text-muted-foreground hover:text-foreground"
+                                    >
+                                        <X className="w-3 h-3" />
+                                    </button>
+                                </span>
+                            ))}
+                        </div>
+                        <div className="flex gap-2">
+                            <Input
+                                type="email"
+                                value={accountingEmailDraft}
+                                onChange={(e) => setAccountingEmailDraft(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault()
+                                        addAccountingEmail()
+                                    }
+                                }}
+                                placeholder="add an email and press Enter"
+                            />
+                            <Button type="button" variant="outline" onClick={addAccountingEmail}>
                                 <Plus className="w-4 h-4" />
                                 Add
                             </Button>

@@ -859,7 +859,7 @@ export default function TaxFormsPage({ stepLabel, caregiver, companyId, companyD
                 body: {
                     caregiverId: caregiver.id,
                     ssn: w4Data.ssn?.replace(/-/g, '') || '',
-                    dob: '',
+                    dob: i9Data.dob || '',
                     ein: '',
                 }
             })
@@ -896,11 +896,10 @@ export default function TaxFormsPage({ stepLabel, caregiver, companyId, companyD
                 body: {
                     caregiverId: caregiver.id,
                     ssn: w9Data.ssn?.replace(/-/g, '') || '',
-                    dob: '',
+                    dob: i9Data.dob || '',
                     ein: w9Data.ein?.replace(/-/g, '') || '',
                 }
             })
-            // Combine address + address2 into the single address field used by backend
             const combinedAddress = [w9Data.address || '', w9Data.address2 || '']
                 .filter(Boolean)
                 .join('\n')
@@ -963,6 +962,12 @@ export default function TaxFormsPage({ stepLabel, caregiver, companyId, companyD
 
         setSaved(prev => ({ ...prev, [formId]: true }))
         setConfirming(null);
+
+        if (step.id === 'i9') setI9Data({})
+        if (step.id === 'w4') setW4Data({})
+        if (step.id === 'w9') setW9Data({})
+        if (step.id === 'nc4ez') setNc4ezData({})
+
         if (currentStep < steps.length - 1) {
             setCurrentStep(prev => prev + 1)
         }

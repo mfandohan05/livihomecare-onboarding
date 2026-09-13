@@ -1,12 +1,35 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Shield, ExternalLink, Upload, CheckCircle, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
-export default function BloodbornePathogensPage({ stepLabel, onNext, initialData, onChange, caregiver, companyId }) {
+export default function BloodbornePathogensPage({ stepLabel, onNext, initialData, onChange, caregiver, companyId, companyData }) {
     const [certificate, setCertificate] = useState(initialData?.certificate || null)
     const [uploading, setUploading] = useState(false)
     const [uploaded, setUploaded] = useState(initialData?.uploaded || false)
+
+    useEffect(() => {
+        if (!caregiver?.id || !companyId) return
+
+        const loadExistingCertificate = async () => {
+            const { data, error } = await supabase
+                .from('caregiver_documents')
+                .select('file_name')
+                .eq('caregiver_id', caregiver.id)
+                .eq('company_id', companyId)
+                .eq('document_type', 'bloodborne_certificate')
+                .maybeSingle()
+
+            if (!error && data) {
+                setCertificate(data.file_name)
+                setUploaded(true)
+            }
+        }
+
+        loadExistingCertificate()
+    }, [caregiver?.id, companyId])
+
+    const supportEmail = companyData?.support_email
 
     const isMobile = !window.matchMedia('(hover: hover)').matches || window.matchMedia('(max-width: 768px)').matches
 
@@ -68,8 +91,11 @@ export default function BloodbornePathogensPage({ stepLabel, onNext, initialData
             </div>
 
             <h1 className="text-3xl font-bold mb-2">Bloodborne Pathogens Training</h1>
-            <p className="text-muted-foreground mb-8">
+            <p className="text-muted-foreground mb-2">
                 All new hires are required to complete Bloodborne Pathogens training and submit a certificate of completion before starting work. If you already have a valid, unexpired certificate, you can skip the training and upload it directly.
+            </p>
+            <p className="text-muted-foreground mb-8">
+                The certificate cost is $9.95 + taxes, which is reimbursable after completing multiple shifts.
             </p>
 
             <div className="bg-[var(--secondary-bg)] border border-[var(--primary-color)]/20 rounded-xl p-4 md:p-6 mb-6">
@@ -80,13 +106,22 @@ export default function BloodbornePathogensPage({ stepLabel, onNext, initialData
                     <div className="flex-1">
                         <p className="font-semibold mb-1">Bloodborne Pathogens Course</p>
                         <p className="text-sm text-muted-foreground mb-4">
-                            Complete the online training at cpr.io. The course takes approximately 30-60 minutes. Upon completion, download your certificate and upload it below.
+                            Please review these steps before starting the training:
                         </p>
                         <ol className="text-sm text-muted-foreground space-y-1 mb-4 list-decimal pl-4">
-                            <li>Click the button below to open the training {isMobile ? 'in a new tab' : 'in a popup'}</li>
-                            <li>Complete the course and pass the assessment</li>
-                            <li>Download your certificate of completion</li>
-                            <li>Upload the certificate below</li>
+                            <li>Click the button below — you'll be redirected to an external site {isMobile ? 'in a new tab' : 'in a popup'} to start the training.</li>
+                            <li>Complete the course, then once you pass the test, click "Get my certificate."</li>
+                            <li>Enter your personal information, and for Delivery Option, select "Digital." Any other certificate type is optional and will not be reimbursed.</li>
+                            <li>
+                                Proceed to checkout, enter your billing details, and in the "Email Card to Employer" field, enter{' '}
+                                {supportEmail
+                                    ? <>our company email: <span className="font-medium text-foreground">{supportEmail}</span></>
+                                    : "your employer's email"}
+                                .
+                            </li>
+                            <li>Click "Place the order," then click "Print Wallet Card" to view, download, and save your certificate. It will not save automatically — you must download it yourself.</li>
+                            <li>Upload the certificate below.</li>
+                            <li>Click "Save & Continue" to complete this step.</li>
                         </ol>
                         <button
                             onClick={handleOpenTraining}

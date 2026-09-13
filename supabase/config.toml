@@ -627,6 +627,12 @@ entrypoint = "./functions/generate-generic-signed-document/index.ts"
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/generate-generic-signed-document/*.html" ]
 
+[functions.get-form-template-url]
+enabled = true
+verify_jwt = true
+import_map = "./functions/get-form-template-url/deno.json"
+entrypoint = "./functions/get-form-template-url/index.ts"
+
 [functions.studio-whoami]
 enabled = true
 verify_jwt = true

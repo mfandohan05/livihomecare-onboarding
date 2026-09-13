@@ -79,9 +79,56 @@ const docLabel = (type) => {
         criminal_background_check: "Criminal Background Check (Signed)",
         "criminal-background-results": "Criminal Background Check Results",
         "nc-healthcare-personnel-check": "NC Health Care Personnel Registry Check",
-        resume: "Resume"
+        resume: "Resume",
+        competency_skills_assessment: "Competency Skills Assessment",
+        oig_exclusion: "OIG Exclusion Screening Result",
+        drug_test_results: "Drug Test Result",
+        employee_policy_manual: "Employee Policy Manual (Signed)",
     }
     return labels[type] || type
+}
+
+const DOCUMENT_CATEGORIES = [
+    {
+        key: 'caregiver_uploaded',
+        label: 'Caregiver-Uploaded Documents',
+        types: ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'certifications', 'nursingLicense', 'bloodborne_certificate'],
+    },
+    {
+        key: 'screening',
+        label: 'Screening & Background Check Results',
+        types: ['criminal-background-results', 'nc-healthcare-personnel-check', 'resume', 'competency_skills_assessment', 'drug_test_results', 'oig_exclusion', 'reference_check'],
+    },
+    {
+        key: 'tax',
+        label: 'Tax Documents',
+        types: ['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'],
+    },
+    {
+        key: 'employment',
+        label: 'Offer Letter & Employment Agreement',
+        types: ['offer_letter_generated', 'offer_letter_other', 'job_description', 'independent_contractor_agreement'],
+    },
+    {
+        key: 'signed_forms',
+        label: 'Signed Forms & Agreements',
+        types: [
+            'non_compete', 'non_compete_signed',
+            'drug_test_policy', 'drug_test_policy_signed',
+            'hepb_status', 'hep_b_declination_signed',
+            'criminal_background_check', 'criminal_background_check_signed',
+            'new_hire_notification', 'new_hire_notification_signed',
+            'pre_employment_orientation', 'orientation_checklist_signed',
+            'wotc_disclosure', 'direct_deposit_authorization', 'contractor_agreement',
+        ],
+    },
+]
+
+const categorizeDocument = (documentType, signableTypeIds) => {
+    const match = DOCUMENT_CATEGORIES.find(cat => cat.types.includes(documentType))
+    if (match) return match.key
+    if (signableTypeIds.includes(documentType)) return 'signed_forms'
+    return 'other'
 }
 
 export default function AdminCaregiverDetail() {
@@ -122,6 +169,7 @@ export default function AdminCaregiverDetail() {
     const [i9Section2CompletedBy, setI9Section2CompletedBy] = useState(null)
     const [i9Section2CompletedAt, setI9Section2CompletedAt] = useState(null)
     const [resending, setResending] = useState(false);
+    const [markingPayroll, setMarkingPayroll] = useState(false);
     const [hasSsn, setHasSsn] = useState(false);
     const [hasBanking, setHasBanking] = useState(false);
     const [adminEmail, setAdminEmail] = useState('');
@@ -326,8 +374,9 @@ export default function AdminCaregiverDetail() {
             'new_hire_notification_signed', 'orientation_checklist_signed', 'pre_employment_orientation',
             'non_compete_signed', 'hep_b_declination_signed', 'offer_letter_generated', 'hepb_status',
             'independent_contractor_agreement', "direct_deposit_authorization", 'wotc_disclosure', 
-            "reference_check", "job_description", "non_compete", 'contractor_agreement', 
-            'criminal_background_check', 'drug_test_policy', "new_hire_notification"
+            "reference_check", "job_description", "non_compete", 'contractor_agreement',
+            'criminal_background_check', 'drug_test_policy', "new_hire_notification",
+            'employee_policy_manual',
         ]
 
         const bucket = generatedPdfTypes.includes(doc.document_type)
@@ -386,17 +435,25 @@ export default function AdminCaregiverDetail() {
         "job_description": "Job Description Form",
         "criminal_background_check": "Criminal Background Check (Signed)",
         "criminal-background-results": "Criminal Background Check Results",
-        "nc-healthcare-personnel-check": "NC Health Care Personnel Registry Check"
+        "nc-healthcare-personnel-check": "NC Health Care Personnel Registry Check",
+        'competency_skills_assessment': "Competency Skills Assessment",
+        'drug_test_results': 'Drug Test Result',
+        'oig_exclusion': 'OIG Exclusion Screening Result',
+        'employee_policy_manual': 'Employee Policy Manual (Signed)',
     }
 
     const handleUpload = async (documentType, file) => {
         setUploadingDoc(documentType)
+
+        const isReferenceCheck = documentType === 'reference_check'
+        const bucket = isReferenceCheck ? 'generated-pdfs' : 'documents'
         const fileExt = file.name.split('.').pop()
         const sanitizedName = caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')
-        const filePath = `${companyId}/${id}/${sanitizedName}_${documentType}.${fileExt}`
+        const fileName = isReferenceCheck ? 'reference_check.pdf' : `${sanitizedName}_${documentType}.${fileExt}`
+        const filePath = isReferenceCheck ? `${companyId}/${id}/reference_check.pdf` : `${companyId}/${id}/${fileName}`
 
         const { error: uploadError } = await supabase.storage
-            .from('documents')
+            .from(bucket)
             .upload(filePath, file, { upsert: true })
 
         if (!uploadError) {
@@ -405,10 +462,10 @@ export default function AdminCaregiverDetail() {
                 .upsert({
                     caregiver_id: id,
                     document_type: documentType,
-                    file_name: `${sanitizedName}_${documentType}.${fileExt}`,
+                    file_name: fileName,
                     file_path: filePath,
                     file_size: file.size,
-                    mime_type: file.type,
+                    mime_type: isReferenceCheck ? 'application/pdf' : file.type,
                     company_id: companyId,
                 }, { onConflict: 'caregiver_id, document_type' })
                 .eq('company_id', companyId)
@@ -513,6 +570,21 @@ export default function AdminCaregiverDetail() {
             body: { caregiverId: id }
         })
         setResending(false);
+    }
+
+    const handleMarkReadyForPayroll = async () => {
+        setMarkingPayroll(true);
+        await supabase
+            .from('caregivers')
+            .update({ ready_for_payroll: true, ready_for_payroll_at: new Date().toISOString() })
+            .eq('id', id)
+            .eq('company_id', companyId)
+        await supabase.functions.invoke('send-ready-for-payroll-notification', {
+            body: { caregiverId: id }
+        })
+        await fetchAll()
+        await logAction('marked_ready_for_payroll', { admin_name: adminName })
+        setMarkingPayroll(false);
     }
 
     const openCaregiverView = async () => {
@@ -717,9 +789,24 @@ export default function AdminCaregiverDetail() {
     const isNurse = caregiver.role === 'nurse_prn' || caregiver.role === 'nurse_director'
     const isCancelled = caregiver.status === 'cancelled'
     const uploadableDocs = isNurse
-        ? ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'nursingLicense', 'bloodborne_certificate', 'certifications', 'criminal-background-results', 'nc-healthcare-personnel-check', 'resume']
-        : ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'bloodborne_certificate', 'certifications', 'criminal-background-results', 'nc-healthcare-personnel-check', 'resume']
+        ? ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'nursingLicense', 'bloodborne_certificate', 'certifications', 'criminal-background-results', 'nc-healthcare-personnel-check', 'resume', 'competency_skills_assessment', 'drug_test_results', 'oig_exclusion', 'reference_check']
+        : ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'bloodborne_certificate', 'certifications', 'criminal-background-results', 'nc-healthcare-personnel-check', 'resume', 'competency_skills_assessment', 'drug_test_results', 'oig_exclusion', 'reference_check']
     const adminSignableTypes = signableDocs.filter(d => !d.requiresSection2).flatMap(d => d.ids)
+    const visibleDocuments = documents.filter(doc => {
+        if (doc.document_type === 'w4_completed') {
+            return caregiver.role !== 'nurse_prn' && caregiver.role !== 'nurse_director'
+        }
+        return true;
+    })
+    const documentGroups = [
+        ...DOCUMENT_CATEGORIES,
+        { key: 'other', label: 'Other Documents' },
+    ]
+        .map(cat => ({
+            ...cat,
+            docs: visibleDocuments.filter(d => categorizeDocument(d.document_type, adminSignableTypes) === cat.key),
+        }))
+        .filter(cat => cat.docs.length > 0)
     const groupedSkills = Object.entries(competency?.checked || {})
         .filter(([_, checked]) => checked)
         .reduce((acc, [key]) => {
@@ -1479,46 +1566,50 @@ export default function AdminCaregiverDetail() {
                         )}
                         <h2 className="font-semibold mb-4">Documents</h2>
 
-                        {documents.length > 0 && (
-                            <div className="space-y-2 mb-6">
-                                {documents.filter(doc => {
-                                    if (doc.document_type === 'w4_completed') {
-                                        return caregiver.role !== 'nurse_prn' && caregiver.role !== 'nurse_director'
-                                    }
-                                    return true;
-                                }).map((doc) => (
-                                    <div key={doc.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2 px-3 rounded-lg border border-border hover:bg-muted/30 transition-colors">
-                                        <div className="min-w-0">
-                                            <p className="text-sm font-medium">{docLabel(doc.document_type)}</p>
-                                            <p className="text-xs text-muted-foreground truncate">{doc.file_name}</p>
-                                            {adminSignableTypes.includes(doc.document_type) && !doc.admin_signed_at && (
-                                                <span className="inline-block mt-1 max-w-full text-xs font-medium px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200">
-                                                    Notice: Admin signature required
-                                                </span>
-                                            )}
-                                            {adminSignableTypes.includes(doc.document_type) && doc.admin_signed_at && (
-                                                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--secondary-bg)] text-[var(--primary-color)] shrink-0">
-                                                    Admin signed
-                                                </span>
-                                            )}
-                                            {doc.document_type === 'i9_completed' && !i9Section2Completed && (
-                                                <span className="inline-block mt-1 max-w-full text-xs font-medium px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200">
-                                                    Notice: Please use the Sign/Complete feature to complete Section 2.
-                                                </span>
-                                            )}
-                                            {doc.document_type === 'i9_completed' && i9Section2Completed && (
-                                                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--secondary-bg)] text-[var(--primary-color)] shrink-0">
-                                                    Section 2 complete
-                                                </span>
-                                            )}
+                        {documentGroups.length > 0 && (
+                            <div className="space-y-5 mb-6">
+                                {documentGroups.map(group => (
+                                    <div key={group.key}>
+                                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                                            {group.label}
+                                        </p>
+                                        <div className="space-y-2">
+                                            {group.docs.map((doc) => (
+                                                <div key={doc.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2 px-3 rounded-lg border border-border hover:bg-muted/30 transition-colors">
+                                                    <div className="min-w-0">
+                                                        <p className="text-sm font-medium">{docLabel(doc.document_type)}</p>
+                                                        <p className="text-xs text-muted-foreground truncate">{doc.file_name}</p>
+                                                        {adminSignableTypes.includes(doc.document_type) && !doc.admin_signed_at && (
+                                                            <span className="inline-block mt-1 max-w-full text-xs font-medium px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200">
+                                                                Notice: Admin signature required
+                                                            </span>
+                                                        )}
+                                                        {adminSignableTypes.includes(doc.document_type) && doc.admin_signed_at && (
+                                                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--secondary-bg)] text-[var(--primary-color)] shrink-0">
+                                                                Admin signed
+                                                            </span>
+                                                        )}
+                                                        {doc.document_type === 'i9_completed' && !i9Section2Completed && (
+                                                            <span className="inline-block mt-1 max-w-full text-xs font-medium px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200">
+                                                                Notice: Please use the Sign/Complete feature to complete Section 2.
+                                                            </span>
+                                                        )}
+                                                        {doc.document_type === 'i9_completed' && i9Section2Completed && (
+                                                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[var(--secondary-bg)] text-[var(--primary-color)] shrink-0">
+                                                                Section 2 complete
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <button
+                                                        onClick={() => handleDownload(doc)}
+                                                        className="flex items-center gap-1.5 text-xs text-[var(--primary-color)] hover:underline shrink-0"
+                                                    >
+                                                        <Eye className="w-3.5 h-3.5" />
+                                                        View Document
+                                                    </button>
+                                                </div>
+                                            ))}
                                         </div>
-                                        <button
-                                            onClick={() => handleDownload(doc)}
-                                            className="flex items-center gap-1.5 text-xs text-[var(--primary-color)] hover:underline shrink-0"
-                                        >
-                                            <Eye className="w-3.5 h-3.5" />
-                                            View Document
-                                        </button>
                                     </div>
                                 ))}
                             </div>
@@ -1535,7 +1626,7 @@ export default function AdminCaregiverDetail() {
                                             <label className="cursor-pointer shrink-0">
                                                 <input
                                                     type="file"
-                                                    accept="image/*,.pdf"
+                                                    accept={docType === 'reference_check' ? '.pdf' : 'image/*,.pdf'}
                                                     className="hidden"
                                                     onChange={(e) => {
                                                         const file = e.target.files[0]
@@ -1933,6 +2024,42 @@ export default function AdminCaregiverDetail() {
                             )}
                         </div>
                     )}
+
+                    {caregiver.status === 'completed' && (
+                        <div className="bg-white rounded-xl border border-border p-6">
+                            <h2 className="font-semibold mb-4">Payroll Readiness</h2>
+                            {caregiver.ready_for_payroll ? (
+                                <div className="flex items-center gap-2 text-sm text-[var(--primary-color)]">
+                                    <CheckCircle className="w-4 h-4 shrink-0" />
+                                    <span>
+                                        Marked ready for payroll
+                                        {caregiver.ready_for_payroll_at && ` on ${new Date(caregiver.ready_for_payroll_at).toLocaleDateString('en-US', {
+                                            month: 'short', day: 'numeric', year: 'numeric',
+                                            hour: '2-digit', minute: '2-digit'
+                                        })}`}
+                                    </span>
+                                </div>
+                            ) : (
+                                <>
+                                    <p className="text-sm text-muted-foreground mb-4">
+                                        Once all onboarding paperwork has been reviewed and confirmed complete, mark this new hire ready for payroll. Accounting will be notified automatically.
+                                    </p>
+                                    <Button
+                                        onClick={handleMarkReadyForPayroll}
+                                        disabled={markingPayroll}
+                                        className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white disabled:opacity-50"
+                                    >
+                                        {markingPayroll ? (
+                                            <><Loader2 className="w-4 h-4 animate-spin mr-2" />Marking...</>
+                                        ) : (
+                                            'Mark Ready for Payroll'
+                                        )}
+                                    </Button>
+                                </>
+                            )}
+                        </div>
+                    )}
+
                     <div className="bg-white rounded-xl border border-border p-6">
                         <h2 className="font-semibold mb-4">New Hire Orientation Quiz Results</h2>
                         {quizProgress && quizProgress.length > 0 ? (
