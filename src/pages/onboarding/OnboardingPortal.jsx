@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import SidebarComponent from '@/components/global/SidebarComponent'
 import WelcomePage from '@/pages/onboarding/onboarding-pages/WelcomePage'
@@ -18,7 +17,7 @@ import { logImportantAction } from '@/lib/logAction'
 
 import { useSaveProgress, loadProgress as loadLocalProgress } from '@/hooks/useOnboardingProgress'
 
-import { getCaregiverByToken, updateCaregiverStatus, saveProgress, loadProgress, checkpointTimeLog } from '@/lib/caregiver'
+import { updateCaregiverStatus, saveProgress, loadProgress, checkpointTimeLog } from '@/lib/caregiver'
 import { supabase } from '@/lib/supabase'
 
 import { toast } from 'sonner'
@@ -79,12 +78,14 @@ const fetchRoleSteps = async (companyId, role) => {
     }))
 }
 
-export default function OnboardingPortal() {
-    const { token } = useParams()
-    const [searchParams] = useSearchParams();
-    const isPreview = searchParams.get('preview') === 'true'
-    const { isIdle, getHoursWorked, isActiveTab, setPopupOpen } = useOnboardingTimer(token)
-    const [caregiver, setCaregiver] = useState(null)
+// `initialCaregiver` is resolved and authorized by OnboardingGate. `viewer` is
+// 'admin' when a company admin is previewing the caregiver's onboarding (read-only).
+export default function OnboardingPortal({ initialCaregiver, viewer }) {
+    // Namespaces this caregiver's browser-local progress and timer state.
+    const storageKey = initialCaregiver.id
+    const isPreview = viewer === 'admin'
+    const { isIdle, getHoursWorked, isActiveTab, setPopupOpen } = useOnboardingTimer(storageKey)
+    const [caregiver, setCaregiver] = useState(initialCaregiver)
     const [companyId, setCompanyId] = useState("");
     const [companyData, setCompanyData] = useState({});
     const [loading, setLoading] = useState(true)
@@ -113,26 +114,11 @@ export default function OnboardingPortal() {
     })
     const [saving, setSaving] = useState(false)
     const [roleStepsTemplate, setRoleStepsTemplate] = useState([]);
-    useSaveProgress(token, activeStep, steps, formData)
+    useSaveProgress(storageKey, activeStep, steps, formData)
 
     useEffect(() => {
         const fetchCaregiver = async () => {
-            const data = await getCaregiverByToken(token);
-            if (data && data.link_expires_at && data.status === 'pending') {
-                const expiry = new Date(data.link_expires_at);
-
-                if (new Date() > expiry) {
-                    await supabase.functions.invoke('expire-caregiver-token', {
-                        body: { token }
-                    })
-
-                    setCaregiver(null)
-                    setLoading(false)
-                    return;
-                }
-            }
-
-            setCaregiver(data)
+            const data = initialCaregiver
 
             if (data) {
                 setCompanyId(data.company_id)
@@ -177,7 +163,7 @@ export default function OnboardingPortal() {
                                 : 'locked'
                     })))
                 } else {
-                    localStorage.removeItem(`onboarding_${data.token}`)
+                    localStorage.removeItem(`onboarding_${storageKey}`)
                     setSteps(roleSteps)
                     setActiveStep(1)
                 }
@@ -186,7 +172,7 @@ export default function OnboardingPortal() {
             setLoading(false)
         }
         fetchCaregiver()
-    }, [token])
+    }, [initialCaregiver.id])
 
     const { logAction } = logImportantAction(caregiver?.id, caregiver?.name, false, companyId);
     useEffect(() => {
@@ -197,14 +183,14 @@ export default function OnboardingPortal() {
             return;
         }
         if (!isPreview) {
-            updateCaregiverStatus(token, 'in_progress')
+            updateCaregiverStatus('in_progress')
         }
 
     }, [caregiver?.id])
 
     useEffect(() => {
         if (!caregiver) return
-        const key = `livi_session_start_${token}`
+        const key = `livi_session_start_${storageKey}`
         if (!localStorage.getItem(key)) {
             localStorage.setItem(key, new Date().toISOString())
         }
@@ -220,7 +206,7 @@ export default function OnboardingPortal() {
 
             if (existingLog && existingLog.active_seconds) {
                 const milliseconds = existingLog.active_seconds * 1000;
-                localStorage.setItem(`livi_time_${token}`, milliseconds);
+                localStorage.setItem(`livi_time_${storageKey}`, milliseconds);
             }
         }
 
@@ -228,18 +214,18 @@ export default function OnboardingPortal() {
     }, [caregiver?.id])
 
     useEffect(() => {
-        if (!caregiver || caregiver.status === 'completed') return
+        if (!caregiver || caregiver.status === 'completed' || isPreview) return
 
         const interval = setInterval(() => {
-            checkpointTimeLog(caregiver.id, companyId, token, getHoursWorked)
+            checkpointTimeLog(caregiver.id, companyId, storageKey, getHoursWorked)
         }, 30000)
 
         return () => clearInterval(interval)
-    }, [caregiver?.id, caregiver?.status, companyId, token])
+    }, [caregiver?.id, caregiver?.status, companyId, storageKey])
 
     const isNurse = caregiver?.role === 'nurse_prn' || caregiver?.role === "nurse_director";
 
-    const saveCoordinates = async (token, personalInfo) => {
+    const saveCoordinates = async (personalInfo) => {
         if (!personalInfo?.streetAddress) return
         try {
             const address = `${personalInfo.streetAddress}, ${personalInfo.city}, ${personalInfo.state} ${personalInfo.zip}`
@@ -252,7 +238,7 @@ export default function OnboardingPortal() {
             if (data.features?.length > 0) {
                 const [lng, lat] = data.features[0].center
                 await supabase.functions.invoke('save-caregiver-location', {
-                    body: { token, lat, lng }
+                    body: { lat, lng }
                 })
             }
         } catch (e) {
@@ -260,7 +246,7 @@ export default function OnboardingPortal() {
         }
     }
     useEffect(() => {
-        if (!steps.length) {
+        if (!steps.length || isPreview) {
             return;
         }
         const lastStep = steps[steps.length - 1]
@@ -274,13 +260,13 @@ export default function OnboardingPortal() {
                 step.id === lastStep.id ? { ...step, status: 'completed' } : step
             ))
             setCaregiver(prev => prev ? { ...prev, status: 'completed' } : prev)
-            updateCaregiverStatus(token, 'completed')
+            updateCaregiverStatus('completed')
 
             const saveLog = async () => {
-                await checkpointTimeLog(caregiver.id, companyId, token, getHoursWorked, true);
+                await checkpointTimeLog(caregiver.id, companyId, storageKey, getHoursWorked, true);
 
                 try {
-                    await saveCoordinates(token, formData.personalInfo)
+                    await saveCoordinates(formData.personalInfo)
                 } catch (err) {
                     console.error('Error saving coordinates:', err)
                 }
@@ -375,7 +361,7 @@ export default function OnboardingPortal() {
     const stepLabel = `Step ${currentStepNumber} of ${totalSteps}`
 
     const resetFormData = () => {
-        localStorage.removeItem(`onboarding_${token}`)
+        localStorage.removeItem(`onboarding_${storageKey}`)
         setFormData({
             personalInfo: {},
             competency: { checked: {}, lunch: '', dinner: '' },
@@ -444,7 +430,7 @@ export default function OnboardingPortal() {
         setActiveStep(nextStepId)
         window.scrollTo({ top: 0, behavior: 'smooth' })
 
-        checkpointTimeLog(caregiver.id, companyId, token, getHoursWorked)
+        checkpointTimeLog(caregiver.id, companyId, storageKey, getHoursWorked)
         await saveProgress(caregiver.id, companyId, nextStepId, completedStepIds, formData)
         setSaving(false)
     }

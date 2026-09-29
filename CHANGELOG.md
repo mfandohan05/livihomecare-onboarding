@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.3.0 - 2026-09-29
+- Added user accounts for employees being onboarded
+- Added password reset for employee accounts
+- Employee-facing functions (documents, SSN, banking, status, location) now verify the signed-in user owns the record they act on
+
 ## 2.2.0 - 2026-09-13
 - Fixed bug where birthday was not being properly collected on tax forms step
 - Added support for 3 more types of documents attached to RSOnboard Employee Profile
