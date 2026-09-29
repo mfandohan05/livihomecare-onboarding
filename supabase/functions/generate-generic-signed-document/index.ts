@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { PDFDocument, StandardFonts } from 'https://esm.sh/pdf-lib@1.17.1'
+import { requireCaregiverAccess } from '../_shared/caregiverAccess.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -57,6 +58,7 @@ Deno.serve(async (req) => {
 
   try {
     const { caregiverId, documentType, fieldValues } = await req.json()
+    await requireCaregiverAccess(req, caregiverId)
 
     if (!documentType || !fieldValues || typeof fieldValues !== 'object') {
       throw new Error('Missing or malformed request: documentType and fieldValues are required')

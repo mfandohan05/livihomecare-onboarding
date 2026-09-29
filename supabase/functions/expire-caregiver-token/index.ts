@@ -26,11 +26,14 @@ Deno.serve(async (req) => {
 
     const { data: caregiver, error: lookupError } = await supabase
       .from('caregivers')
-      .select('id, status, link_expires_at')
+      .select('id, status, link_expires_at, user_id')
       .eq('token', token)
       .maybeSingle()
 
     if (lookupError || !caregiver) return NOT_FOUND
+
+    // Once a caregiver has an account the token only redirects to sign-in, so it must stay resolvable.
+    if (caregiver.user_id) return NOT_FOUND
 
     const isExpired = caregiver.status === 'pending' &&
       caregiver.link_expires_at &&

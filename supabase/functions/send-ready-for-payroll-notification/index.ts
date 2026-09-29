@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { requireCaregiverAccess } from '../_shared/caregiverAccess.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,6 +13,7 @@ Deno.serve(async (req) => {
 
   try {
     const { caregiverId } = await req.json()
+    await requireCaregiverAccess(req, caregiverId, ['admin'])
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
