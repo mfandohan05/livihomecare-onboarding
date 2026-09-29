@@ -29,6 +29,9 @@ export default function BloodbornePathogensPage({ stepLabel, onNext, initialData
         loadExistingCertificate()
     }, [caregiver?.id, companyId])
 
+    const supportEmail = companyData?.support_email
+
+<<<<<<< HEAD
     useEffect(() => {
         if (!caregiver?.id || !companyId) return
 
@@ -50,6 +53,8 @@ export default function BloodbornePathogensPage({ stepLabel, onNext, initialData
         loadExistingCertificate()
     }, [caregiver?.id, companyId])
 
+=======
+>>>>>>> dev
     const supportEmail = companyData?.support_email
 
     const isMobile = !window.matchMedia('(hover: hover)').matches || window.matchMedia('(max-width: 768px)').matches
