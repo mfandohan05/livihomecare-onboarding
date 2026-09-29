@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { requireCaregiverAccess } from '../_shared/caregiverAccess.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,6 +11,7 @@ Deno.serve(async (req) => {
 
   try {
     const { caregiverId, formKey } = await req.json()
+    await requireCaregiverAccess(req, caregiverId)
 
     if (!caregiverId || !formKey) {
       throw new Error('Missing or malformed request: caregiverId and formKey are required')

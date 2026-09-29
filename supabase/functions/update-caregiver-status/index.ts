@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { requireOwnCaregiver } from '../_shared/caregiverAccess.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,41 +7,26 @@ const corsHeaders = {
 
 // Caregivers may only self-report these two transitions; every other status
 // change (pending, cancelled, etc.) is admin-only and goes through the
-// authenticated admin flow, not this token-based function.
+// authenticated admin flow, not this function.
 const ALLOWED_STATUSES = ['in_progress', 'completed']
 
-const NOT_FOUND = new Response(
-  JSON.stringify({ error: 'Invalid or expired link' }),
-  { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-)
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  })
 
+// The caregiver is derived from the verified JWT — the request never names one.
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const { token, status } = await req.json()
-    if (!token || typeof token !== 'string') return NOT_FOUND
-    if (!ALLOWED_STATUSES.includes(status)) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid status' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
+    const { status } = await req.json()
+    if (!ALLOWED_STATUSES.includes(status)) return json({ error: 'Invalid status' }, 400)
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    )
-
-    const { data: caregiver, error: lookupError } = await supabase
-      .from('caregivers')
-      .select('id')
-      .eq('token', token)
-      .maybeSingle()
-
-    if (lookupError || !caregiver) return NOT_FOUND
+    const { supabase, caregiver } = await requireOwnCaregiver(req)
 
     const { error } = await supabase
       .from('caregivers')
@@ -50,14 +35,8 @@ Deno.serve(async (req) => {
 
     if (error) throw error
 
-    return new Response(
-      JSON.stringify({ success: true }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    return json({ success: true })
   } catch {
-    return new Response(
-      JSON.stringify({ error: 'Invalid or expired link' }),
-      { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    return json({ error: 'Unauthorized' }, 401)
   }
 })
