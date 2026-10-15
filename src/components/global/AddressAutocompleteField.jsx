@@ -3,7 +3,7 @@ import { useAddressAutocomplete } from '@/hooks/useAddressAutocomplete'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-export default function AddressAutocompleteField({ label = 'Street Address', value, onSelect }) {
+export default function AddressAutocompleteField({ label = 'Street Address', value, onSelect, onCommit }) {
     const { query, setQuery, suggestions, parseFeature, clearSuggestions } = useAddressAutocomplete()
     const [inputValue, setInputValue] = useState(value || '')
     const [open, setOpen] = useState(false)
@@ -33,6 +33,10 @@ export default function AddressAutocompleteField({ label = 'Street Address', val
         setQuery(val)
     }
 
+    const handleBlur = () => {
+        if (inputValue !== value) onCommit?.(inputValue)
+    }
+
     const handleSelectSuggestion = (feature) => {
         const parsed = parseFeature(feature)
         setInputValue(parsed.streetAddress)
@@ -49,6 +53,7 @@ export default function AddressAutocompleteField({ label = 'Street Address', val
                 <Input
                     value={inputValue}
                     onChange={handleInputChange}
+                    onBlur={handleBlur}
                     onFocus={() => {
                         if (suggestions.length > 0) setOpen(true)
                     }}
