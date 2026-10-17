@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
+import { formatPhone } from '@/lib/formUtils'
 
 // Set VITE_FORMSPREE_ENDPOINT in .env to enable submissions. Never hardcode the endpoint.
 const FORMSPREE_ENDPOINT = import.meta.env.VITE_FORMSPREE_ENDPOINT || ''
-const FALLBACK_EMAIL = 'info@rsonboard.com' // TODO: confirm the monitored contact address
+const FALLBACK_EMAIL = 'mlftechnologiesllc@gmail.com'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const EMPTY = { name: '', email: '', company: '', phone: '', message: '', website: '' } // `website` is the honeypot
@@ -106,7 +107,7 @@ export default function Contact() {
                                 <input type="text" autoComplete="organization" {...props('company')} />
                             </Field>
                             <Field id="phone" label="Phone" optional>
-                                <input type="tel" autoComplete="tel" {...props('phone')} />
+                                <input type="tel" autoComplete="tel" inputMode="tel" placeholder="(555) 000-0000" {...props('phone')} onChange={(e) => setValues((v) => ({ ...v, phone: formatPhone(e.target.value) }))} />
                             </Field>
                             <div className="sm:col-span-2">
                                 <Field id="message" label="Message" error={errors.message}>

@@ -10,7 +10,7 @@ export default function Footer() {
                     <Link to="/" aria-label="Ready, Set, Onboard! home" className="rounded-2xl bg-white p-2">
                         <img src={logo} alt="Ready, Set, Onboard!" width="498" height="226" className="h-10 w-auto" />
                     </Link>
-                    <p className="text-sm" style={{ color: 'rgba(255,255,255,0.8)' }}>&copy; {new Date().getFullYear()} Ready, Set, Onboard! All rights reserved.</p>
+                    <p className="text-sm" style={{ color: 'rgba(255,255,255,0.8)' }}>&copy; {new Date().getFullYear()} MLF Technologies LLC. All rights reserved.</p>
                 </div>
                 <nav aria-label="Footer">
                     <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium">
