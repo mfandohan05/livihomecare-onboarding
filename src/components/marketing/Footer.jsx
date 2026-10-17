@@ -17,9 +17,6 @@ export default function Footer() {
                         <li><a href="#features" className="hover:underline">Features</a></li>
                         <li><a href="#contact" className="hover:underline">Contact</a></li>
                         <li><Link to="/login" className="hover:underline">Log in</Link></li>
-                        {/* TODO: replace with real Privacy Policy and Terms pages */}
-                        <li><span style={{ color: 'rgba(255,255,255,0.75)' }}>Privacy (TODO)</span></li>
-                        <li><span style={{ color: 'rgba(255,255,255,0.75)' }}>Terms (TODO)</span></li>
                     </ul>
                 </nav>
             </div>
