@@ -1,11 +1,9 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { ArrowLeft } from 'lucide-react'
 import companyLogo from '@/assets/logo.png'
+import '@/components/marketing/marketing.css'
 
 export default function AdminLogin() {
     const navigate = useNavigate()
@@ -48,63 +46,56 @@ export default function AdminLogin() {
 }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
-            <div className="w-full max-w-sm">
-                <button
-                    onClick={() => navigate('/')}
-                    className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
-                >
-                    <ArrowLeft className="w-4 h-4" />
-                    Back to home
-                </button>
+        <div className="landing-root lr-page-enter lr-surface min-h-screen flex items-center justify-center px-4 py-10">
+            <div className="w-full max-w-md">
+                <Link to="/login" className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--lr-text-2)] hover:text-[var(--lr-navy)]">
+                    <ArrowLeft className="size-4" aria-hidden="true" />
+                    Back to sign in
+                </Link>
 
-                <div className="flex justify-center mb-8">
-                    <img src={companyLogo} alt="Ready, Set, Onboard!" className="w-[200px]" />
+                <div className="mb-6 flex justify-center">
+                    <img src={companyLogo} alt="Ready, Set, Onboard!" width="498" height="226" className="h-16 w-auto" />
                 </div>
 
-                <div className="bg-white rounded-xl border border-border p-6 sm:p-8 shadow-sm">
-                    <h1 className="text-xl font-semibold mb-1">Admin Portal</h1>
-                    <p className="text-sm text-muted-foreground mb-6">Sign in to manage employees</p>
+                <main className="lr-card p-7 sm:p-9">
+                    <h1 className="lr-h3 text-2xl">Administrator login</h1>
+                    <p className="lr-muted mt-1 mb-6 text-[0.9375rem]">Sign in to manage your employees.</p>
 
-                    <form onSubmit={handleLogin} className="space-y-4">
-                        <div className="space-y-1.5">
-                            <Label htmlFor="email">Email</Label>
-                            <Input
+                    <form onSubmit={handleLogin} className="space-y-5">
+                        <div>
+                            <label htmlFor="email" className="text-sm font-semibold text-[var(--lr-navy)]">Email</label>
+                            <input
                                 id="email"
                                 type="email"
+                                autoComplete="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="example@readysetonboard.com"
-                                className="focus-visible:border-[#08265D] focus-visible:ring-[#08265D]/40"
+                                className="lr-input"
                                 required
                             />
                         </div>
-                        <div className="space-y-1.5">
-                            <Label htmlFor="password">Password</Label>
-                            <Input
+                        <div>
+                            <label htmlFor="password" className="text-sm font-semibold text-[var(--lr-navy)]">Password</label>
+                            <input
                                 id="password"
                                 type="password"
+                                autoComplete="current-password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="••••••••"
-                                className="focus-visible:border-[#08265D] focus-visible:ring-[#08265D]/40"
+                                className="lr-input"
                                 required
                             />
                         </div>
 
-                        {error && (
-                            <p className="text-sm text-red-500">{error}</p>
-                        )}
+                        {error && <p role="alert" className="lr-error">{error}</p>}
 
-                        <Button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full bg-[#0A2E73] hover:bg-[#14449C] text-white focus-visible:ring-[#08265D]/40"
-                        >
+                        <button type="submit" disabled={loading} className="lr-btn lr-btn-primary w-full">
                             {loading ? 'Signing in...' : 'Sign in'}
-                        </Button>
+                        </button>
                     </form>
-                </div>
+                </main>
             </div>
         </div>
     )

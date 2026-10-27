@@ -1,4 +1,7 @@
-import LandingPage from './pages/LandingPage'
+import { useEffect } from 'react'
+import Landing from './pages/marketing/Landing'
+import Login from './pages/Login'
+import NotFound from './pages/NotFound'
 import OnboardingGate from './pages/onboarding/OnboardingGate'
 import CaregiverSignIn from './pages/onboarding/CaregiverSignIn'
 import ResetPassword from './pages/onboarding/ResetPassword'
@@ -25,7 +28,7 @@ import StudioOfferLetterTemplateEditor from './pages/studio/StudioOfferLetterTem
 import StudioOrientationSections from './pages/studio/StudioOrientationSections';
 import StudioOrientationSectionEditor from './pages/studio/StudioOrientationSectionEditor';
 import StudioOrientationPreview from './pages/studio/StudioOrientationPreview';
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { Toaster } from './components/ui/sonner';
 import ErrorDialogProvider from './components/global/ErrorDialogProvider';
 import { Navigate } from 'react-router-dom';
@@ -55,13 +58,26 @@ function StudioLayoutWrapper() {
     )
 }
 
+// Public pages only: start at the top when moving between them (e.g. landing page -> /login).
+// App routes (/admin, /studio, /onboard) are left alone, and same-page #anchors don't change pathname.
+const PUBLIC_PATHS = ['/', '/login', '/admin/login']
+function ScrollToTopOnPublicNav() {
+    const { pathname } = useLocation()
+    useEffect(() => {
+        if (PUBLIC_PATHS.includes(pathname)) window.scrollTo(0, 0)
+    }, [pathname])
+    return null
+}
+
 function App() {
     return (
         <BrowserRouter>
+            <ScrollToTopOnPublicNav />
             <Toaster position="bottom-center" />
             <ErrorDialogProvider />
             <Routes>
-                <Route path="/" element={<LandingPage />} />
+                <Route path="/" element={<Landing />} />
+                <Route path="/login" element={<Login />} />
                 <Route path='/onboard' element={<OnboardingGate />} />
                 <Route path='/onboard/:token' element={<OnboardingGate />} />
                 <Route path='/sign-in' element={<CaregiverSignIn />} />
@@ -90,6 +106,7 @@ function App() {
                     <Route path="companies/:id/orientation/:sectionId" element={<StudioOrientationSectionEditor />} />
                     <Route path="companies/:id/orientation/:sectionId/preview" element={<StudioOrientationPreview />} />
                 </Route>
+                <Route path="*" element={<NotFound />} />
             </Routes>
         </BrowserRouter>
     )

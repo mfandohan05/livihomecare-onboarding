@@ -163,6 +163,7 @@ export default function OfferLetterPage({ stepLabel, caregiver, companyId, compa
 
   const [signature, setSignature] = useState(initialData?.signature || '')
   const [address, setAddress] = useState(initialData?.address || '')
+  const [addressSelected, setAddressSelected] = useState(!!initialData?.address)
   const [address2, setAddress2] = useState(initialData?.address2 || '')
   const [city, setCity] = useState(initialData?.city || '')
   const [state, setState] = useState(initialData?.state || '')
@@ -189,7 +190,7 @@ export default function OfferLetterPage({ stepLabel, caregiver, companyId, compa
   }, [companyId, caregiver?.role])
 
   const canSign = signature.trim() && (
-    !template?.requires_address ? true : address.trim() && city.trim() && state.trim() && zip.trim()
+    !template?.requires_address ? true : address.trim() && city.trim() && state.trim() && zip.trim() && addressSelected
   )
 
   const handleSign = async () => {
@@ -303,6 +304,10 @@ export default function OfferLetterPage({ stepLabel, caregiver, companyId, compa
                       <AddressAutocompleteField
                         label="Address Line 1"
                         value={address}
+                        onCommit={(val) => {
+                          setAddress(val)
+                          setAddressSelected(false)
+                        }}
                         onSelect={(parsed) => {
                           const newAddress = parsed.streetAddress || address
                           const newCity = parsed.city || city
@@ -312,9 +317,15 @@ export default function OfferLetterPage({ stepLabel, caregiver, companyId, compa
                           setCity(newCity)
                           setState(newState)
                           setZip(newZip)
+                          setAddressSelected(true)
                           onChange({ signature, address: newAddress, address2, city: newCity, state: newState, zip: newZip, signed })
                         }}
                       />
+                      {address.trim() && !addressSelected && (
+                        <p className="text-xs text-amber-600">
+                          Please select your address from the suggestions list to continue.
+                        </p>
+                      )}
                       <div className="space-y-2">
                         <Label htmlFor="offerAddress2">Address line 2</Label>
                         <Input id="offerAddress2" placeholder="Apt 4B (if applicable)" value={address2}
