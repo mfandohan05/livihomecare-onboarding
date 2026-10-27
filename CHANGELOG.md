@@ -1,8 +1,8 @@
 # Changelog
 
-## 2.3.1 - 2026-10-27
+## 2.4.0 - 2026-10-17
+- Added new landing page, redesigned login screens
 - Fixed bug with address not showing up on offer letter
-
 
 ## 2.3.0 - 2026-09-29
 - Added user accounts for employees being onboarded

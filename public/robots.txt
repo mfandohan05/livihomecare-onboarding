@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /studio
+Disallow: /onboard
+Disallow: /sign-in
+Disallow: /reset-password
+
+Sitemap: https://rsonboard.com/sitemap.xml
