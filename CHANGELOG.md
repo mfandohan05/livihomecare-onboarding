@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.3.1 - 2026-10-27
+- Fixed bug with address not showing up on offer letter
+
+
 ## 2.3.0 - 2026-09-29
 - Added user accounts for employees being onboarded
 - Added password reset for employee accounts
