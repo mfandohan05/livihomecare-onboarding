@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Upload, Eye, EyeOff, Loader2, CheckCircle, Pencil } from 'lucide-react'
+import { ArrowLeft, Upload, Eye, EyeOff, Loader2, CheckCircle, Pencil, CalendarClock } from 'lucide-react'
 import {
     AlertDialog,
     AlertDialogContent,
@@ -15,6 +15,17 @@ import { Label } from '@/components/ui/label'
 import { formatPhone } from '@/lib/formUtils'
 import { logImportantAction } from '@/lib/logAction'
 import { useCompany } from '@/context/CompanyContext'
+import ExpirationDateDialog from '@/components/global/ExpirationDateDialog'
+import { ExpirationBadge } from '@/components/admin/ExpirationBadge'
+import {
+    EXPIRATION_REQUIRED_TYPES,
+    collapseAliasedDocuments,
+    findDocumentByType,
+    formatDateOnly,
+    isTrackedDocumentType,
+    toDateOnly,
+    toExpirationTimestamp,
+} from '@/lib/documentExpiration'
 
 const statusColor = (status) => {
     if (status === 'completed') return 'text-[#577C09] bg-[#E8F0D0]'
@@ -147,6 +158,9 @@ export default function AdminCaregiverDetail() {
     const [loadingSsn, setLoadingSsn] = useState(false)
     const [loadingBanking, setLoadingBanking] = useState(false)
     const [uploadingDoc, setUploadingDoc] = useState(null)
+    const [expirationDialog, setExpirationDialog] = useState(null)
+    const [expirationSaving, setExpirationSaving] = useState(false)
+    const [expirationError, setExpirationError] = useState(null)
     const [showReauth, setShowReauth] = useState(false)
     const [reauthPassword, setReauthPassword] = useState('')
     const [reauthError, setReauthError] = useState(null)
@@ -442,14 +456,16 @@ export default function AdminCaregiverDetail() {
         'employee_policy_manual': 'Employee Policy Manual (Signed)',
     }
 
-    const handleUpload = async (documentType, file) => {
+    const handleUpload = async (documentType, file, expirationDate) => {
         setUploadingDoc(documentType)
 
         const isReferenceCheck = documentType === 'reference_check'
+        const tracked = isTrackedDocumentType(documentType)
+        const targetType = (tracked && findDocumentByType(documents, documentType)?.document_type) || documentType
         const bucket = isReferenceCheck ? 'generated-pdfs' : 'documents'
         const fileExt = file.name.split('.').pop()
         const sanitizedName = caregiver.name.replace(/[^a-zA-Z0-9]/g, '_')
-        const fileName = isReferenceCheck ? 'reference_check.pdf' : `${sanitizedName}_${documentType}.${fileExt}`
+        const fileName = isReferenceCheck ? 'reference_check.pdf' : `${sanitizedName}_${targetType}.${fileExt}`
         const filePath = isReferenceCheck ? `${companyId}/${id}/reference_check.pdf` : `${companyId}/${id}/${fileName}`
 
         const { error: uploadError } = await supabase.storage
@@ -461,12 +477,13 @@ export default function AdminCaregiverDetail() {
                 .from('caregiver_documents')
                 .upsert({
                     caregiver_id: id,
-                    document_type: documentType,
+                    document_type: targetType,
                     file_name: fileName,
                     file_path: filePath,
                     file_size: file.size,
                     mime_type: isReferenceCheck ? 'application/pdf' : file.type,
                     company_id: companyId,
+                    ...(tracked ? { expiration_date: toExpirationTimestamp(expirationDate) } : {}),
                 }, { onConflict: 'caregiver_id, document_type' })
                 .eq('company_id', companyId)
             await supabase.from('audit_logs').insert({
@@ -476,12 +493,54 @@ export default function AdminCaregiverDetail() {
                 caregiver_id: caregiver.id,
                 caregiver_name: caregiver.name,
                 company_id: companyId,
-                metadata: { "document_type": documentTypeToName[documentType] }
+                metadata: {
+                    "document_type": documentTypeToName[targetType],
+                    ...(tracked ? { "expiration_date": toDateOnly(expirationDate) } : {}),
+                }
             })
             await fetchAll()
         }
         setUploadingDoc(null)
     }
+
+    const closeExpirationDialog = () => {
+        setExpirationDialog(null)
+        setExpirationError(null)
+    }
+
+    const handleExpirationConfirm = async (value) => {
+        const dialog = expirationDialog
+        if (!dialog) return
+
+        if (dialog.mode === 'replace') {
+            closeExpirationDialog()
+            await handleUpload(dialog.docType, dialog.file, value)
+            return
+        }
+
+        setExpirationSaving(true)
+        setExpirationError(null)
+        const { error } = await supabase
+            .from('caregiver_documents')
+            .update({ expiration_date: toExpirationTimestamp(value) })
+            .eq('id', dialog.doc.id)
+            .eq('company_id', companyId)
+
+        if (error) {
+            setExpirationError('Could not save the expiration date. Please try again.')
+            setExpirationSaving(false)
+            return
+        }
+
+        await logAction('updated_document_expiration', {
+            document_type: documentTypeToName[dialog.doc.document_type],
+            expiration_date: value,
+        })
+        await fetchAll()
+        setExpirationSaving(false)
+        closeExpirationDialog()
+    }
+
     const handleReauth = async () => {
         setReauthLoading(true)
         setReauthError(null)
@@ -798,6 +857,7 @@ export default function AdminCaregiverDetail() {
         }
         return true;
     })
+    const currentTrackedDocIds = new Set(collapseAliasedDocuments(documents).map(d => d.id))
     const documentGroups = [
         ...DOCUMENT_CATEGORIES,
         { key: 'other', label: 'Other Documents' },
@@ -1566,6 +1626,23 @@ export default function AdminCaregiverDetail() {
                         )}
                         <h2 className="font-semibold mb-4">Documents</h2>
 
+                        <ExpirationDateDialog
+                            open={Boolean(expirationDialog)}
+                            title={expirationDialog?.mode === 'replace'
+                                ? `Replace ${docLabel(expirationDialog.docType)}`
+                                : `Expiration date: ${docLabel(expirationDialog?.doc?.document_type)}`}
+                            description={expirationDialog?.mode === 'replace'
+                                ? `Enter the expiration date of the new document for ${caregiver.name} before uploading.`
+                                : 'Changing the date updates the status and reminder schedule for this document.'}
+                            initialValue={expirationDialog?.mode === 'edit' ? expirationDialog.doc.expiration_date : null}
+                            required={EXPIRATION_REQUIRED_TYPES.includes(expirationDialog?.mode === 'replace' ? expirationDialog.docType : expirationDialog?.doc?.document_type)}
+                            confirmLabel={expirationDialog?.mode === 'replace' ? 'Upload' : 'Save'}
+                            saving={expirationSaving}
+                            error={expirationError}
+                            onConfirm={handleExpirationConfirm}
+                            onClose={closeExpirationDialog}
+                        />
+
                         {documentGroups.length > 0 && (
                             <div className="space-y-5 mb-6">
                                 {documentGroups.map(group => (
@@ -1579,6 +1656,14 @@ export default function AdminCaregiverDetail() {
                                                     <div className="min-w-0">
                                                         <p className="text-sm font-medium">{docLabel(doc.document_type)}</p>
                                                         <p className="text-xs text-muted-foreground truncate">{doc.file_name}</p>
+                                                        {doc.expiration_date && (
+                                                            <div className="flex flex-wrap items-center gap-2 mt-1">
+                                                                <span className="text-xs text-muted-foreground">
+                                                                    Expires {formatDateOnly(toDateOnly(doc.expiration_date))}
+                                                                </span>
+                                                                {currentTrackedDocIds.has(doc.id) && <ExpirationBadge expirationDate={doc.expiration_date} />}
+                                                            </div>
+                                                        )}
                                                         {adminSignableTypes.includes(doc.document_type) && !doc.admin_signed_at && (
                                                             <span className="inline-block mt-1 max-w-full text-xs font-medium px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200">
                                                                 Notice: Admin signature required
@@ -1600,13 +1685,24 @@ export default function AdminCaregiverDetail() {
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <button
-                                                        onClick={() => handleDownload(doc)}
-                                                        className="flex items-center gap-1.5 text-xs text-[var(--primary-color)] hover:underline shrink-0"
-                                                    >
-                                                        <Eye className="w-3.5 h-3.5" />
-                                                        View Document
-                                                    </button>
+                                                    <div className="flex items-center gap-4 shrink-0">
+                                                        {isTrackedDocumentType(doc.document_type) && (
+                                                            <button
+                                                                onClick={() => setExpirationDialog({ mode: 'edit', doc })}
+                                                                className="flex items-center gap-1.5 text-xs text-[var(--primary-color)] hover:underline"
+                                                            >
+                                                                <CalendarClock className="w-3.5 h-3.5" />
+                                                                {doc.expiration_date ? 'Edit expiration' : 'Add expiration date'}
+                                                            </button>
+                                                        )}
+                                                        <button
+                                                            onClick={() => handleDownload(doc)}
+                                                            className="flex items-center gap-1.5 text-xs text-[var(--primary-color)] hover:underline"
+                                                        >
+                                                            <Eye className="w-3.5 h-3.5" />
+                                                            View Document
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
@@ -1619,7 +1715,7 @@ export default function AdminCaregiverDetail() {
                             <p className="text-sm font-medium mb-3">Upload on behalf of employee</p>
                             <div className="space-y-2">
                                 {uploadableDocs.map((docType) => {
-                                    const existing = documents.find(d => d.document_type === docType)
+                                    const existing = findDocumentByType(documents, docType)
                                     return (
                                         <div key={docType} className="flex items-center justify-between gap-3 py-2 px-3 rounded-lg border border-dashed border-border">
                                             <p className="text-sm text-muted-foreground min-w-0 flex-1">{docLabel(docType)}</p>
@@ -1630,7 +1726,10 @@ export default function AdminCaregiverDetail() {
                                                     className="hidden"
                                                     onChange={(e) => {
                                                         const file = e.target.files[0]
-                                                        if (file) handleUpload(docType, file)
+                                                        e.target.value = ''
+                                                        if (!file) return
+                                                        if (isTrackedDocumentType(docType)) setExpirationDialog({ mode: 'replace', docType, file })
+                                                        else handleUpload(docType, file)
                                                     }}
                                                 />
                                                 {uploadingDoc === docType ? (

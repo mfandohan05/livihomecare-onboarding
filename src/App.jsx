@@ -4,6 +4,7 @@ import Login from './pages/Login'
 import NotFound from './pages/NotFound'
 import OnboardingGate from './pages/onboarding/OnboardingGate'
 import CaregiverSignIn from './pages/onboarding/CaregiverSignIn'
+import MyDocuments from './pages/onboarding/MyDocuments'
 import ResetPassword from './pages/onboarding/ResetPassword'
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminRoute from './components/admin/AdminRoute';
@@ -81,6 +82,7 @@ function App() {
                 <Route path='/onboard' element={<OnboardingGate />} />
                 <Route path='/onboard/:token' element={<OnboardingGate />} />
                 <Route path='/sign-in' element={<CaregiverSignIn />} />
+                <Route path='/my-documents' element={<MyDocuments />} />
                 <Route path='/reset-password' element={<ResetPassword />} />
                 <Route path='/admin/login' element={<AdminLogin />} />
                 <Route path='/admin' element={<AdminLayoutWrapper />}>

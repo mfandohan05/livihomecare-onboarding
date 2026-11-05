@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import { Users, Clock, CheckCircle, AlertCircle, XCircle } from 'lucide-react'
+import { Users, Clock, CheckCircle, AlertCircle, XCircle, TriangleAlert } from 'lucide-react'
 import { job_label } from '@/lib/labelUtils'
 import { useCompany } from '@/context/CompanyContext'
+import { fetchCompanyExpirySummaries } from '@/lib/documentExpirationQueries'
 
 export default function AdminDashboard() {
     const navigate = useNavigate()
@@ -12,7 +13,8 @@ export default function AdminDashboard() {
         pending: 0,
         inProgress: 0,
         completed: 0,
-        cancelled: 0
+        cancelled: 0,
+        needsAttention: 0
     })
     const [recentCaregivers, setRecentCaregivers] = useState([])
     const [loading, setLoading] = useState(true)
@@ -51,6 +53,13 @@ export default function AdminDashboard() {
                 })
                 const nonCancelledCaregivers = caregivers.filter(c => c.status !== 'cancelled')
                 setRecentCaregivers(nonCancelledCaregivers.slice(0, 5))
+
+                const activeIds = new Set(nonCancelledCaregivers.map(c => c.id))
+                const expirySummaries = await fetchCompanyExpirySummaries(companyId)
+                const needsAttention = [...expirySummaries.entries()]
+                    .filter(([caregiverId, summary]) => activeIds.has(caregiverId) && summary.attentionCount > 0)
+                    .length
+                setStats(prev => ({ ...prev, needsAttention }))
             }
 
             setLoading(false)
@@ -88,15 +97,31 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 mb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-8">
                 {[
                     { label: 'Total Employees Enrolled', value: stats.total, icon: Users, color: 'text-blue-600 bg-blue-50' },
                     { label: 'Pending', value: stats.pending, icon: AlertCircle, color: 'text-muted-foreground bg-muted' },
                     { label: 'In Progress', value: stats.inProgress, icon: Clock, color: 'text-amber-600 bg-amber-50' },
                     { label: 'Completed', value: stats.completed, icon: CheckCircle, color: 'text-[#577C09] bg-[#E8F0D0]' },
                     { label: 'Cancelled', value: stats.cancelled, icon: XCircle, color: 'text-red-600 bg-red-50' },
+                    {
+                        label: 'Documents needing attention',
+                        value: stats.needsAttention,
+                        icon: TriangleAlert,
+                        color: 'text-red-900 bg-red-100',
+                        onClick: () => navigate('/admin/employees?expiry=attention'),
+                    },
                 ].map((stat) => (
-                    <div key={stat.label} className="bg-white rounded-xl border border-border p-4 sm:p-6">
+                    <div
+                        key={stat.label}
+                        {...(stat.onClick ? {
+                            role: 'link',
+                            tabIndex: 0,
+                            onClick: stat.onClick,
+                            onKeyDown: (e) => { if (e.key === 'Enter') stat.onClick() },
+                        } : {})}
+                        className={`bg-white rounded-xl border border-border p-4 sm:p-6 ${stat.onClick ? 'cursor-pointer hover:bg-muted/30 transition-colors' : ''}`}
+                    >
                         <div className={`w-10 h-10 rounded-lg ${stat.color} flex items-center justify-center mb-3`}>
                             <stat.icon className="w-5 h-5" />
                         </div>

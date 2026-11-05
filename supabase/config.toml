@@ -938,3 +938,8 @@ enabled = true
 verify_jwt = true
 import_map = "./functions/studio-delete-company-admin/deno.json"
 entrypoint = "./functions/studio-delete-company-admin/index.ts"
+
+[functions.send-expiration-reminders]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/send-expiration-reminders/index.ts"

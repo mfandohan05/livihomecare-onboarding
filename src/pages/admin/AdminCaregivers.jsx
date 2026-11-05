@@ -15,6 +15,13 @@ import {
 import { Upload, ChevronDown } from 'lucide-react'
 import { formatPhone } from '@/lib/formUtils'
 import { useCompany } from '@/context/CompanyContext'
+import { ExpirationSummaryBadge } from '@/components/admin/ExpirationBadge'
+import {
+    EXPIRY_FILTERS,
+    fetchCompanyExpirySummaries,
+    fetchExpirySummaries,
+    matchesExpiryFilter,
+} from '@/lib/documentExpirationQueries'
 
 const Field = ({ label, id, children, required }) => (
     <div className="space-y-1.5">
@@ -329,6 +336,10 @@ export default function AdminCaregivers() {
     const [search, setSearch] = useState('')
     const [statusFilter, setStatusFilter] = useState('all')
     const [roleFilter, setRoleFilter] = useState('all')
+    const [expiryFilter, setExpiryFilter] = useState(
+        EXPIRY_FILTERS.includes(searchParams.get('expiry')) ? searchParams.get('expiry') : 'all'
+    )
+    const [expirySummaries, setExpirySummaries] = useState(new Map())
     const [loading, setLoading] = useState(true)
     const [page, setPage] = useState(1);
     const [totalCount, setTotalCount] = useState(0)
@@ -365,7 +376,7 @@ export default function AdminCaregivers() {
             return;
         }
         fetchCaregivers()
-    }, [page, debouncedSearch, statusFilter, roleFilter, skillFilters, companyId])
+    }, [page, debouncedSearch, statusFilter, roleFilter, skillFilters, expiryFilter, companyId])
 
     useEffect(() => {
         if (!companyId) {
@@ -435,11 +446,37 @@ export default function AdminCaregivers() {
             query = query.in('id', matchingIds)
         }
 
-        const { data, count } = await query.range(from, to)
+        let expiryOrder = null
+        let companySummaries = null
+        if (expiryFilter !== 'all') {
+            companySummaries = await fetchCompanyExpirySummaries(companyId)
+            expiryOrder = [...companySummaries.entries()]
+                .filter(([, summary]) => matchesExpiryFilter(summary, expiryFilter))
+                .sort((a, b) => a[1].worst.daysLeft - b[1].worst.daysLeft)
+                .map(([caregiverId]) => caregiverId)
+
+            if (expiryOrder.length === 0) {
+                setCaregivers([])
+                setFiltered([])
+                setTotalCount(0)
+                setLoading(false)
+                return
+            }
+
+            query = query.in('id', expiryOrder)
+        }
+
+        const { data, count } = expiryOrder ? await query : await query.range(from, to)
 
         if (data) {
-            setCaregivers(data)
-            setFiltered(data)
+            let rows = data
+            if (expiryOrder) {
+                const rank = new Map(expiryOrder.map((caregiverId, index) => [caregiverId, index]))
+                rows = [...data].sort((a, b) => rank.get(a.id) - rank.get(b.id)).slice(from, to + 1)
+            }
+            setExpirySummaries(companySummaries || await fetchExpirySummaries(companyId, rows.map(row => row.id)))
+            setCaregivers(rows)
+            setFiltered(rows)
         }
         setTotalCount(count || 0)
         setLoading(false)
@@ -447,7 +484,7 @@ export default function AdminCaregivers() {
 
     useEffect(() => {
         setPage(1)
-    }, [debouncedSearch, statusFilter, roleFilter, skillFilters])
+    }, [debouncedSearch, statusFilter, roleFilter, skillFilters, expiryFilter])
 
     const statusColor = (status) => {
         if (status === 'completed') return 'text-[#577C09] bg-[#E8F0D0]'
@@ -539,6 +576,17 @@ export default function AdminCaregivers() {
                     {roleOptions.map(r => (
                         <option key={r.role_key} value={r.role_key}>{r.display_label}</option>
                     ))}
+                </select>
+                <select
+                    value={expiryFilter}
+                    onChange={(e) => setExpiryFilter(e.target.value)}
+                    aria-label="Filter by document expiration"
+                    className="w-full sm:w-auto border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[var(--primary-color)]"
+                >
+                    <option value="all">All document statuses</option>
+                    <option value="attention">Expired or expiring soon</option>
+                    <option value="expired">Expired</option>
+                    <option value="expiring">Expiring soon</option>
                 </select>
                 <div className="relative w-full sm:w-auto" ref={skillDropdownRef}>
                     <button
@@ -677,9 +725,12 @@ export default function AdminCaregivers() {
                                         </td>
                                         <td className="px-6 py-4 text-sm text-muted-foreground">{activeTime}</td>
                                         <td className="px-6 py-4">
-                                            <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusColor(caregiver.status)}`}>
-                                                {statusLabel(caregiver.status)}
-                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusColor(caregiver.status)}`}>
+                                                    {statusLabel(caregiver.status)}
+                                                </span>
+                                                <ExpirationSummaryBadge summary={expirySummaries.get(caregiver.id)} />
+                                            </div>
                                         </td>
                                     </tr>
                                 )
