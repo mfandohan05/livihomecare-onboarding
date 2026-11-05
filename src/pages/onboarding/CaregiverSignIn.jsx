@@ -38,7 +38,7 @@ export default function CaregiverSignIn() {
             return
         }
 
-        navigate('/onboard', { replace: true })
+        navigate(caregiver.status === 'completed' ? '/my-documents' : '/onboard', { replace: true })
     }
 
     const handleForgotPassword = async () => {
