@@ -56,8 +56,8 @@ Deno.serve(async (req) => {
       ? (parseFloat(activeHours) * caregiver.pay_rate).toFixed(2)
       : null
 
-    const portalDomain = 'rsonboard.com'
-    const senderEmail = 'onboarding@rsonboard.com'
+    const portalDomain = 'app.livihomecare.com'
+    const senderEmail = 'onboarding@livihomecare.com'
 
     const logoUrl = `https://${portalDomain}/logo.png`
 

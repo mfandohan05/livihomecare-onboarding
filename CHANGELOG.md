@@ -6,6 +6,8 @@
 - Admins can now set or edit a document's expiration date, and replacing a document asks for its new expiration date
 - Added daily email reminders to employees and a digest to company admins when a document is 30, 15 or 7 days from expiring, and every 7 days once expired
 - Added a My Documents page where completed employees can upload updated documents; completed employees now land there after signing in
+
+## 2.3.1 - 2026-10-17
 - Added new landing page, redesigned login screens
 - Fixed bug with address not showing up on offer letter
 
@@ -22,6 +24,11 @@
 - Added audit logging for "Ready for Payroll" status
 - Fixed bug where audit logs were not showing correct names for important actions, only emails
 - Added Employee Policy Manual to Forms & Agreements w/scrollspy
+- Made it so that tax form values are cleared immediately from HTML after submissions- Fixed bug where bloodborne pathogens certificate being uploaded by the admin was not being properly reflected on the caregiver side
+- Added "Ready for Payroll" status for employees where admins can mark employees that are ready to review by payroll
+- Added audit logging for "Ready for Payroll" status
+- Fixed bug where audit logs were not showing correct names for important actions, only emails
+
 - Made it so that tax form values are cleared immediately from HTML after submissions
 
 ## 2.1.0 - 2026-08-19
