@@ -6,10 +6,8 @@
 - Admins can now set or edit a document's expiration date, and replacing a document asks for its new expiration date
 - Added daily email reminders to employees and a digest to company admins when a document is 30, 15 or 7 days from expiring, and every 7 days once expired
 - Added a My Documents page where completed employees can upload updated documents; completed employees now land there after signing in
-
-## 2.3.1 - 2026-10-27
+- Added new landing page, redesigned login screens
 - Fixed bug with address not showing up on offer letter
-
 
 ## 2.3.0 - 2026-09-29
 - Added user accounts for employees being onboarded

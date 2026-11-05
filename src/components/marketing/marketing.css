@@ -1,0 +1,158 @@
+/*
+ * Ready, Set, Onboard! public pages (landing + login hub + admin login).
+ * Everything is scoped to .landing-root and uses hardcoded brand tokens sampled from the logo,
+ * so it never depends on tenant theming (--primary-color / --secondary-bg) or CompanyProvider.
+ */
+.landing-root {
+  /* Brand (sampled from src/assets/logo.png) */
+  --lr-navy: #022a69;
+  --lr-navy-hover: #0a3a86;
+  --lr-navy-deep: #011a47;
+  --lr-teal: #16b3b6;
+  --lr-amber: #fcaf2a;
+  --lr-coral: #f85741;
+
+  /* Accent tints (~12%) for icon tiles, chips, stages */
+  --lr-teal-tint: #e3f6f6;
+  --lr-amber-tint: #fff5e5;
+  --lr-coral-tint: #ffebe8;
+  --lr-navy-tint: #e6ecf7;
+
+  /* Neutrals */
+  --lr-white: #ffffff;
+  --lr-surface: #f5f7fb;
+  --lr-text: #14224a;
+  --lr-text-2: #4b5778;
+  --lr-line: rgba(2, 42, 105, 0.12);
+
+  /* Radii, shadows */
+  --lr-r-card: 24px;
+  --lr-r-tile: 16px;
+  --lr-shadow-1: 0 1px 2px rgba(2, 42, 105, 0.06), 0 6px 20px -8px rgba(2, 42, 105, 0.14);
+  --lr-shadow-2: 0 2px 4px rgba(2, 42, 105, 0.06), 0 22px 44px -16px rgba(2, 42, 105, 0.24);
+
+  /* Type scale */
+  --lr-display: clamp(2.25rem, 1.35rem + 3.6vw, 4rem);   /* 36 -> 64 */
+  --lr-h2: clamp(1.875rem, 1.35rem + 2.1vw, 3rem);       /* 30 -> 48 */
+  --lr-h3: 1.25rem;
+  --lr-lead: clamp(1.0625rem, 1rem + 0.35vw, 1.3125rem);
+  --lr-body: 1.0625rem;
+  --lr-caption: 0.875rem;
+
+  background: var(--lr-white);
+  color: var(--lr-text);
+  font-size: var(--lr-body);
+  line-height: 1.6;
+  overflow-x: clip;
+}
+html:has(.landing-root) { scroll-behavior: smooth; }
+.landing-root section[id] { scroll-margin-top: 88px; }
+
+/* Type */
+.lr-display { font-size: var(--lr-display); font-weight: 600; letter-spacing: -0.035em; line-height: 1.06; color: var(--lr-navy); text-wrap: balance; }
+.lr-h2 { font-size: var(--lr-h2); font-weight: 600; letter-spacing: -0.03em; line-height: 1.12; color: var(--lr-navy); text-wrap: balance; }
+.lr-h3 { font-size: var(--lr-h3); font-weight: 600; letter-spacing: -0.01em; line-height: 1.3; color: var(--lr-navy); }
+.lr-lead { font-size: var(--lr-lead); color: var(--lr-text-2); line-height: 1.55; }
+.lr-muted { color: var(--lr-text-2); }
+.lr-caption { font-size: var(--lr-caption); color: var(--lr-text-2); }
+
+/* Layout */
+.lr-container { width: 100%; max-width: 1160px; margin-inline: auto; padding-inline: 20px; }
+@media (min-width: 640px) { .lr-container { padding-inline: 32px; } }
+.lr-section { padding-block: 64px; }
+@media (min-width: 1024px) { .lr-section { padding-block: 112px; } }
+.lr-surface { background: var(--lr-surface); }
+
+/* Buttons: one primary, one tonal, same height/padding */
+.lr-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 48px; padding: 0 28px; border-radius: 999px; border: 0; cursor: pointer;
+  font: inherit; font-size: 1rem; font-weight: 600; line-height: 1; text-decoration: none; white-space: nowrap;
+  transition: background-color .18s ease, box-shadow .18s ease, transform .12s ease;
+}
+.lr-btn:active { transform: translateY(1px) scale(0.985); }
+.lr-btn-primary { background: var(--lr-navy); color: #fff; }
+.lr-btn-primary:hover { background: var(--lr-navy-hover); box-shadow: 0 8px 20px -8px rgba(2, 42, 105, 0.6); }
+.lr-btn-tonal { background: var(--lr-navy-tint); color: var(--lr-navy); }
+.lr-btn-tonal:hover { background: #d6e0f2; }
+.lr-btn-light { background: #fff; color: var(--lr-navy); }
+.lr-btn-light:hover { background: var(--lr-navy-tint); }
+.lr-btn-sm { height: 40px; padding: 0 20px; font-size: 0.9375rem; }
+.lr-btn[disabled] { opacity: 0.65; cursor: not-allowed; }
+
+/* Focus: visible everywhere, white on dark surfaces */
+.landing-root :focus-visible { outline: 3px solid var(--lr-navy); outline-offset: 3px; border-radius: 8px; }
+.landing-root .lr-dark :focus-visible { outline-color: #fff; }
+
+/* Surfaces */
+.lr-card {
+  background: #fff; border-radius: var(--lr-r-card); border: 1px solid var(--lr-line); box-shadow: var(--lr-shadow-1);
+}
+.lr-lift { transition: transform .22s ease, box-shadow .22s ease; }
+.lr-lift:hover { transform: translateY(-4px); box-shadow: var(--lr-shadow-2); }
+.lr-tile { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 14px; color: var(--lr-navy); }
+.lr-tile-teal { background: var(--lr-teal-tint); }
+.lr-tile-amber { background: var(--lr-amber-tint); }
+.lr-tile-coral { background: var(--lr-coral-tint); }
+.lr-tile-navy { background: var(--lr-navy-tint); }
+
+/* Chips: navy text always; color lives in the tint and icon, and every status also has an icon + word */
+.lr-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; font-size: 0.8125rem; font-weight: 600; color: var(--lr-navy); background: var(--lr-navy-tint); white-space: nowrap; }
+.lr-chip svg { width: 14px; height: 14px; flex: none; }
+.lr-chip-teal { background: var(--lr-teal-tint); }
+.lr-chip-amber { background: var(--lr-amber-tint); }
+.lr-chip-coral { background: var(--lr-coral-tint); }
+.lr-chip-gray { background: #eef0f5; color: #3b4766; }
+.lr-dot { width: 8px; height: 8px; border-radius: 99px; flex: none; }
+
+/* Hero glow built from the logo ring, very low opacity */
+.lr-hero { position: relative; isolation: isolate; }
+.lr-hero::before {
+  content: ""; position: absolute; z-index: -1; inset: -10% -10% auto auto; width: 70%; height: 90%;
+  background:
+    radial-gradient(40% 45% at 30% 30%, rgba(22, 179, 182, 0.14), transparent 70%),
+    radial-gradient(36% 40% at 70% 25%, rgba(252, 175, 42, 0.12), transparent 70%),
+    radial-gradient(40% 45% at 60% 75%, rgba(248, 87, 65, 0.09), transparent 70%);
+  pointer-events: none;
+}
+
+/* Mock UI helpers */
+.lr-mock { background: #fff; border: 1px solid var(--lr-line); border-radius: 20px; box-shadow: var(--lr-shadow-2); overflow: hidden; }
+.lr-field-hl { background: var(--lr-teal-tint); border-radius: 6px; padding: 1px 8px; font-weight: 600; color: var(--lr-navy); }
+.lr-progress { height: 6px; border-radius: 99px; background: var(--lr-navy-tint); overflow: hidden; }
+.lr-progress > i { display: block; height: 100%; border-radius: 99px; background: var(--lr-navy); }
+
+/* Honeypot: off-screen and out of the tab order; never visible */
+.lr-hp { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+
+/* Inputs */
+.lr-input {
+  display: block; width: 100%; margin-top: 6px; padding: 12px 16px; font: inherit; color: var(--lr-text);
+  background: #fff; border: 1px solid #677fa5; border-radius: 14px; min-height: 48px;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.lr-input::placeholder { color: #66718f; opacity: 1; }
+.lr-input:hover { border-color: var(--lr-navy); }
+.lr-input:focus-visible { outline: none; border-color: var(--lr-navy); box-shadow: 0 0 0 4px rgba(2, 42, 105, 0.18); }
+.lr-input[aria-invalid="true"] { border-color: #b42318; }
+.lr-error { color: #b42318; font-size: var(--lr-caption); margin-top: 6px; }
+
+/* Page enter: plays when a public page mounts after navigating. Short, never fully transparent, and the end state is
+   the element's natural style, so nothing can get stuck faded. Not scoped, so the 404 page can use it too. */
+.lr-page-enter { animation: lr-page-in 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
+@keyframes lr-page-in { from { opacity: 0.35; transform: translateY(14px); } }
+
+/* Motion: progressive enhancement only. Nothing is ever hidden: the entrance is a small slide (transform only,
+   never opacity), runs only where scroll-driven animations exist, and is skipped for reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .lr-reveal { animation: lr-reveal linear both; animation-timeline: view(); animation-range: entry 0% entry 40%; }
+    @keyframes lr-reveal { from { transform: translateY(20px); } to { transform: none; } }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html:has(.landing-root) { scroll-behavior: auto; }
+  .lr-page-enter { animation: none; }
+  .lr-lift, .lr-btn { transition: none; }
+  .lr-lift:hover { transform: none; }
+}

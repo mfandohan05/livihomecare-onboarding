@@ -45,11 +45,11 @@ export default function StudioLogin() {
         <div className="studio-theme min-h-screen flex items-center justify-center bg-muted/30 px-4">
             <div className="w-full max-w-sm">
                 <button
-                    onClick={() => navigate('/')}
+                    onClick={() => navigate('/login')}
                     className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
                 >
                     <ArrowLeft className="w-4 h-4" />
-                    Back to home
+                    Back to sign in
                 </button>
 
                 <div className="flex justify-center mb-8">
