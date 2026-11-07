@@ -880,13 +880,16 @@ export default function AdminCaregiverDetail() {
         const newToken = crypto.randomUUID()
         const newExpiry = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString()
 
+        const updates = {
+            token: newToken,
+            link_expires_at: newExpiry,
+        }
+
+        if (caregiver.status === 'cancelled') updates.status = progress ? 'in_progress' : 'pending'
+
         await supabase
             .from('caregivers')
-            .update({
-                status: 'pending',
-                token: newToken,
-                link_expires_at: newExpiry,
-            })
+            .update(updates)
             .eq('id', id)
         await logAction('regenerated_link');
         await supabase.functions.invoke('send-invite-email', {
