@@ -36,11 +36,11 @@ Deno.serve(async (req) => {
 
     const companyName = companyData?.company_name || 'your employer'
     const primaryColor = companyData?.primary_color || '#577C09'
-    const supportEmail = companyData?.support_email || 'office@livihomecare.com'
+    const supportEmail = companyData?.support_email || ''
     const supportPhone = companyData?.phone || ''
 
-    const portalDomain = 'app.livihomecare.com'
-    const senderEmail = 'noreply@livihomecare.com'
+    const portalDomain = 'rsonboard.com'
+    const senderEmail = 'noreply@rsonboard.com'
 
     const logoUrl = `https://${portalDomain}/logo.png`
 
