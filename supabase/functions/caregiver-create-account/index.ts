@@ -1,4 +1,5 @@
 import { serviceClient } from '../_shared/caregiverAccess.ts'
+import { MIN_PASSWORD_LENGTH } from '../_shared/passwordPolicy.js'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,7 +12,6 @@ const json = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   })
 
-const MIN_PASSWORD_LENGTH = 8
 const MAX_PASSWORD_LENGTH = 72
 
 // Creates the Supabase Auth user for a caregiver and links it to their row.

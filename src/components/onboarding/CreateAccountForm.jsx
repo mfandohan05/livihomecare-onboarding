@@ -5,8 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import AuthCard from './AuthCard'
-
-const MIN_PASSWORD_LENGTH = 8
+import { MIN_PASSWORD_LENGTH } from '@/lib/passwordPolicy'
 
 export default function CreateAccountForm({ token, name, email, onCreated, onExistingAccount }) {
     const [password, setPassword] = useState('')

@@ -1,4 +1,5 @@
 import { requirePlatformAdmin, studioCorsHeaders } from '../_shared/platformAdmin.ts'
+import { MIN_PASSWORD_LENGTH } from '../_shared/passwordPolicy.js'
 
 const VALID_ROLES = ['admin', 'superadmin']
 
@@ -12,7 +13,7 @@ Deno.serve(async (req) => {
     if (!companyId) throw new Error('companyId is required')
     if (!name || !name.trim()) throw new Error('name is required')
     if (!email || !email.trim()) throw new Error('email is required')
-    if (!password || password.length < 8) throw new Error('password must be at least 8 characters')
+    if (!password || password.length < MIN_PASSWORD_LENGTH) throw new Error(`password must be at least ${MIN_PASSWORD_LENGTH} characters`)
     const finalRole = role || 'admin'
     if (!VALID_ROLES.includes(finalRole)) throw new Error(`Invalid role: ${finalRole}`)
 

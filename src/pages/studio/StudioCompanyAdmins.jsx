@@ -24,6 +24,7 @@ import {
 import { ArrowLeft, Plus, Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { callStudioFunction } from '@/lib/studio'
+import { MIN_PASSWORD_LENGTH } from '@/lib/passwordPolicy'
 
 const ROLE_OPTIONS = [
     { value: 'admin', label: 'Admin' },
@@ -106,7 +107,7 @@ function AdminDialog({ open, onClose, onSaved, companyId, editingAdmin }) {
                     <Field
                         label={editingAdmin ? 'New password' : 'Password'}
                         id="password"
-                        hint={editingAdmin ? 'Leave blank to keep their current password.' : 'At least 8 characters.'}
+                        hint={editingAdmin ? 'Leave blank to keep their current password.' : `At least ${MIN_PASSWORD_LENGTH} characters.`}
                     >
                         <Input
                             id="password"

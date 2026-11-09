@@ -1,4 +1,5 @@
 import { requirePlatformAdmin, studioCorsHeaders } from '../_shared/platformAdmin.ts'
+import { MIN_PASSWORD_LENGTH } from '../_shared/passwordPolicy.js'
 
 const VALID_ROLES = ['admin', 'superadmin']
 
@@ -21,7 +22,7 @@ Deno.serve(async (req) => {
     if (existingError || !existing) throw new Error('Admin not found')
 
     if (typeof password === 'string' && password) {
-      if (password.length < 8) throw new Error('password must be at least 8 characters')
+      if (password.length < MIN_PASSWORD_LENGTH) throw new Error(`password must be at least ${MIN_PASSWORD_LENGTH} characters`)
       const { error: pwError } = await supabase.auth.admin.updateUserById(id, { password })
       if (pwError) throw pwError
     }

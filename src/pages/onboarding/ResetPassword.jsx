@@ -5,8 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import AuthCard from '@/components/onboarding/AuthCard'
-
-const MIN_PASSWORD_LENGTH = 8
+import { MIN_PASSWORD_LENGTH } from '@/lib/passwordPolicy'
 
 // Landing page for the link in Supabase's standard password-reset email. The
 // link signs the user into a short-lived recovery session, which is what
