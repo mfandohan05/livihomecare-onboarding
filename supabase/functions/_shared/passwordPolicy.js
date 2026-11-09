@@ -8,7 +8,8 @@ export const PASSWORD_RULES = [
   { id: 'lower',  label: 'A lowercase letter (a-z)',  test: (p) => /[a-z]/.test(p) },
   { id: 'upper',  label: 'An uppercase letter (A-Z)', test: (p) => /[A-Z]/.test(p) },
   { id: 'digit',  label: 'A number (0-9)',            test: (p) => /\d/.test(p) },
-  { id: 'symbol', label: 'A symbol (e.g. ! @ # $)',   test: (p) => /[^A-Za-z0-9]/.test(p) },
+  // Same symbol set Supabase uses for `lower_upper_letters_digits_symbols`.
+  { id: 'symbol', label: 'A symbol (e.g. ! @ # $)',   test: (p) => /[!@#$%^&*()_+\-=[\]{};':"\\|<>?,.\/`~]/.test(p) },
 ]
 
 export const PASSWORD_REQUIREMENTS_MESSAGE =
