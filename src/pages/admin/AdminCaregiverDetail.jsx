@@ -11,6 +11,7 @@ import {
     AlertDialogDescription,
 } from '@/components/ui/alert-dialog'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import { formatPhone } from '@/lib/formUtils'
 import { logImportantAction } from '@/lib/logAction'
@@ -1150,9 +1151,8 @@ export default function AdminCaregiverDetail() {
                     <div className="space-y-4 pt-2">
                         <div className="space-y-1.5">
                             <Label htmlFor="reauth_password">Password</Label>
-                            <Input
+                            <PasswordInput
                                 id="reauth_password"
-                                type="password"
                                 value={reauthPassword}
                                 onChange={(e) => setReauthPassword(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && handleReauth()}
@@ -1292,9 +1292,8 @@ export default function AdminCaregiverDetail() {
                     <div className="space-y-4 pt-2">
                         <div className="space-y-1.5">
                             <Label htmlFor="cancel_password">Enter your password to confirm</Label>
-                            <Input
+                            <PasswordInput
                                 id="cancel_password"
-                                type="password"
                                 value={cancelPassword}
                                 onChange={(e) => setCancelPassword(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && handleCancelOnboarding()}
@@ -1337,9 +1336,8 @@ export default function AdminCaregiverDetail() {
                     <div className="space-y-4 pt-2">
                         <div className="space-y-1.5">
                             <Label htmlFor="delete_password">Enter your password to confirm</Label>
-                            <Input
+                            <PasswordInput
                                 id="delete_password"
-                                type="password"
                                 value={deletePassword}
                                 onChange={(e) => setDeletePassword(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && handleDelete()}
