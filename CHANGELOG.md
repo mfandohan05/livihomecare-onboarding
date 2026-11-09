@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.4.1 - 2026-11-05
+- Added FAQ & How-To Guides for both admins and employees/caregivers
+
 ## 2.4.0 - 2026-10-27
 - Added document expiration tracking with color-coded status badges (yellow, orange, red, dark red) on the employee page
 - Added a document expiration indicator, filter and sort to the employees list, and a "Documents needing attention" card to the dashboard

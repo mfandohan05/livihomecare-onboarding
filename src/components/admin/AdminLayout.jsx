@@ -13,7 +13,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { LayoutDashboard, Users, LogOut, ChevronDown, Map, Logs, Menu } from 'lucide-react'
+import { LayoutDashboard, Users, LogOut, ChevronDown, Map, Logs, Menu, BookOpen } from 'lucide-react'
 import { APP_VERSION } from '@/version'
 import { useCompany } from '@/context/CompanyContext'
 
@@ -76,7 +76,8 @@ export default function AdminLayout({ children }) {
         { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
         { label: 'Employees', path: '/admin/employees', icon: Users },
         { label: 'Caregiver Map', path: '/admin/map', icon: Map },
-        ...(adminRole === 'superadmin' ? [{ label: 'Logs', path: '/admin/logs', icon: Logs }] : [])
+        ...(adminRole === 'superadmin' ? [{ label: 'Logs', path: '/admin/logs', icon: Logs }] : []),
+        { label: 'How-To Guide', path: '/admin/help', icon: BookOpen },
     ]
 
     const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/')
@@ -114,6 +115,13 @@ export default function AdminLayout({ children }) {
                 </div>
 
                 <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+                    <button
+                        onClick={() => navigate('/admin/help')}
+                        aria-label="How-To Guide"
+                        className={`md:hidden flex items-center justify-center w-9 h-9 rounded-md transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-color)] ${isActive('/admin/help') ? 'bg-[var(--secondary-bg)] text-[var(--primary-color)]' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+                    >
+                        <BookOpen className="w-5 h-5" />
+                    </button>
                     <div className="md:hidden">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>

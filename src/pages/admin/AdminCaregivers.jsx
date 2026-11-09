@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import HowDoesThisWork from '@/components/help/HowDoesThisWork'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { Search } from 'lucide-react'
@@ -170,6 +171,7 @@ function NewCaregiverDialog({ open, onClose, onCreated, companyId, roleOptions }
             <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto scrollbar-hide">
                 <DialogHeader>
                     <DialogTitle>New Employee</DialogTitle>
+                    <HowDoesThisWork article="add-employee" className="mt-1" />
                 </DialogHeader>
 
                 <div className="space-y-6 pt-2">
@@ -537,6 +539,7 @@ export default function AdminCaregivers() {
                 <div>
                     <h1 className="text-2xl font-bold">Employees</h1>
                     <p className="text-muted-foreground">{totalCount} total employees</p>
+                    <HowDoesThisWork article="finding-employees" className="mt-1" />
                 </div>
                 <Button
                     onClick={() => setShowNewDialog(true)}

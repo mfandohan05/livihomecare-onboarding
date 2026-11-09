@@ -17,6 +17,7 @@ import { logImportantAction } from '@/lib/logAction'
 import { useCompany } from '@/context/CompanyContext'
 import ExpirationDateDialog from '@/components/global/ExpirationDateDialog'
 import { ExpirationBadge } from '@/components/admin/ExpirationBadge'
+import HowDoesThisWork from '@/components/help/HowDoesThisWork'
 import {
     EXPIRATION_REQUIRED_TYPES,
     collapseAliasedDocuments,
@@ -1398,7 +1399,8 @@ export default function AdminCaregiverDetail() {
                         <p className="text-muted-foreground truncate">{caregiver.position_title}</p>
                     </div>
                 </div>
-                <div className='flex flex-row gap-2'>
+                <div className='flex flex-row items-center gap-3'>
+                    <HowDoesThisWork article="employee-page" />
                     <span className={`text-sm font-medium px-3 py-1.5 rounded-full shrink-0 ${statusColor(caregiver.status)}`}>
                         {statusLabel(caregiver.status)}
                     </span>
@@ -1624,7 +1626,10 @@ export default function AdminCaregiverDetail() {
                                 </div>
                             </div>
                         )}
-                        <h2 className="font-semibold mb-4">Documents</h2>
+                        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                            <h2 className="font-semibold">Documents</h2>
+                            <HowDoesThisWork article="document-expiration" />
+                        </div>
 
                         <ExpirationDateDialog
                             open={Boolean(expirationDialog)}

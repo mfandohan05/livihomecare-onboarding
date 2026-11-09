@@ -22,6 +22,7 @@ import { supabase } from '@/lib/supabase'
 
 import { toast } from 'sonner'
 import SurePayrollGuidePage from './onboarding-pages/SurePayrollGuidePage'
+import NeedHelpLink from '@/components/help/NeedHelpLink'
 
 import {
     Heart,
@@ -570,12 +571,14 @@ export default function OnboardingPortal({ initialCaregiver, viewer }) {
                 getHoursWorked={getHoursWorked}
                 isCompleted={isCompleted}
             />
-            <SidebarInset className="overflow-y-auto">
+            <SidebarInset className="relative overflow-y-auto">
                 {isPreview && (
                     <div className="bg-amber-500 text-white text-center text-xs py-2 font-medium">
                         Preview Mode — changes cannot be made.
                     </div>
                 )}
+                {/* Opens the FAQ in a new tab at this step's topic, so no work is lost. */}
+                <NeedHelpLink stepName={steps.find(s => s.id === activeStep)?.stepName} className="absolute right-4 top-4 z-10 sm:right-8" />
                 <fieldset disabled={isPreview} className='contents'>
                     {renderStep()}
                 </fieldset>

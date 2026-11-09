@@ -5,6 +5,7 @@ import { Users, Clock, CheckCircle, AlertCircle, XCircle, TriangleAlert } from '
 import { job_label } from '@/lib/labelUtils'
 import { useCompany } from '@/context/CompanyContext'
 import { fetchCompanyExpirySummaries } from '@/lib/documentExpirationQueries'
+import HowDoesThisWork from '@/components/help/HowDoesThisWork'
 
 export default function AdminDashboard() {
     const navigate = useNavigate()
@@ -95,6 +96,7 @@ export default function AdminDashboard() {
                     <h1 className="text-2xl font-bold">Dashboard</h1>
                     <p className="text-muted-foreground">Manage your employees and onboarding</p>
                 </div>
+                <HowDoesThisWork article="dashboard" />
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-8">

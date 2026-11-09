@@ -5,6 +5,7 @@ import { Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useCompany } from '@/context/CompanyContext'
+import HowDoesThisWork from '@/components/help/HowDoesThisWork'
 
 const ACTION_LABELS = {
     viewed_ssn: 'Viewed SSN',
@@ -179,6 +180,7 @@ export default function AdminLogs() {
                     <h1 className="text-2xl font-bold">Audit Logs</h1>
                     <p className="text-muted-foreground">{total} total entries</p>
                 </div>
+                <HowDoesThisWork article="audit-logs" />
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 mb-6 sm:flex-wrap">

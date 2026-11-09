@@ -6,6 +6,8 @@ import OnboardingGate from './pages/onboarding/OnboardingGate'
 import CaregiverSignIn from './pages/onboarding/CaregiverSignIn'
 import MyDocuments from './pages/onboarding/MyDocuments'
 import ResetPassword from './pages/onboarding/ResetPassword'
+import CaregiverLayout from './components/help/CaregiverLayout'
+import CaregiverFaq from './pages/help/CaregiverFaq'
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminRoute from './components/admin/AdminRoute';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -14,6 +16,7 @@ import AdminCaregiverDetail from './pages/admin/AdminCaregiverDetail';
 import AdminCaregiverMap from './pages/admin/AdminCaregiverMap';
 import AdminLayout from './components/admin/AdminLayout';
 import AdminLogs from './pages/admin/AdminLogs';
+import AdminHelp from './pages/admin/AdminHelp';
 import StudioLogin from './pages/studio/StudioLogin';
 import PlatformAdminRoute from './components/studio/PlatformAdminRoute';
 import StudioLayout from './components/studio/StudioLayout';
@@ -79,11 +82,16 @@ function App() {
             <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/login" element={<Login />} />
-                <Route path='/onboard' element={<OnboardingGate />} />
-                <Route path='/onboard/:token' element={<OnboardingGate />} />
-                <Route path='/sign-in' element={<CaregiverSignIn />} />
-                <Route path='/my-documents' element={<MyDocuments />} />
-                <Route path='/reset-password' element={<ResetPassword />} />
+                {/* Public, static help content: no sign-in needed */}
+                <Route path='/help' element={<CaregiverFaq />} />
+                {/* Every caregiver route lives under CaregiverLayout, which adds the Help button */}
+                <Route element={<CaregiverLayout />}>
+                    <Route path='/onboard' element={<OnboardingGate />} />
+                    <Route path='/onboard/:token' element={<OnboardingGate />} />
+                    <Route path='/sign-in' element={<CaregiverSignIn />} />
+                    <Route path='/my-documents' element={<MyDocuments />} />
+                    <Route path='/reset-password' element={<ResetPassword />} />
+                </Route>
                 <Route path='/admin/login' element={<AdminLogin />} />
                 <Route path='/admin' element={<AdminLayoutWrapper />}>
                     <Route path="dashboard" element={<AdminDashboard />} />
@@ -91,6 +99,8 @@ function App() {
                     <Route path="employees/:id" element={<AdminCaregiverDetail />} />
                     <Route path="map" element={<AdminCaregiverMap />} />
                     <Route path="logs" element={<AdminLogs />} />
+                    <Route path="help" element={<AdminHelp />} />
+                    <Route path="help/:articleId" element={<AdminHelp />} />
                 </Route>
                 <Route path='/studio/login' element={<StudioLogin />} />
                 <Route path='/studio' element={<StudioLayoutWrapper />}>
