@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { ArrowLeft } from 'lucide-react'
+import { PasswordInput } from '@/components/ui/password-input'
 import companyLogo from '@/assets/logo.png'
 import '@/components/marketing/marketing.css'
 
@@ -77,9 +78,9 @@ export default function AdminLogin() {
                         </div>
                         <div>
                             <label htmlFor="password" className="text-sm font-semibold text-[var(--lr-navy)]">Password</label>
-                            <input
+                            <PasswordInput
+                                as="input"
                                 id="password"
-                                type="password"
                                 autoComplete="current-password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}

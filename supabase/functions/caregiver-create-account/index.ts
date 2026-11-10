@@ -1,4 +1,5 @@
 import { serviceClient } from '../_shared/caregiverAccess.ts'
+import { MAX_PASSWORD_LENGTH, meetsPasswordRules, PASSWORD_REQUIREMENTS_MESSAGE } from '../_shared/passwordPolicy.js'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,9 +11,6 @@ const json = (body: unknown, status = 200) =>
     status,
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   })
-
-const MIN_PASSWORD_LENGTH = 8
-const MAX_PASSWORD_LENGTH = 72
 
 // Creates the Supabase Auth user for a caregiver and links it to their row.
 // The email always comes from the caregivers row — never from the request. The
@@ -28,8 +26,8 @@ Deno.serve(async (req) => {
     const { token, password } = await req.json()
     if (!token || typeof token !== 'string') return json({ error: 'Invalid or expired link' }, 404)
 
-    if (typeof password !== 'string' || password.length < MIN_PASSWORD_LENGTH) {
-      return json({ success: false, error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters.` })
+    if (!meetsPasswordRules(password)) {
+      return json({ success: false, error: PASSWORD_REQUIREMENTS_MESSAGE })
     }
     if (password.length > MAX_PASSWORD_LENGTH) {
       return json({ success: false, error: `Password must be at most ${MAX_PASSWORD_LENGTH} characters.` })
@@ -62,7 +60,7 @@ Deno.serve(async (req) => {
 
     if (createError || !created?.user) {
       if (createError?.code === 'weak_password') {
-        return json({ success: false, error: createError.message })
+        return json({ success: false, error: PASSWORD_REQUIREMENTS_MESSAGE })
       }
       // An auth user already exists for this email (another caregiver record, an
       // admin, ...). Never link to it — that would hand this link's holder an

@@ -2,11 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import AuthCard from '@/components/onboarding/AuthCard'
-
-const MIN_PASSWORD_LENGTH = 8
+import { MAX_PASSWORD_LENGTH, meetsPasswordRules } from '@/lib/passwordPolicy'
+import PasswordRequirements from '@/components/onboarding/PasswordRequirements'
 
 // Landing page for the link in Supabase's standard password-reset email. The
 // link signs the user into a short-lived recovery session, which is what
@@ -18,7 +18,13 @@ export default function ResetPassword() {
     const [confirm, setConfirm] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
+    const [confirmError, setConfirmError] = useState(null)
     const arrivedViaRecoveryLink = useRef(/type=recovery/.test(window.location.hash + window.location.search))
+
+    const clearErrors = () => {
+        setError(null)
+        setConfirmError(null)
+    }
 
     useEffect(() => {
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
@@ -40,14 +46,14 @@ export default function ResetPassword() {
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-        setError(null)
+        clearErrors()
 
-        if (password.length < MIN_PASSWORD_LENGTH) {
-            setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`)
+        if (!meetsPasswordRules(password)) {
+            setError('Please meet all of the password requirements.')
             return
         }
         if (password !== confirm) {
-            setError('Passwords do not match.')
+            setConfirmError('Passwords do not match.')
             return
         }
 
@@ -55,7 +61,10 @@ export default function ResetPassword() {
         const { error: updateError } = await supabase.auth.updateUser({ password })
         if (updateError) {
             setLoading(false)
-            setError(updateError.message || 'Could not update your password. Please try again.')
+            setError(updateError.code === 'weak_password'
+                ? 'Please meet all of the password requirements.'
+                : updateError.message || 'Could not update your password. Please try again.'
+            )
             return
         }
 
@@ -89,28 +98,43 @@ export default function ResetPassword() {
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-1.5">
                     <Label htmlFor="password">New password</Label>
-                    <Input
+                    <PasswordInput
                         id="password"
-                        type="password"
                         autoComplete="new-password"
+                        maxLength={MAX_PASSWORD_LENGTH}
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder={`At least ${MIN_PASSWORD_LENGTH} characters`}
+                        onChange={(e) => {
+                            setPassword(e.target.value)
+                            clearErrors()
+                        }}
+                        placeholder={`Enter your new password`}
                         className="focus-visible:border-[#08265D] focus-visible:ring-[#08265D]/40"
                         required
                     />
+                    <div className="pt-1">
+                        <PasswordRequirements password={password} />
+                    </div>
                 </div>
                 <div className="space-y-1.5">
                     <Label htmlFor="confirm">Confirm new password</Label>
-                    <Input
+                    <PasswordInput
                         id="confirm"
-                        type="password"
                         autoComplete="new-password"
+                        maxLength={MAX_PASSWORD_LENGTH}
                         value={confirm}
-                        onChange={(e) => setConfirm(e.target.value)}
+                        onChange={(e) => {
+                            setConfirm(e.target.value)
+                            clearErrors()
+                        }}
+                        placeholder={`Re-enter your new password`}
                         className="focus-visible:border-[#08265D] focus-visible:ring-[#08265D]/40"
+                        aria-invalid={!!confirmError}
+                        aria-describedby={confirmError ? 'confirm-error' : undefined}
                         required
                     />
+                    {confirmError && (
+                        <p id="confirm-error" className="text-sm text-red-500">{confirmError}</p>
+                    )}
                 </div>
 
                 {error && <p className="text-sm text-red-500">{error}</p>}

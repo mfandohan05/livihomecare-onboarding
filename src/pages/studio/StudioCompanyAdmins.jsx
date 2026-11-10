@@ -24,6 +24,9 @@ import {
 import { ArrowLeft, Plus, Pencil, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { callStudioFunction } from '@/lib/studio'
+import { MAX_PASSWORD_LENGTH, meetsPasswordRules } from '@/lib/passwordPolicy'
+import { PasswordInput } from '@/components/ui/password-input'
+import PasswordRequirements from '@/components/onboarding/PasswordRequirements'
 
 const ROLE_OPTIONS = [
     { value: 'admin', label: 'Admin' },
@@ -60,8 +63,13 @@ function AdminDialog({ open, onClose, onSaved, companyId, editingAdmin }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-        setSaving(true)
         setError(null)
+        // A blank password on edit means "keep the current one".
+        if ((!editingAdmin || form.password) && !meetsPasswordRules(form.password)) {
+            setError('Please meet all of the password requirements.')
+            return
+        }
+        setSaving(true)
         try {
             const result = editingAdmin
                 ? await callStudioFunction('studio-update-company-admin', {
@@ -106,16 +114,21 @@ function AdminDialog({ open, onClose, onSaved, companyId, editingAdmin }) {
                     <Field
                         label={editingAdmin ? 'New password' : 'Password'}
                         id="password"
-                        hint={editingAdmin ? 'Leave blank to keep their current password.' : 'At least 8 characters.'}
+                        hint={editingAdmin ? 'Leave blank to keep their current password.' : undefined}
                     >
-                        <Input
+                        <PasswordInput
                             id="password"
-                            type="password"
+                            maxLength={MAX_PASSWORD_LENGTH}
                             value={form.password}
                             onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
                             placeholder={editingAdmin ? '••••••••' : ''}
                             required={!editingAdmin}
                         />
+                        {(!editingAdmin || form.password) && (
+                            <div className="pt-1">
+                                <PasswordRequirements password={form.password} />
+                            </div>
+                        )}
                     </Field>
                     <Field label="Position" id="position" hint="Job title shown in the UI, e.g. HR Manager.">
                         <Input id="position" value={form.position} onChange={(e) => setForm((p) => ({ ...p, position: e.target.value }))} />
