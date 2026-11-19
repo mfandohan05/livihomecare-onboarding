@@ -1,7 +1,5 @@
 import { CircleHelp } from 'lucide-react'
 
-// Always-visible Help button for caregiver pages. It opens the FAQ in a NEW TAB so
-// the caregiver never loses their place or unsaved work on the page they are on.
 export default function CaregiverHelpButton() {
     return (
         <a

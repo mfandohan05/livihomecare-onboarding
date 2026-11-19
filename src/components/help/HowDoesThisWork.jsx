@@ -1,7 +1,5 @@
 import { CircleHelp } from 'lucide-react'
 
-// Small contextual link for the main admin screens. Opens the matching How-To
-// article in a new tab so any open dialog or unsaved work stays where it is.
 export default function HowDoesThisWork({ article, className = '' }) {
     return (
         <a

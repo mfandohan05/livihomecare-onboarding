@@ -3,12 +3,9 @@ import { Image as ImageIcon, Info, Lightbulb, TriangleAlert } from 'lucide-react
 import { cn } from '@/lib/utils'
 import { fillPlaceholders } from '@/lib/help/placeholders'
 
-// Renders the structured content blocks used by both the caregiver FAQ and the
-// admin guide (see the header of src/content/help/caregiverFaq.js).
 
 const INLINE = /(\*\*[^*]+\*\*|\[\[[a-z]+:[^\]]+\]\]|\[[^\]]+\]\([^)]+\))/g
 
-// [[red: Expired]] -> a colored status chip. Colors match the status badges in the admin app.
 const CHIPS = {
   darkred: 'bg-red-100 text-red-950 border-red-300',
   red: 'bg-red-50 text-red-800 border-red-200',
@@ -69,8 +66,7 @@ export function Callout({ kind, children }) {
   )
 }
 
-// Drop a real image into public/help/ and set `src` (e.g. "/help/dashboard.png") in the
-// content file to replace the placeholder. Until then a labelled box is shown.
+
 export function ScreenshotPlaceholder({ label, src, alt }) {
   if (src) {
     return (

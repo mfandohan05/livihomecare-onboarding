@@ -3,8 +3,6 @@ import { NavLink } from 'react-router-dom'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 
-// Sidebar content: global search, "Popular / Start here", then every category and
-// article. Used inline on desktop and inside a drawer on phones/tablets.
 export default function AdminHelpNav({ help, query, onQueryChange, onNavigate }) {
     const popular = help.categories.flatMap((c) => c.articles).filter((a) => a.popular)
 

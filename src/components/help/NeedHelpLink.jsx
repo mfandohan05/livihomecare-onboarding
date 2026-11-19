@@ -1,8 +1,6 @@
 import { CircleHelp } from 'lucide-react'
 import { stepHelpTopics } from '@/content/help/caregiverFaq'
 
-// Small "Need help with this step?" link. Opens the FAQ at the section that
-// matches the step, in a new tab so the caregiver keeps their place.
 export default function NeedHelpLink({ stepName, className = '' }) {
     const topic = stepHelpTopics[stepName]
     if (!topic) return null

@@ -9,8 +9,6 @@ import { blocksToText, searchEntries } from '@/lib/help/search'
 import { fillPlaceholders } from '@/lib/help/placeholders'
 import companyLogo from '@/assets/logo.png'
 
-// Public page: static content only, so signed-out visitors can read it. The only
-// per-company part is the contact block, filled in when the visitor is a signed-in caregiver.
 export default function CaregiverFaq() {
     const { company } = useCaregiverCompany()
     const [query, setQuery] = useState('')
@@ -21,8 +19,6 @@ export default function CaregiverFaq() {
         document.title = 'Help & FAQ'
         return () => { document.title = previous }
     }, [])
-
-    // Searchable text per question (placeholders filled so company names are searchable too).
     const entries = useMemo(
         () => caregiverFaq.categories.flatMap((c) => c.items.map((item) => ({
             key: item.id,
@@ -40,7 +36,6 @@ export default function CaregiverFaq() {
         .filter((c) => c.items.length > 0)
     const resultCount = visibleCategories.reduce((n, c) => n + c.items.length, 0)
 
-    // Deep links: /help#category-id scrolls to a section; /help#question-id opens that question.
     useEffect(() => {
         const goToHash = () => {
             const id = decodeURIComponent(window.location.hash.slice(1))
@@ -48,7 +43,6 @@ export default function CaregiverFaq() {
             const isQuestion = caregiverFaq.categories.some((c) => c.items.some((i) => i.id === id))
             setQuery('')
             if (isQuestion) setOpenItems((prev) => (prev.includes(id) ? prev : [...prev, id]))
-            // Wait for the filtered list to re-render before scrolling.
             setTimeout(() => {
                 const el = document.getElementById(id)
                 if (el) {
@@ -74,7 +68,6 @@ export default function CaregiverFaq() {
                     <a
                         href="/onboard"
                         onClick={(e) => {
-                            // Opened from a page in this tab: go back there. Opened in a new tab: go to the app.
                             if (window.history.length > 1) { e.preventDefault(); window.history.back() }
                         }}
                         className="text-sm font-medium text-[var(--primary-color)] underline underline-offset-2 hover:text-[var(--hover-color)]"
@@ -149,7 +142,6 @@ export default function CaregiverFaq() {
                                 type="multiple"
                                 value={openItems}
                                 onValueChange={(next) =>
-                                    // Only this category's items change; keep the others as they were.
                                     setOpenItems((prev) => [
                                         ...prev.filter((id) => !category.items.some((i) => i.id === id)),
                                         ...next,
