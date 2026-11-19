@@ -1,4 +1,5 @@
 import { requireOwnCaregiver } from '../_shared/caregiverAccess.ts'
+import { assignTrainings } from '../_shared/training.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -34,6 +35,18 @@ Deno.serve(async (req) => {
       .eq('id', caregiver.id)
 
     if (error) throw error
+
+    if (status === 'completed') {
+      try {
+        await assignTrainings(supabase, {
+          id: caregiver.id,
+          company_id: caregiver.company_id,
+          role: String(caregiver.role || ''),
+        })
+      } catch (assignError) {
+        console.error('training assignment failed', assignError)
+      }
+    }
 
     return json({ success: true })
   } catch {

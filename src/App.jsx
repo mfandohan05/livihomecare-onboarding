@@ -32,6 +32,11 @@ import StudioOfferLetterTemplateEditor from './pages/studio/StudioOfferLetterTem
 import StudioOrientationSections from './pages/studio/StudioOrientationSections';
 import StudioOrientationSectionEditor from './pages/studio/StudioOrientationSectionEditor';
 import StudioOrientationPreview from './pages/studio/StudioOrientationPreview';
+import { StudioTrainings, StudioTrainingEditor } from './pages/studio/StudioTrainings';
+import { AdminTrainings, AdminTrainingEditor } from './pages/admin/AdminTrainings';
+import MyProfile from './pages/onboarding/MyProfile';
+import MyTraining from './pages/onboarding/MyTraining';
+import TrainingPlayer from './pages/onboarding/TrainingPlayer';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { Toaster } from './components/ui/sonner';
 import ErrorDialogProvider from './components/global/ErrorDialogProvider';
@@ -90,6 +95,9 @@ function App() {
                     <Route path='/onboard/:token' element={<OnboardingGate />} />
                     <Route path='/sign-in' element={<CaregiverSignIn />} />
                     <Route path='/my-documents' element={<MyDocuments />} />
+                    <Route path='/my-profile' element={<MyProfile />} />
+                    <Route path='/my-training' element={<MyTraining />} />
+                    <Route path='/my-training/:trainingId' element={<TrainingPlayer />} />
                     <Route path='/reset-password' element={<ResetPassword />} />
                 </Route>
                 <Route path='/admin/login' element={<AdminLogin />} />
@@ -98,6 +106,8 @@ function App() {
                     <Route path="employees" element={<AdminCaregivers />} />
                     <Route path="employees/:id" element={<AdminCaregiverDetail />} />
                     <Route path="map" element={<AdminCaregiverMap />} />
+                    <Route path="training" element={<AdminTrainings />} />
+                    <Route path="training/:trainingId" element={<AdminTrainingEditor />} />
                     <Route path="logs" element={<AdminLogs />} />
                     <Route path="help" element={<AdminHelp />} />
                     <Route path="help/:articleId" element={<AdminHelp />} />
@@ -117,6 +127,8 @@ function App() {
                     <Route path="companies/:id/orientation" element={<StudioOrientationSections />} />
                     <Route path="companies/:id/orientation/:sectionId" element={<StudioOrientationSectionEditor />} />
                     <Route path="companies/:id/orientation/:sectionId/preview" element={<StudioOrientationPreview />} />
+                    <Route path="companies/:id/training" element={<StudioTrainings />} />
+                    <Route path="companies/:id/training/:trainingId" element={<StudioTrainingEditor />} />
                 </Route>
                 <Route path="*" element={<NotFound />} />
             </Routes>

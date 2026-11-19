@@ -23,6 +23,9 @@ import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import SurePayrollGuidePage from './onboarding-pages/SurePayrollGuidePage'
 import NeedHelpLink from '@/components/help/NeedHelpLink'
+import { useNavigate } from 'react-router-dom'
+import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 
 import {
     Heart,
@@ -93,6 +96,15 @@ export default function OnboardingPortal({ initialCaregiver, viewer }) {
     const [steps, setSteps] = useState([])
     const [activeStep, setActiveStep] = useState(1)
     const hasSavedCompletion = useRef(false);
+    const navigate = useNavigate()
+    const [justCompleted, setJustCompleted] = useState(false)
+    const [showProfilePrompt, setShowProfilePrompt] = useState(false)
+
+    useEffect(() => {
+        if (!justCompleted) return
+        const timer = setTimeout(() => setShowProfilePrompt(true), 30000)
+        return () => clearTimeout(timer)
+    }, [justCompleted])
     const [formData, setFormData] = useState({
         personalInfo: {},
         competency: { checked: {}, lunch: '', dinner: '' },
@@ -262,6 +274,7 @@ export default function OnboardingPortal({ initialCaregiver, viewer }) {
             ))
             setCaregiver(prev => prev ? { ...prev, status: 'completed' } : prev)
             updateCaregiverStatus('completed')
+            setJustCompleted(true)
 
             const saveLog = async () => {
                 await checkpointTimeLog(caregiver.id, companyId, storageKey, getHoursWorked, true);
@@ -584,6 +597,25 @@ export default function OnboardingPortal({ initialCaregiver, viewer }) {
                 </fieldset>
 
             </SidebarInset>
+            <Dialog open={showProfilePrompt} onOpenChange={setShowProfilePrompt}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>You're all set, {caregiver?.name?.split(' ')[0]}!</DialogTitle>
+                        <DialogDescription>
+                            Continue to your profile to see the documents you've uploaded, then head to My Training to complete your assigned trainings.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowProfilePrompt(false)}>Not now</Button>
+                        <Button
+                            onClick={() => navigate('/my-profile')}
+                            className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white"
+                        >
+                            Continue to my profile
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </SidebarProvider>
     )
 }

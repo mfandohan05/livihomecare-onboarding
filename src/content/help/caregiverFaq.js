@@ -425,6 +425,7 @@ export const caregiverFaq = {
           answer: [
             'When you reach the last step you will see a "You\'re all done" page with your certificate. You can download the certificate right there.',
             'Your employer is told that you finished and will review your paperwork. They will contact you about what comes next.',
+            'About 30 seconds after you finish, a box appears asking if you want to continue to your profile. Choose **Continue to my profile** to see your documents and find your trainings, or **Not now** to stay on the page.',
           ],
         },
         {
@@ -432,9 +433,53 @@ export const caregiverFaq = {
           question: 'Where do I find My Documents?',
           keywords: ['my documents', 'replace', 'expired', 'update document', 'reminder'],
           answer: [
-            'After you finish onboarding, [sign in](/sign-in) with your email and password. You will go straight to **My Documents**.',
+            'After you finish onboarding, [sign in](/sign-in) with your email and password. You will go to **My Profile**. Choose **My Documents** in the menu at the top.',
             'There you can replace documents that are expiring. Tap **Replace**, choose the new file, and enter its new expiration date.',
             'You will get reminder emails when a document is close to expiring.',
+          ],
+        },
+        {
+          id: 'my-training',
+          question: 'Where do I find my training?',
+          keywords: ['training', 'my training', 'course', 'slides', 'assigned', 'profile'],
+          answer: [
+            'After you finish onboarding, [sign in](/sign-in). On **My Profile**, choose **Continue to My Training**, or pick **My Training** in the menu at the top.',
+            'Each training shows a status:',
+            { ul: [
+              '**Not Started**: you have not opened it yet.',
+              '**In Progress**: you started it. Choose **Continue** to pick up where you left off.',
+              '**Passed**: you finished it.',
+              '**Due Soon**: it is due within the next 7 days.',
+              '**Overdue**: it is past its due date. The date is shown next to the label.',
+            ] },
+            { note: 'If you see no trainings, your employer has not assigned any to you yet.' },
+          ],
+        },
+        {
+          id: 'training-how-it-works',
+          question: 'How does a training work?',
+          keywords: ['training', 'slides', 'next', 'back', 'progress', 'quiz', 'video', 'passing score'],
+          answer: [
+            'A training is a set of slides you go through one at a time. Tap **Next** and **Back** to move around. A bar at the top shows your progress. Slides can have text, pictures and videos.',
+            'At the end you take a short quiz. You need to reach the passing score to finish the training.',
+            { tip: 'Your place is saved. You can leave and come back to a training later.' },
+          ],
+        },
+        {
+          id: 'training-failed-quiz',
+          question: 'I did not pass the training quiz. What now?',
+          keywords: ['fail', 'failed', 'retake', 'try again', 'quiz', 'score', 'answers', 'passing'],
+          answer: [
+            'You will see your score and the score you need. The correct answers are not shown.',
+            'Choose **Review slides** to go over the training again, or **Try again** to retake the quiz right away. You can try as many times as you need.',
+          ],
+        },
+        {
+          id: 'training-already-done',
+          question: 'I already completed this training somewhere else.',
+          keywords: ['already', 'completed', 'done', 'previous', 'before', 'training'],
+          answer: [
+            'Contact {{company.contact}}. They can mark the training complete for you.',
           ],
         },
       ],

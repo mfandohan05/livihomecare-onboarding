@@ -59,13 +59,14 @@ export const adminHelp = {
             'They work through the steps listed in the left menu, in order. A progress bar shows how many are complete.',
             'On each step they tap **Save & Continue** to move on.',
             'At the last step they see a "You\'re all done" page with a certificate.',
-            'Later they sign in to **My Documents** to replace expiring documents.',
+            'About 30 seconds after finishing, a pop-up offers to take them to their profile, where they can see their uploaded documents and continue to **My Training**.',
+            'Later they sign in to **My Profile**, **My Training** and **My Documents**.',
           ],
           details: [
             { screenshot: { label: 'Caregiver onboarding screen', src: '/help/orientation-step.png', alt: 'Example screen with sample data: Caregiver onboarding screen' } },
             { note: 'Your platform administrator chooses which steps your company uses, and in what order. Different roles can see different steps. Use **Open Caregiver View** on an employee\'s page to see exactly what they see.' },
             { tip: 'Every caregiver page has a Help button that opens an FAQ. Point new hires to it.' },
-            'The step articles: [Creating an account and signing in](/admin/help/cg-account), [Welcome](/admin/help/cg-welcome), [Upload Documents](/admin/help/cg-upload), [Personal Information](/admin/help/cg-personal), [New Hire Orientation](/admin/help/cg-orientation), [Competency Checklist](/admin/help/cg-competency), [How to Use eRSP](/admin/help/cg-ersp), [How to Use SurePayroll](/admin/help/cg-surepayroll), [Forms & Agreements](/admin/help/cg-forms), [Tax Forms](/admin/help/cg-tax), [Offer Letter](/admin/help/cg-offer), [Bloodborne Pathogens](/admin/help/cg-bloodborne), [Completed page](/admin/help/cg-completed), and [My Documents](/admin/help/cg-my-documents).',
+            'The step articles: [Creating an account and signing in](/admin/help/cg-account), [Welcome](/admin/help/cg-welcome), [Upload Documents](/admin/help/cg-upload), [Personal Information](/admin/help/cg-personal), [New Hire Orientation](/admin/help/cg-orientation), [Competency Checklist](/admin/help/cg-competency), [How to Use eRSP](/admin/help/cg-ersp), [How to Use SurePayroll](/admin/help/cg-surepayroll), [Forms & Agreements](/admin/help/cg-forms), [Tax Forms](/admin/help/cg-tax), [Offer Letter](/admin/help/cg-offer), [Bloodborne Pathogens](/admin/help/cg-bloodborne), [Completed page](/admin/help/cg-completed), [My Documents](/admin/help/cg-my-documents), and [My Profile and My Training](/admin/help/cg-training).',
           ],
           seeing: ['The employee\'s status goes from Pending to In Progress when they open the portal, and to Completed when they reach the last step.'],
           problems: [
@@ -346,6 +347,7 @@ export const adminHelp = {
           steps: [
             'The employee sees "You\'re all done" and a certificate with their name. They can download it.',
             'They see a list of the steps they completed and what happens next.',
+            'About 30 seconds later, a pop-up offers to take them to their profile, where they can continue to My Training. They can dismiss it with **Not now**.',
             'You are emailed that they finished. Review their documents and take your next steps.',
           ],
           details: [
@@ -356,7 +358,7 @@ export const adminHelp = {
           ],
           seeing: ['Status shows [[green: Completed]]. They appear on the Caregiver Map and in Orientation Time & Pay.'],
           problems: [{ q: 'The employee lost their certificate.', a: ['They can sign in and open the Completed page again, or you can tell them to ask for another copy. The certificate is not stored as a document.'] }],
-          related: ['statuses-finishing', 'cg-my-documents'],
+          related: ['statuses-finishing', 'cg-my-documents', 'cg-training'],
         },
         {
           id: 'cg-my-documents',
@@ -364,7 +366,7 @@ export const adminHelp = {
           summary: 'Where completed employees replace expiring documents.',
           whenToUse: ['Use this when a document is expiring and you want the employee to replace it.'],
           steps: [
-            'The employee signs in with their email and password. They go to **My Documents**.',
+            'The employee signs in with their email and password. They land on **My Profile** and choose **Update expiring documents**, or use **My Documents** in the menu at the top.',
             'They find the document and tap **Replace**.',
             'They choose the new file, enter the new expiration date, and tap **Upload**.',
           ],
@@ -376,6 +378,96 @@ export const adminHelp = {
           seeing: ['"Document updated" appears. The new file and date show on the employee page.'],
           problems: [{ q: 'They see no documents.', a: ['Only documents with tracked types appear. Others are not listed.'] }],
           related: ['document-expiration', 'emails'],
+        },
+        {
+          id: 'cg-training',
+          title: 'After they finish: My Profile and My Training',
+          summary: 'Where completed employees see their documents and take their trainings.',
+          whenToUse: ['Use this when an employee asks where to find their training, or what the pop-up after onboarding is.'],
+          steps: [
+            'After finishing onboarding, the employee sees a pop-up asking if they want to continue to their profile. It appears about 30 seconds after the last step.',
+            'On **My Profile** they see the documents they uploaded, and a **Continue to My Training** button.',
+            'On **My Training** each assigned training has a status marker. They select **Start**, **Continue** or **Review**.',
+            'A training is a set of slides. They move with **Next** and **Back**, and a progress bar shows how far along they are.',
+            'At the end they take a quiz. If they reach the passing score the training is marked **Passed**.',
+          ],
+          details: [
+            { table: { head: ['Marker', 'Meaning'], rows: [
+              ['[[gray: Not Started]]', 'The employee has not opened the training.'],
+              ['[[amber: In Progress]]', 'They started it but have not passed.'],
+              ['[[green: Passed]]', 'They passed the quiz, or an admin marked it complete.'],
+              ['[[yellow: Due Soon]]', 'Not passed yet and due within 7 days.'],
+              ['[[darkred: Overdue]]', 'Not passed and past the due date. The due date is shown in the marker.'],
+            ] } },
+            { note: 'If an employee fails the quiz they see their score but never the correct answers. They can review the slides and try again as many times as they need.' },
+            { tip: 'If the pop-up is dismissed, the employee can sign in at any time and go to **My Training** from the menu.' },
+          ],
+          seeing: ['Each training shows its status marker. Passed trainings show the date they were completed.'],
+          problems: [
+            { q: 'The employee sees no trainings.', a: ['Only published trainings that apply to their role are assigned. See [Creating and editing trainings](/admin/help/training-manage).'] },
+            { q: 'The employee already completed this training elsewhere.', a: ['You can mark it complete for them. See [Training status and marking complete](/admin/help/training-employees).'] },
+          ],
+          related: ['training-manage', 'training-employees', 'cg-my-documents'],
+        },
+      ],
+    },
+
+    {
+      id: 'training',
+      title: 'Training',
+      summary: 'Creating trainings and tracking who has finished them.',
+      articles: [
+        {
+          id: 'training-manage',
+          title: 'Creating and editing trainings',
+          summary: 'Build slides and a quiz, set the passing score and due date, and publish.',
+          whenToUse: ['Use this to add a new training for your employees, or to change an existing one.'],
+          steps: [
+            'Select **Training** in the top bar, then **New training**. Your platform administrator can also manage trainings from Studio, under your company.',
+            'Fill in the **Basics**: title, description, minimum passing score, due date, and who sees it.',
+            'Under **Slides**, select **Add slide**. Give each slide any mix of a title, text, an image and a video link.',
+            'Under **Quiz questions**, select **Add question**, type the question and its options, and pick the correct answer.',
+            'Turn on **Published** and select **Save training**.',
+          ],
+          details: [
+            { table: { head: ['Setting', 'What it does'], rows: [
+              ['Minimum passing score', 'The percentage of quiz questions an employee must answer correctly to pass.'],
+              ['Due within (days)', 'How many days an employee has, counted from when they finish onboarding or when the training is assigned to them. Leave blank for no due date.'],
+              ['Who sees this training', 'Tick roles to limit the training to them. Leave all unticked to give it to every role.'],
+              ['Published', 'Employees only see and are assigned published trainings. Leave it off while you are still building.'],
+            ] } },
+            'Videos can be a YouTube or Vimeo link, or a direct link to an .mp4 or .webm file. Images can be PNG, JPG, WebP or GIF up to 5 MB.',
+            'Use the arrows to reorder slides, questions and trainings. **Preview slides** shows how the slides will look to an employee.',
+            { note: 'Changes apply to everyone right away, including employees who are partway through. If a training has no quiz questions, it is passed after the last slide.' },
+            { warning: 'Deleting a training also deletes every employee\'s progress on it.' },
+          ],
+          seeing: ['"Training saved" appears. The training shows in the list with its status, slide count and question count.'],
+          problems: [
+            { q: 'It will not save.', a: ['Read the message. Every slide needs a title, text, an image or a video, and every question needs a correct answer and at least two options with text.'] },
+            { q: 'My video does not show.', a: ['Use the full link from the video site. Links that do not start with https:// are not accepted.'] },
+          ],
+          related: ['training-employees', 'cg-training'],
+        },
+        {
+          id: 'training-employees',
+          title: 'Training status and marking complete',
+          summary: 'See who has finished, and record training an employee already did.',
+          whenToUse: ['Use this to check an employee\'s training, or when they already completed a training before using the platform.'],
+          steps: [
+            'Open **Employees** and select a person who has completed onboarding.',
+            'Find the **Training** panel. Each training shows its status marker and due date.',
+            'To record training they already did, select **Mark complete** and confirm.',
+            'To let them take it again, select **Reset** on a passed training and confirm.',
+          ],
+          details: [
+            'A training marked complete by an admin shows who marked it and when. Marking complete and resetting are both recorded in the audit log.',
+            { note: 'The Training panel only appears once the employee has completed onboarding.' },
+          ],
+          seeing: ['The status changes to [[green: Passed]] and the panel shows "Marked complete by" with your name.'],
+          problems: [
+            { q: 'I do not see the Training panel.', a: ['The employee has not finished onboarding yet, or no published training applies to their role.'] },
+          ],
+          related: ['training-manage', 'audit-logs'],
         },
       ],
     },
@@ -514,6 +606,7 @@ export const adminHelp = {
               ['Onboarding Progress / Manage Progress', 'Steps completed and tools to remove steps or reset.'],
               ['Orientation Time & Pay', 'Completed employees only: active time and a **suggested** orientation pay (hours times pay rate).'],
               ['Payroll Readiness', 'Completed employees only: **Mark Ready for Payroll**.'],
+              ['Training', 'Completed employees only: each training, its status, and **Mark complete** or **Reset**. See [Training status and marking complete](/admin/help/training-employees).'],
               ['New Hire Orientation Quiz Results', 'Which orientation sections the employee passed.'],
             ] } },
             { note: 'You cannot change the name, role, position title or job description here. To change the email the employee signs in with, contact your platform administrator. Editing the email on this page updates the record only.' },

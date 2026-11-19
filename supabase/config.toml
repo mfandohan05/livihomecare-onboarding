@@ -943,3 +943,15 @@ entrypoint = "./functions/studio-delete-company-admin/index.ts"
 enabled = true
 verify_jwt = false
 entrypoint = "./functions/send-expiration-reminders/index.ts"
+
+[functions.training-admin]
+enabled = true
+verify_jwt = true
+import_map = "./functions/training-admin/deno.json"
+entrypoint = "./functions/training-admin/index.ts"
+
+[functions.training-caregiver]
+enabled = true
+verify_jwt = true
+import_map = "./functions/training-caregiver/deno.json"
+entrypoint = "./functions/training-caregiver/index.ts"
