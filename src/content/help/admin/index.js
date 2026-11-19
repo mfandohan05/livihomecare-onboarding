@@ -59,7 +59,7 @@ export const adminHelp = {
             'They work through the steps listed in the left menu, in order. A progress bar shows how many are complete.',
             'On each step they tap **Save & Continue** to move on.',
             'At the last step they see a "You\'re all done" page with a certificate.',
-            'About 30 seconds after finishing, a pop-up offers to take them to their profile, where they can see their uploaded documents and continue to **My Training**.',
+            'As soon as they finish, a pop-up with a 30 second countdown takes them to their profile, where they can see their uploaded documents and continue to **My Training**.',
             'Later they sign in to **My Profile**, **My Training** and **My Documents**.',
           ],
           details: [
@@ -345,9 +345,9 @@ export const adminHelp = {
           summary: 'The "all done" page, certificate and what happens next.',
           whenToUse: ['Use this to know what the employee sees at the end, and what you should do next.'],
           steps: [
-            'The employee sees "You\'re all done" and a certificate with their name. They can download it.',
+            'The employee sees "You\'re all done" and a certificate with their name. They can download it. Once they leave this page, opening their link or signing in takes them to **My Profile**, where **View certificate** brings it back.',
             'They see a list of the steps they completed and what happens next.',
-            'About 30 seconds later, a pop-up offers to take them to their profile, where they can continue to My Training. They can dismiss it with **Not now**.',
+            'A pop-up with a 30 second countdown offers to take them to their profile, where they can continue to My Training. If they do not choose, they are taken there automatically. **Stay on this page** keeps them on the certificate.',
             'You are emailed that they finished. Review their documents and take your next steps.',
           ],
           details: [
@@ -357,7 +357,7 @@ export const adminHelp = {
             'The "what happens next" text and the contact details shown to the employee come from your company\'s settings. Ask your platform administrator to update them.',
           ],
           seeing: ['Status shows [[green: Completed]]. They appear on the Caregiver Map and in Orientation Time & Pay.'],
-          problems: [{ q: 'The employee lost their certificate.', a: ['They can sign in and open the Completed page again, or you can tell them to ask for another copy. The certificate is not stored as a document.'] }],
+          problems: [{ q: 'The employee lost their certificate.', a: ['They can sign in and choose **View certificate** on **My Profile**. The certificate is not stored as a document.'] }],
           related: ['statuses-finishing', 'cg-my-documents', 'cg-training'],
         },
         {
@@ -385,7 +385,7 @@ export const adminHelp = {
           summary: 'Where completed employees see their documents and take their trainings.',
           whenToUse: ['Use this when an employee asks where to find their training, or what the pop-up after onboarding is.'],
           steps: [
-            'After finishing onboarding, the employee sees a pop-up asking if they want to continue to their profile. It appears about 30 seconds after the last step.',
+            'After finishing onboarding, the employee sees a pop-up asking if they want to continue to their profile. It appears as soon as they finish, with a 30 second countdown, and takes them to their profile automatically if they do not choose.',
             'On **My Profile** they see the documents they uploaded, and a **Continue to My Training** button.',
             'On **My Training** each assigned training has a status marker. They select **Start**, **Continue** or **Review**.',
             'A training is a set of slides. They move with **Next** and **Back**, and a progress bar shows how far along they are.',
@@ -400,7 +400,7 @@ export const adminHelp = {
               ['[[darkred: Overdue]]', 'Not passed and past the due date. The due date is shown in the marker.'],
             ] } },
             { note: 'If an employee fails the quiz they see their score but never the correct answers. They can review the slides and try again as many times as they need.' },
-            { tip: 'If the pop-up is dismissed, the employee can sign in at any time and go to **My Training** from the menu.' },
+            { tip: 'If they choose **Stay on this page**, they can sign in at any time and go to **My Training** from the menu.' },
           ],
           seeing: ['Each training shows its status marker. Passed trainings show the date they were completed.'],
           problems: [

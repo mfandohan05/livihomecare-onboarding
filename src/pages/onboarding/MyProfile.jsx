@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useOutletContext } from 'react-router-dom'
 import { ArrowRight, FileText, GraduationCap } from 'lucide-react'
 import { getDocuments } from '@/lib/caregiver'
+import { trainingCaregiver } from '@/lib/training'
 import { Button } from '@/components/ui/button'
-import { useCompletedCaregiver } from '@/hooks/useCompletedCaregiver'
-import CaregiverShell, { CaregiverGate } from '@/components/training/CaregiverShell'
 import { documentLabel, formatDateOnly, toDateOnly } from '@/lib/documentExpiration'
 
 const roleLabels = {
@@ -25,24 +24,26 @@ const prettyType = (type) => {
 
 export default function MyProfile() {
     const navigate = useNavigate()
-    const state = useCompletedCaregiver()
+    const state = useOutletContext()
     const [documents, setDocuments] = useState(null)
+    const [trainings, setTrainings] = useState(null)
 
     useEffect(() => {
-        if (state.status !== 'ready') return
         let cancelled = false
         getDocuments(state.caregiver.id).then((docs) => {
             if (!cancelled) setDocuments(docs)
         })
+        trainingCaregiver('list')
+            .then((rows) => { if (!cancelled) setTrainings(rows) })
+            .catch(() => { if (!cancelled) setTrainings([]) })
         return () => { cancelled = true }
     }, [state])
 
-    if (state.status !== 'ready') return <CaregiverGate state={state} />
-
     const { caregiver, companyName } = state
+    const remaining = (trainings || []).filter((t) => t.status !== 'passed').length
 
     return (
-        <CaregiverShell>
+        <>
             <div className="space-y-4">
                 <div className="bg-white rounded-xl border border-border p-6 sm:p-8 shadow-sm">
                     <h1 className="text-xl font-semibold">{caregiver.name}</h1>
@@ -51,12 +52,15 @@ export default function MyProfile() {
                     </p>
                 </div>
 
+                {remaining > 0 && (
                 <div className="bg-[var(--secondary-bg)] rounded-xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-start gap-3">
                         <GraduationCap className="w-5 h-5 text-[var(--primary-color)] mt-0.5 shrink-0" />
                         <div>
                             <p className="font-medium text-[var(--primary-color)]">Your training is ready</p>
-                            <p className="text-sm text-[var(--hover-color)]">Complete your assigned trainings to finish getting set up.</p>
+                            <p className="text-sm text-[var(--hover-color)]">
+                                You have {remaining} training{remaining === 1 ? '' : 's'} left to complete.
+                            </p>
                         </div>
                     </div>
                     <Button
@@ -65,6 +69,14 @@ export default function MyProfile() {
                     >
                         Continue to My Training
                         <ArrowRight className="w-4 h-4" />
+                    </Button>
+                </div>
+                )}
+
+                <div className="bg-white rounded-xl border border-border p-4 sm:px-8 shadow-sm flex items-center justify-between gap-3">
+                    <p className="text-sm text-muted-foreground">Your onboarding completion certificate</p>
+                    <Button variant="outline" size="sm" onClick={() => navigate('/onboard?certificate=1')}>
+                        View certificate
                     </Button>
                 </div>
 
@@ -97,6 +109,6 @@ export default function MyProfile() {
                     )}
                 </div>
             </div>
-        </CaregiverShell>
+        </>
     )
 }

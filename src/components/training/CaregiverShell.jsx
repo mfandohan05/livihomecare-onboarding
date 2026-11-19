@@ -1,8 +1,9 @@
-import { Navigate, NavLink, useNavigate } from 'react-router-dom'
+import { Navigate, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import companyLogo from '@/assets/logo.png'
+import { useCompletedCaregiver } from '@/hooks/useCompletedCaregiver'
 
 const links = [
     { to: '/my-profile', label: 'My Profile' },
@@ -35,17 +36,20 @@ export function CaregiverGate({ state }) {
     return null
 }
 
-export default function CaregiverShell({ children, maxWidth = 'max-w-2xl' }) {
+export default function CaregiverShell() {
     const navigate = useNavigate()
+    const state = useCompletedCaregiver()
 
     const handleSignOut = async () => {
         await supabase.auth.signOut()
         navigate('/sign-in', { replace: true })
     }
 
+    if (state.status !== 'ready') return <CaregiverGate state={state} />
+
     return (
         <div className="min-h-screen bg-muted/30 px-4 py-10">
-            <div className={`w-full ${maxWidth} mx-auto`}>
+            <div className="w-full max-w-2xl mx-auto">
                 <div className="flex justify-center mb-6">
                     <img src={companyLogo} alt="Ready, Set, Onboard!" className="w-[200px]" />
                 </div>
@@ -65,7 +69,7 @@ export default function CaregiverShell({ children, maxWidth = 'max-w-2xl' }) {
                     </nav>
                     <Button variant="outline" size="sm" onClick={handleSignOut}>Sign out</Button>
                 </div>
-                {children}
+                <Outlet context={state} />
             </div>
         </div>
     )

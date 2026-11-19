@@ -415,7 +415,7 @@ export const caregiverFaq = {
           question: 'Where is my certificate?',
           keywords: ['certificate', 'download', 'pdf', 'completion'],
           answer: [
-            'It is on the last page, "You\'re all done". Tap **Download Certificate** to save it. It is not kept as a document in My Documents, so download it before you leave.',
+            'It is on the last page, "You\'re all done". Tap **Download Certificate** to save it. It is not kept as a document in My Documents. You can open it again any time from **My Profile**, using **View certificate**.',
           ],
         },
         {
@@ -425,7 +425,7 @@ export const caregiverFaq = {
           answer: [
             'When you reach the last step you will see a "You\'re all done" page with your certificate. You can download the certificate right there.',
             'Your employer is told that you finished and will review your paperwork. They will contact you about what comes next.',
-            'About 30 seconds after you finish, a box appears asking if you want to continue to your profile. Choose **Continue to my profile** to see your documents and find your trainings, or **Not now** to stay on the page.',
+            'As soon as you finish, a box appears with a 30 second countdown. Choose **Continue to my profile** to see your documents and find your trainings, or **Stay on this page** to keep your certificate in view. If you do not choose, you are taken to your profile when the countdown ends.',
           ],
         },
         {

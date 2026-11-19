@@ -37,6 +37,7 @@ import { AdminTrainings, AdminTrainingEditor } from './pages/admin/AdminTraining
 import MyProfile from './pages/onboarding/MyProfile';
 import MyTraining from './pages/onboarding/MyTraining';
 import TrainingPlayer from './pages/onboarding/TrainingPlayer';
+import CaregiverShell from './components/training/CaregiverShell';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { Toaster } from './components/ui/sonner';
 import ErrorDialogProvider from './components/global/ErrorDialogProvider';
@@ -94,10 +95,12 @@ function App() {
                     <Route path='/onboard' element={<OnboardingGate />} />
                     <Route path='/onboard/:token' element={<OnboardingGate />} />
                     <Route path='/sign-in' element={<CaregiverSignIn />} />
-                    <Route path='/my-documents' element={<MyDocuments />} />
-                    <Route path='/my-profile' element={<MyProfile />} />
-                    <Route path='/my-training' element={<MyTraining />} />
-                    <Route path='/my-training/:trainingId' element={<TrainingPlayer />} />
+                    <Route element={<CaregiverShell />}>
+                        <Route path='/my-documents' element={<MyDocuments />} />
+                        <Route path='/my-profile' element={<MyProfile />} />
+                        <Route path='/my-training' element={<MyTraining />} />
+                        <Route path='/my-training/:trainingId' element={<TrainingPlayer />} />
+                    </Route>
                     <Route path='/reset-password' element={<ResetPassword />} />
                 </Route>
                 <Route path='/admin/login' element={<AdminLogin />} />

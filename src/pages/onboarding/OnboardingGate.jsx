@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Navigate, useParams } from 'react-router-dom'
+import { Navigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { getCaregiverByToken, getMyCaregiver } from '@/lib/caregiver'
 import CreateAccountForm from '@/components/onboarding/CreateAccountForm'
@@ -13,6 +13,7 @@ import OnboardingPortal from './OnboardingPortal'
 //                    session, never from anything the client supplies
 export default function OnboardingGate() {
     const { token } = useParams()
+    const [searchParams] = useSearchParams()
     const [result, setResult] = useState({ status: 'loading' })
     const [attempt, setAttempt] = useState(0)
 
@@ -77,6 +78,13 @@ export default function OnboardingGate() {
                 />
             )
         case 'ready':
+            if (
+                result.viewer !== 'admin' &&
+                result.caregiver.status === 'completed' &&
+                !searchParams.has('certificate')
+            ) {
+                return <Navigate to="/my-profile" replace />
+            }
             return <OnboardingPortal key={result.caregiver.id} initialCaregiver={result.caregiver} viewer={result.viewer} />
         case 'norecord':
             return (

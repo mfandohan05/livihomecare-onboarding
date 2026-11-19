@@ -3,18 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowRight, GraduationCap } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { useCompletedCaregiver } from '@/hooks/useCompletedCaregiver'
-import CaregiverShell, { CaregiverGate } from '@/components/training/CaregiverShell'
 import TrainingStatusBadge from '@/components/training/TrainingStatusBadge'
 import { formatTrainingDate, trainingCaregiver } from '@/lib/training'
 
 export default function MyTraining() {
     const navigate = useNavigate()
-    const state = useCompletedCaregiver()
     const [trainings, setTrainings] = useState(null)
 
     useEffect(() => {
-        if (state.status !== 'ready') return
         let cancelled = false
         trainingCaregiver('list')
             .then((rows) => { if (!cancelled) setTrainings(rows) })
@@ -23,14 +19,12 @@ export default function MyTraining() {
                 if (!cancelled) setTrainings([])
             })
         return () => { cancelled = true }
-    }, [state.status])
-
-    if (state.status !== 'ready') return <CaregiverGate state={state} />
+    }, [])
 
     const passedCount = (trainings || []).filter((t) => t.status === 'passed').length
 
     return (
-        <CaregiverShell>
+        <>
             <div className="bg-white rounded-xl border border-border p-6 sm:p-8 shadow-sm">
                 <div className="flex items-center gap-2 mb-1">
                     <GraduationCap className="w-5 h-5 text-[var(--primary-color)]" />
@@ -75,6 +69,6 @@ export default function MyTraining() {
                     </div>
                 )}
             </div>
-        </CaregiverShell>
+        </>
     )
 }
