@@ -63,6 +63,17 @@ function SidebarComponent({ steps, activeStep, setActiveStep, handleNext, caregi
                 </SidebarMenu>
             </SidebarContent>
             <SidebarFooter>
+                {/* Dev only (vite dev server): skips validation and advances. Never included in production builds. */}
+                {import.meta.env.DEV && (
+                    <button
+                        type="button"
+                        onClick={handleNext}
+                        disabled={isCompleted}
+                        className="w-full rounded-lg border border-dashed border-amber-400 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800 hover:bg-amber-100 disabled:opacity-50"
+                    >
+                        (Dev only) Skip to the next page
+                    </button>
+                )}
                 <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50 text-xs text-muted-foreground">
                     {isIdle ? (
                         <>

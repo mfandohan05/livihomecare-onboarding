@@ -1,9 +1,4 @@
 import { supabase } from './supabase'
-
-// Resolves an emailed onboarding link. The token is only a pointer: the response
-// says whether the caller may proceed ({ state: 'ok', viewer, caregiver }), must
-// create an account ({ state: 'needs_signup', name, email }) or must sign in
-// ({ state: 'needs_signin' }). Returns null for an invalid or expired link.
 export async function getCaregiverByToken(token) {
   const { data, error } = await supabase.functions.invoke('get-caregiver-by-token', {
     body: { token }
@@ -13,8 +8,6 @@ export async function getCaregiverByToken(token) {
   return data
 }
 
-// The caregiver record of the signed-in user, derived server-side from the
-// session. Returns null when signed out or when the user has no onboarding record.
 export async function getMyCaregiver() {
   const { data, error } = await supabase.functions.invoke('get-my-caregiver')
 

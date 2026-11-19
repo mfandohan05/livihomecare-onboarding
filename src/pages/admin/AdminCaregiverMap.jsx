@@ -7,6 +7,7 @@ import { formatPhone } from '@/lib/formUtils'
 import { job_label } from '@/lib/labelUtils'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { useCompany } from '@/context/CompanyContext'
+import HowDoesThisWork from '@/components/help/HowDoesThisWork'
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN
 
@@ -225,6 +226,7 @@ export default function AdminCaregiverMap() {
                         </div>
                     </p>
                 </div>
+                <HowDoesThisWork article="caregiver-map" />
             </div>
 
             {/* Search bar */}
