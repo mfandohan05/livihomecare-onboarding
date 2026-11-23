@@ -201,6 +201,9 @@ export default function AdminCaregiverDetail() {
     const [cancelPassword, setCancelPassword] = useState('');
     const [cancelError, setCancelError] = useState(null)
     const [cancelLoading, setCancelLoading] = useState(false)
+    const [showResetPasswordConfirm, setShowResetPasswordConfirm] = useState(false)
+    const [resetPasswordLoading, setResetPasswordLoading] = useState(false)
+    const [resetPasswordResult, setResetPasswordResult] = useState(null)
     const { companyId } = useCompany();
     const [roleSteps, setRoleSteps] = useState([])
     const [signableDocs, setSignableDocs] = useState([])
@@ -804,6 +807,40 @@ export default function AdminCaregiverDetail() {
 
         navigate('/admin/employees')
     }
+    const closeResetPasswordDialog = () => {
+        setShowResetPasswordConfirm(false)
+        setResetPasswordResult(null)
+    }
+
+    const handleResetPassword = async () => {
+        setResetPasswordLoading(true)
+        setResetPasswordResult(null)
+
+        const { data, error } = await supabase.functions.invoke('admin-reset-caregiver-password', {
+            body: { caregiverId: id }
+        })
+
+        setResetPasswordLoading(false)
+
+        if (error || !data?.success) {
+            setResetPasswordResult({ success: false, message: data?.error || 'Could not reset this employee\'s sign-in. Please try again.' })
+            return
+        }
+
+        if (data.method === 'password_reset_email') {
+            setResetPasswordResult({ success: true, message: `We emailed ${caregiver.name} a link to choose a new password.` })
+            return
+        }
+
+        await fetchAll()
+        setResetPasswordResult({
+            success: true,
+            message: data.emailSent
+                ? `${caregiver.name}'s Google sign-in was removed. We emailed them a link to verify their email and sign in with Google again.`
+                : `${caregiver.name}'s Google sign-in was removed, but the email could not be sent. Use "Resend invite email" under Onboarding Link Management to send them their link.`,
+        })
+    }
+
     const handleCancelOnboarding = async () => {
         setCancelLoading(true)
         setCancelError(null)
@@ -1322,6 +1359,41 @@ export default function AdminCaregiverDetail() {
                                 className="w-full sm:w-auto"
                             >
                                 Cancel
+                            </Button>
+                        </div>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialog>
+            <AlertDialog open={showResetPasswordConfirm} onOpenChange={(open) => !open && closeResetPasswordDialog()}>
+                <AlertDialogContent className="max-w-sm">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Reset {caregiver?.name}'s password?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            If they sign in with an email and password, we'll email them a link to choose a new password. If they signed in with Google, their Google sign-in will be removed and they'll get a link to verify their email and sign in again.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="space-y-4 pt-2">
+                        {resetPasswordResult && (
+                            <p className={`text-sm ${resetPasswordResult.success ? 'text-[#577C09]' : 'text-red-500'}`}>
+                                {resetPasswordResult.message}
+                            </p>
+                        )}
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            {!resetPasswordResult?.success && (
+                                <Button
+                                    onClick={handleResetPassword}
+                                    disabled={resetPasswordLoading}
+                                    className="bg-red-500 hover:bg-red-600 text-white disabled:opacity-50 w-full sm:w-auto"
+                                >
+                                    {resetPasswordLoading ? 'Resetting...' : 'Reset password'}
+                                </Button>
+                            )}
+                            <Button
+                                variant="outline"
+                                onClick={closeResetPasswordDialog}
+                                className="w-full sm:w-auto"
+                            >
+                                {resetPasswordResult?.success ? 'Done' : 'Cancel'}
                             </Button>
                         </div>
                     </div>
@@ -1925,6 +1997,14 @@ export default function AdminCaregiverDetail() {
                                 className="text-sm text-red-500 hover:text-red-600 hover:underline transition-colors"
                             >
                                 Cancel onboarding
+                            </button>
+                        )}
+                        {caregiver.user_id && (
+                            <button
+                                onClick={() => setShowResetPasswordConfirm(true)}
+                                className="text-sm text-red-500 hover:text-red-600 hover:underline transition-colors"
+                            >
+                                Reset employee password
                             </button>
                         )}
                         <button

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { createCaregiverAccount, clearVerificationProof } from '@/lib/caregiver'
+import { createCaregiverAccount, clearVerificationProof, markSsoIntent, clearSsoIntent } from '@/lib/caregiver'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/password-input'
@@ -71,7 +71,11 @@ export default function CreateAccountForm({ token, proof, firstName, maskedEmail
             <SsoButtons
                 redirectTo={`${window.location.origin}/onboard/${token}`}
                 disabled={loading}
-                onError={setError}
+                onStart={() => markSsoIntent(token)}
+                onError={(message) => {
+                    clearSsoIntent(token)
+                    setError(message)
+                }}
             />
             <div className="my-4">
                 <OrDivider />

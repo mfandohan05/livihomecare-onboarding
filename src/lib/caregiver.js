@@ -38,6 +38,20 @@ export function clearVerificationProof(token) {
   sessionStorage.removeItem(proofKey(token))
 }
 
+const ssoIntentKey = (token) => `livi_sso_intent_${token}`
+
+export function markSsoIntent(token) {
+  sessionStorage.setItem(ssoIntentKey(token), '1')
+}
+
+export function hasSsoIntent(token) {
+  return sessionStorage.getItem(ssoIntentKey(token)) === '1'
+}
+
+export function clearSsoIntent(token) {
+  sessionStorage.removeItem(ssoIntentKey(token))
+}
+
 export async function sendVerificationCode(token) {
   const { data, error } = await supabase.functions.invoke('caregiver-send-code', {
     body: { token }
@@ -63,6 +77,15 @@ export async function linkSsoAccount(token, proof) {
 
   if (error) return { success: false, error: 'Could not link your account. Please try again.' }
   return data
+}
+
+export async function usesGoogleSignIn(email) {
+  const { data, error } = await supabase.functions.invoke('caregiver-sign-in-method', {
+    body: { email }
+  })
+
+  if (error) return false
+  return data?.usesGoogle === true
 }
 
 export async function signInWithSso(provider, redirectTo) {

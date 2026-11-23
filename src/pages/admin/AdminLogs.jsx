@@ -25,6 +25,7 @@ const ACTION_LABELS = {
     uploaded_doc_on_behalf: "Uploaded Document For Employee",
     updated_employee_info: "Updated Employee Info",
     cancelled_onboarding: "Cancelled Onboarding",
+    reset_caregiver_password: "Reset Employee Password",
 }
 
 const actionColor = (action) => {

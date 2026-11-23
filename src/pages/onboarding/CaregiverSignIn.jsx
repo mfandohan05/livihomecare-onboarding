@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import { getMyCaregiver } from '@/lib/caregiver'
+import { getMyCaregiver, usesGoogleSignIn } from '@/lib/caregiver'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/password-input'
@@ -52,7 +52,10 @@ export default function CaregiverSignIn() {
 
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
         if (signInError) {
-            setError('Invalid email or password')
+            const googleUser = await usesGoogleSignIn(email)
+            setError(googleUser
+                ? 'It looks like you signed up with Google. Please sign in again using Google.'
+                : 'Invalid email or password')
             setLoading(false)
             return
         }

@@ -13,11 +13,12 @@ function GoogleIcon() {
     )
 }
 
-export default function SsoButtons({ redirectTo, disabled, onError }) {
+export default function SsoButtons({ redirectTo, disabled, onError, onStart }) {
     const [pending, setPending] = useState(null)
 
     const handleClick = async (provider) => {
         setPending(provider)
+        onStart?.()
         const { error } = await signInWithSso(provider, redirectTo)
         if (error) {
             setPending(null)

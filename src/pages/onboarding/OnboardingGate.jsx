@@ -8,6 +8,8 @@ import {
     setVerificationProof,
     clearVerificationProof,
     linkSsoAccount,
+    hasSsoIntent,
+    clearSsoIntent,
 } from '@/lib/caregiver'
 import CreateAccountForm from '@/components/onboarding/CreateAccountForm'
 import VerifyIdentity from '@/components/onboarding/VerifyIdentity'
@@ -16,16 +18,32 @@ import OnboardingPortal from './OnboardingPortal'
 
 const SSO_PROVIDERS = ['google']
 
+const linkRequests = new Map()
+
+function linkSsoOnce(token, proof) {
+    const key = `${token}:${proof}`
+    if (!linkRequests.has(key)) {
+        linkRequests.set(key, linkSsoAccount(token, proof).finally(() => linkRequests.delete(key)))
+    }
+    return linkRequests.get(key)
+}
+
 async function resolveSignup(token, res) {
     const info = { firstName: res.firstName, companyName: res.companyName, maskedEmail: res.maskedEmail }
     const proof = getVerificationProof(token)
     if (!proof) return { status: 'verify', ...info }
 
+    if (!hasSsoIntent(token)) return { status: 'signup', proof, ...info }
+
     const { data: { session } } = await supabase.auth.getSession()
     const isSsoSession = !!session?.user?.identities?.some(i => SSO_PROVIDERS.includes(i.provider))
-    if (!isSsoSession) return { status: 'signup', proof, ...info }
+    if (!isSsoSession) {
+        clearSsoIntent(token)
+        return { status: 'signup', proof, ...info }
+    }
 
-    const link = await linkSsoAccount(token, proof)
+    const link = await linkSsoOnce(token, proof)
+    clearSsoIntent(token)
     if (link?.success || link?.alreadyExists) return { status: 'retry' }
 
     if (link?.verificationRequired) {
