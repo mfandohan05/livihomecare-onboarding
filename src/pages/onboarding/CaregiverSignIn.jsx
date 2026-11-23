@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { getMyCaregiver } from '@/lib/caregiver'
 import { Button } from '@/components/ui/button'
@@ -7,14 +7,42 @@ import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import AuthCard from '@/components/onboarding/AuthCard'
+import SsoButtons, { OrDivider } from '@/components/onboarding/SsoButtons'
 
 export default function CaregiverSignIn() {
     const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
     const [notice, setNotice] = useState(null)
+
+    useEffect(() => {
+        if (!searchParams.has('sso')) return
+        let cancelled = false
+
+        const finishSsoSignIn = async () => {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session || cancelled) return
+
+            setLoading(true)
+            const caregiver = await getMyCaregiver()
+            if (cancelled) return
+
+            if (!caregiver) {
+                await supabase.auth.signOut()
+                setError('No employee onboarding is linked to this account. Use the link in your invitation email to get started.')
+                setLoading(false)
+                return
+            }
+
+            navigate(caregiver.status === 'completed' ? '/my-profile' : '/onboard', { replace: true })
+        }
+
+        finishSsoSignIn()
+        return () => { cancelled = true }
+    }, [searchParams, navigate])
 
     const handleSignIn = async (e) => {
         e.preventDefault()
@@ -59,6 +87,14 @@ export default function CaregiverSignIn() {
 
     return (
         <AuthCard title="Employee Sign In" subtitle="Sign in to continue your onboarding">
+            <SsoButtons
+                redirectTo={`${window.location.origin}/sign-in?sso=1`}
+                disabled={loading}
+                onError={setError}
+            />
+            <div className="my-4">
+                <OrDivider />
+            </div>
             <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-1.5">
                     <Label htmlFor="email">Email</Label>

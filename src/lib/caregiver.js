@@ -15,13 +15,63 @@ export async function getMyCaregiver() {
   return data?.caregiver ?? null
 }
 
-export async function createCaregiverAccount(token, password) {
+export async function createCaregiverAccount(token, password, proof) {
   const { data, error } = await supabase.functions.invoke('caregiver-create-account', {
-    body: { token, password }
+    body: { token, password, proof }
   })
 
   if (error) return { success: false, error: 'Could not create your account. Please try again.' }
   return data
+}
+
+const proofKey = (token) => `livi_verification_proof_${token}`
+
+export function getVerificationProof(token) {
+  return sessionStorage.getItem(proofKey(token))
+}
+
+export function setVerificationProof(token, proof) {
+  sessionStorage.setItem(proofKey(token), proof)
+}
+
+export function clearVerificationProof(token) {
+  sessionStorage.removeItem(proofKey(token))
+}
+
+export async function sendVerificationCode(token) {
+  const { data, error } = await supabase.functions.invoke('caregiver-send-code', {
+    body: { token }
+  })
+
+  if (error) return { success: false, error: 'We could not send the code. Please try again.' }
+  return data
+}
+
+export async function verifyVerificationCode(token, code) {
+  const { data, error } = await supabase.functions.invoke('caregiver-verify-code', {
+    body: { token, code }
+  })
+
+  if (error) return { success: false, error: 'Could not verify the code. Please try again.' }
+  return data
+}
+
+export async function linkSsoAccount(token, proof) {
+  const { data, error } = await supabase.functions.invoke('caregiver-link-sso', {
+    body: { token, proof }
+  })
+
+  if (error) return { success: false, error: 'Could not link your account. Please try again.' }
+  return data
+}
+
+export async function signInWithSso(provider, redirectTo) {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider,
+    options: { redirectTo }
+  })
+
+  return { error }
 }
 
 export async function updateCaregiverStatus(status) {

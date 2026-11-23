@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- Employees now verify their identity with an emailed 6-digit code (valid for 5 minutes) before creating an account from their onboarding link
+- Employees can sign up and sign in with Google, in addition to email and password
 - Added Training: trainings made of slides (title, text, image, embedded video) and a scored quiz, managed in Studio and by company admins
 - Added a My Profile page and a My Training page for employees, with Not Started, In Progress, Passed, Due Soon and Overdue markers
 - Employees get a prompt to continue to their profile about 30 seconds after finishing onboarding

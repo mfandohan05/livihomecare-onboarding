@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { createCaregiverAccount } from '@/lib/caregiver'
+import { createCaregiverAccount, clearVerificationProof } from '@/lib/caregiver'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/password-input'
@@ -8,12 +8,13 @@ import { Label } from '@/components/ui/label'
 import AuthCard from './AuthCard'
 import { MAX_PASSWORD_LENGTH, meetsPasswordRules } from '@/lib/passwordPolicy'
 import PasswordRequirements from './PasswordRequirements'
+import SsoButtons, { OrDivider } from './SsoButtons'
 
-export default function CreateAccountForm({ token, name, email, onCreated, onExistingAccount }) {
+export default function CreateAccountForm({ token, proof, firstName, maskedEmail, initialError, onCreated, onExistingAccount, onVerificationExpired }) {
     const [password, setPassword] = useState('')
     const [confirm, setConfirm] = useState('')
     const [loading, setLoading] = useState(false)
-    const [error, setError] = useState(null)
+    const [error, setError] = useState(initialError || null)
     const [confirmError, setConfirmError] = useState(null)
 
     const clearErrors = () => {
@@ -35,10 +36,15 @@ export default function CreateAccountForm({ token, name, email, onCreated, onExi
         }
 
         setLoading(true)
-        const result = await createCaregiverAccount(token, password)
+        const result = await createCaregiverAccount(token, password, proof)
 
         if (!result?.success) {
             setLoading(false)
+            if (result?.verificationRequired) {
+                clearVerificationProof(token)
+                onVerificationExpired()
+                return
+            }
             if (result?.alreadyExists) {
                 onExistingAccount()
                 return
@@ -47,7 +53,7 @@ export default function CreateAccountForm({ token, name, email, onCreated, onExi
             return
         }
 
-        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email: result.email, password })
         if (signInError) {
             setLoading(false)
             setError('Your account was created, but we could not sign you in. Please use the sign in page.')
@@ -59,13 +65,21 @@ export default function CreateAccountForm({ token, name, email, onCreated, onExi
 
     return (
         <AuthCard
-            title={name ? `Welcome, ${name.split(' ')[0]}` : 'Welcome'}
+            title={firstName ? `Welcome, ${firstName}` : 'Welcome'}
             subtitle="Create your account to begin onboarding. You'll use it to sign back in any time."
         >
+            <SsoButtons
+                redirectTo={`${window.location.origin}/onboard/${token}`}
+                disabled={loading}
+                onError={setError}
+            />
+            <div className="my-4">
+                <OrDivider />
+            </div>
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-1.5">
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" value={email} disabled readOnly />
+                    <Input id="email" type="text" value={maskedEmail} disabled readOnly />
                 </div>
                 <div className="space-y-1.5">
                     <Label htmlFor="password">Password</Label>

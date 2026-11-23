@@ -1,4 +1,5 @@
 import { getCallerUser, isAdminOfCompany, serviceClient } from '../_shared/caregiverAccess.ts'
+import { firstName, maskEmail } from '../_shared/caregiverVerification.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,7 +19,8 @@ const NOT_FOUND = () => json({ error: 'Invalid or expired link' }, 404)
 //   ok            the caller is the account-holding caregiver (or an admin of
 //                 the caregiver's company, for preview) — full record returned
 //   needs_signin  the caregiver has an account and the caller isn't them
-//   needs_signup  the caregiver has no account yet — only name/email returned
+//   needs_signup  the caregiver has no account yet — only first name, company
+//                 and a masked email are returned
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -61,7 +63,18 @@ Deno.serve(async (req) => {
       return NOT_FOUND()
     }
 
-    return json({ state: 'needs_signup', name: caregiver.name, email: caregiver.email })
+    const { data: company } = await supabase
+      .from('company_data')
+      .select('company_name')
+      .eq('company_id', caregiver.company_id)
+      .maybeSingle()
+
+    return json({
+      state: 'needs_signup',
+      firstName: firstName(caregiver.name),
+      companyName: company?.company_name || null,
+      maskedEmail: maskEmail(caregiver.email),
+    })
   } catch {
     return NOT_FOUND()
   }

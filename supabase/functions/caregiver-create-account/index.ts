@@ -1,4 +1,5 @@
 import { serviceClient } from '../_shared/caregiverAccess.ts'
+import { consumeProof, findValidProof } from '../_shared/caregiverVerification.ts'
 import { MAX_PASSWORD_LENGTH, meetsPasswordRules, PASSWORD_REQUIREMENTS_MESSAGE } from '../_shared/passwordPolicy.js'
 
 const corsHeaders = {
@@ -23,7 +24,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { token, password } = await req.json()
+    const { token, password, proof } = await req.json()
     if (!token || typeof token !== 'string') return json({ error: 'Invalid or expired link' }, 404)
 
     if (!meetsPasswordRules(password)) {
@@ -51,6 +52,11 @@ Deno.serve(async (req) => {
       caregiver.link_expires_at &&
       new Date() > new Date(caregiver.link_expires_at)
     if (isExpired) return json({ error: 'Invalid or expired link' }, 404)
+
+    const proofRowId = await findValidProof(supabase, caregiver.id, proof)
+    if (!proofRowId) {
+      return json({ success: false, verificationRequired: true, error: 'Please verify your identity again.' })
+    }
 
     const { data: created, error: createError } = await supabase.auth.admin.createUser({
       email: caregiver.email,
@@ -88,7 +94,8 @@ Deno.serve(async (req) => {
       return json({ success: false, alreadyExists: true, error: 'An account already exists. Please sign in.' })
     }
 
-    return json({ success: true })
+    await consumeProof(supabase, proofRowId)
+    return json({ success: true, email: caregiver.email })
   } catch (err) {
     console.error('caregiver-create-account failed:', err)
     return json({ error: 'Could not create account' }, 500)
