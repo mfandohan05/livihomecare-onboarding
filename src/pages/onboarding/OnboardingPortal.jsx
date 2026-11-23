@@ -23,6 +23,8 @@ import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import SurePayrollGuidePage from './onboarding-pages/SurePayrollGuidePage'
 import NeedHelpLink from '@/components/help/NeedHelpLink'
+import { useNavigate } from 'react-router-dom'
+import ProfilePromptDialog from '@/components/onboarding/ProfilePromptDialog'
 
 import {
     Heart,
@@ -93,6 +95,14 @@ export default function OnboardingPortal({ initialCaregiver, viewer }) {
     const [steps, setSteps] = useState([])
     const [activeStep, setActiveStep] = useState(1)
     const hasSavedCompletion = useRef(false);
+    const navigate = useNavigate()
+    const [showProfilePrompt, setShowProfilePrompt] = useState(false)
+    const statusSaved = useRef(Promise.resolve())
+
+    const goToProfile = async () => {
+        await statusSaved.current
+        navigate('/my-profile')
+    }
     const [formData, setFormData] = useState({
         personalInfo: {},
         competency: { checked: {}, lunch: '', dinner: '' },
@@ -261,7 +271,8 @@ export default function OnboardingPortal({ initialCaregiver, viewer }) {
                 step.id === lastStep.id ? { ...step, status: 'completed' } : step
             ))
             setCaregiver(prev => prev ? { ...prev, status: 'completed' } : prev)
-            updateCaregiverStatus('completed')
+            statusSaved.current = updateCaregiverStatus('completed')
+            if (initialCaregiver.status !== 'completed') setShowProfilePrompt(true)
 
             const saveLog = async () => {
                 await checkpointTimeLog(caregiver.id, companyId, storageKey, getHoursWorked, true);
@@ -584,6 +595,13 @@ export default function OnboardingPortal({ initialCaregiver, viewer }) {
                 </fieldset>
 
             </SidebarInset>
+            {showProfilePrompt && (
+                <ProfilePromptDialog
+                    name={caregiver?.name?.split(' ')[0]}
+                    onContinue={goToProfile}
+                    onDismiss={() => setShowProfilePrompt(false)}
+                />
+            )}
         </SidebarProvider>
     )
 }

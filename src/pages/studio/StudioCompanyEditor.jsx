@@ -261,6 +261,17 @@ export default function StudioCompanyEditor() {
                 </Button>
             </div>
 
+            <div className="bg-white rounded-xl border border-border p-4 mb-8 flex items-center justify-between">
+                <div>
+                    <p className="text-sm font-medium">Training</p>
+                    <p className="text-xs text-muted-foreground">Post-onboarding trainings with slides, quizzes, and due dates</p>
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={() => navigate(`/studio/companies/${id}/training`)}>
+                    Manage training
+                    <ChevronRight className="w-4 h-4" />
+                </Button>
+            </div>
+
             <form onSubmit={handleSave} className="space-y-8">
                 <section className="bg-white rounded-xl border border-border p-6 space-y-4">
                     <h2 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">Identity</h2>

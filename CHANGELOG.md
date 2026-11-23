@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+- Added Training: trainings made of slides (title, text, image, embedded video) and a scored quiz, managed in Studio and by company admins
+- Added a My Profile page and a My Training page for employees, with Not Started, In Progress, Passed, Due Soon and Overdue markers
+- Employees get a prompt to continue to their profile about 30 seconds after finishing onboarding
+- Admins can mark training complete (or reset it) for an employee from the employee page
+
 ## 2.4.1 - 2026-11-05
 - Added FAQ & How-To Guides for both admins and employees/caregivers
 

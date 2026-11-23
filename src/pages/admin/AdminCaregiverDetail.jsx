@@ -19,6 +19,7 @@ import { useCompany } from '@/context/CompanyContext'
 import ExpirationDateDialog from '@/components/global/ExpirationDateDialog'
 import { ExpirationBadge } from '@/components/admin/ExpirationBadge'
 import HowDoesThisWork from '@/components/help/HowDoesThisWork'
+import AdminCaregiverTraining from '@/components/training/AdminCaregiverTraining'
 import {
     EXPIRATION_REQUIRED_TYPES,
     collapseAliasedDocuments,
@@ -2163,6 +2164,10 @@ export default function AdminCaregiverDetail() {
                                 </>
                             )}
                         </div>
+                    )}
+
+                    {caregiver.status === 'completed' && (
+                        <AdminCaregiverTraining caregiverId={id} companyId={companyId} />
                     )}
 
                     <div className="bg-white rounded-xl border border-border p-6">
