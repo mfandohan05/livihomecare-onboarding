@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { applyBranding } from '@/lib/branding'
 
 const CompanyContext = createContext(null)
 
@@ -68,15 +69,9 @@ export function CompanyProvider({ children }) {
     }, [])
     useEffect(() => {
         if (primaryColor) {
-            document.documentElement.style.setProperty('--primary-color', primaryColor);
+            applyBranding({ primary: primaryColor, hover: hoverColor, secondary: secondaryColor })
         }
-        if (hoverColor) {
-            document.documentElement.style.setProperty('--hover-color', hoverColor);
-        }
-        if (secondaryColor) {
-            document.documentElement.style.setProperty('--secondary-bg', secondaryColor)
-        }
-    }, [primaryColor, secondaryColor])
+    }, [primaryColor, hoverColor, secondaryColor])
     return (
         <CompanyContext.Provider
             value={{ companyId, companyName, primaryColor, secondaryColor, logoUrl, loading }}

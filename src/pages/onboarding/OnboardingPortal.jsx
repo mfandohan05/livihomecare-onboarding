@@ -19,6 +19,7 @@ import { useSaveProgress, loadProgress as loadLocalProgress } from '@/hooks/useO
 
 import { updateCaregiverStatus, saveProgress, loadProgress, checkpointTimeLog } from '@/lib/caregiver'
 import { supabase } from '@/lib/supabase'
+import { applyBranding, hasCachedBranding } from '@/lib/branding'
 
 import { toast } from 'sonner'
 import SurePayrollGuidePage from './onboarding-pages/SurePayrollGuidePage'
@@ -91,6 +92,7 @@ export default function OnboardingPortal({ initialCaregiver, viewer }) {
     const [caregiver, setCaregiver] = useState(initialCaregiver)
     const [companyId, setCompanyId] = useState("");
     const [companyData, setCompanyData] = useState({});
+    const [brandingLoaded, setBrandingLoaded] = useState(false)
     const [loading, setLoading] = useState(true)
     const [steps, setSteps] = useState([])
     const [activeStep, setActiveStep] = useState(1)
@@ -311,11 +313,13 @@ export default function OnboardingPortal({ initialCaregiver, viewer }) {
 
             if (data) {
                 setCompanyData(data);
-                document.documentElement.style.setProperty('--primary-color', data.primary_color)
-                document.documentElement.style.setProperty('--secondary-bg', data.secondary_bg_color)
-                document.documentElement.style.setProperty('--hover-color', data.hover_color)
+                applyBranding({
+                    primary: data.primary_color,
+                    hover: data.hover_color,
+                    secondary: data.secondary_bg_color,
+                })
             }
-
+            setBrandingLoaded(true)
         }
 
         loadCompanyInformation();
@@ -562,6 +566,15 @@ export default function OnboardingPortal({ initialCaregiver, viewer }) {
     }
     const isCompleted = caregiver?.status === 'completed' ||
         steps.every(s => s.status === 'completed')
+
+    if (caregiver?.company_id && !brandingLoaded && !hasCachedBranding()) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-muted-foreground border-t-transparent rounded-full animate-spin" />
+            </div>
+        )
+    }
+
     return (
         <SidebarProvider>
             {saving && (

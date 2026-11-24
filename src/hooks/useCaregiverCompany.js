@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { getMyCaregiver } from '@/lib/caregiver'
+import { applyBranding } from '@/lib/branding'
 
 export function useCaregiverCompany() {
     const [state, setState] = useState({ company: null, loading: true })
@@ -23,10 +24,7 @@ export function useCaregiverCompany() {
                     .single()
 
                 if (!data) return null
-                const root = document.documentElement.style
-                if (data.primary_color) root.setProperty('--primary-color', data.primary_color)
-                if (data.secondary_bg_color) root.setProperty('--secondary-bg', data.secondary_bg_color)
-                if (data.hover_color) root.setProperty('--hover-color', data.hover_color)
+                applyBranding({ primary: data.primary_color, hover: data.hover_color, secondary: data.secondary_bg_color })
                 return { name: data.company_name, phone: data.phone, email: data.support_email }
             } catch {
                 return null
