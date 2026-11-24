@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { applyBranding, getCachedBranding } from '@/lib/branding'
+import { applyBranding, clearBranding, getCachedBranding } from '@/lib/branding'
+
+const NO_ROW = 'PGRST116'
 
 const CompanyContext = createContext(null)
 
@@ -16,37 +18,43 @@ export function CompanyProvider({ children }) {
     useEffect(() => {
         let cancelled = false
 
+        const forgetCompany = () => {
+            clearBranding()
+            setCompanyName('')
+            setLogoUrl(null)
+        }
+
         const fetchAdminAndCompany = async () => {
-            const { data: { session } } = await supabase.auth.getSession()
-            if (!session) {
-                if (!cancelled) setLoading(false)
-                return
-            }
+            try {
+                const { data: { session } } = await supabase.auth.getSession()
+                if (!session) return
 
-            const { data: admin, error: adminError } = await supabase
-                .from('admin_users')
-                .select('company_id')
-                .eq('id', session.user.id)
-                .single()
+                const { data: admin, error: adminError } = await supabase
+                    .from('admin_users')
+                    .select('company_id')
+                    .eq('id', session.user.id)
+                    .single()
 
-            if (cancelled) return
+                if (cancelled) return
 
-            if (adminError || !admin) {
-                setLoading(false)
-                return
-            }
+                if (adminError?.code === NO_ROW) forgetCompany()
+                if (adminError || !admin) return
 
-            setCompanyId(admin.company_id)
+                setCompanyId(admin.company_id)
 
-            const { data: company, error: companyError } = await supabase
-                .from('company_data')
-                .select('logo_path, company_name, primary_color, secondary_bg_color, hover_color')
-                .eq('company_id', admin.company_id)
-                .maybeSingle()
+                const { data: company, error: companyError } = await supabase
+                    .from('company_data')
+                    .select('logo_path, company_name, primary_color, secondary_bg_color, hover_color')
+                    .eq('company_id', admin.company_id)
+                    .maybeSingle()
 
-            if (cancelled) return
+                if (cancelled || companyError) return
 
-            if (!companyError && company) {
+                if (!company) {
+                    forgetCompany()
+                    return
+                }
+
                 setCompanyName(company.company_name || '')
                 setPrimaryColor(company.primary_color || '#577C09')
                 setSecondaryColor(company.secondary_bg_color || '#E8F0D0')
@@ -60,9 +68,11 @@ export function CompanyProvider({ children }) {
                 } else {
                     setLogoUrl(null)
                 }
+            } catch (err) {
+                console.error('Company branding could not be loaded:', err)
+            } finally {
+                if (!cancelled) setLoading(false)
             }
-
-            setLoading(false)
         }
 
         fetchAdminAndCompany()

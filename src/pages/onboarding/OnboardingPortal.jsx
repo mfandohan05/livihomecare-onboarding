@@ -305,21 +305,26 @@ export default function OnboardingPortal({ initialCaregiver, viewer }) {
             return;
         }
         const loadCompanyInformation = async () => {
-            const { data } = await supabase
-                .from('company_branding')
-                .select('company_name, primary_color, secondary_bg_color, hover_color, phone, support_email, next_steps, welcome_summary, ersp_url')
-                .eq('company_id', companyId)
-                .single();
+            try {
+                const { data } = await supabase
+                    .from('company_branding')
+                    .select('company_name, primary_color, secondary_bg_color, hover_color, phone, support_email, next_steps, welcome_summary, ersp_url')
+                    .eq('company_id', companyId)
+                    .single();
 
-            if (data) {
-                setCompanyData(data);
-                applyBranding({
-                    primary: data.primary_color,
-                    hover: data.hover_color,
-                    secondary: data.secondary_bg_color,
-                })
+                if (data) {
+                    setCompanyData(data);
+                    applyBranding({
+                        primary: data.primary_color,
+                        hover: data.hover_color,
+                        secondary: data.secondary_bg_color,
+                    })
+                }
+            } catch (err) {
+                console.error('Company information could not be loaded:', err)
+            } finally {
+                setBrandingLoaded(true)
             }
-            setBrandingLoaded(true)
         }
 
         loadCompanyInformation();

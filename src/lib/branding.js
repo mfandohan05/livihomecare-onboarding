@@ -49,16 +49,6 @@ function setVariables({ primary, hover, secondary }) {
     if (secondary) style.setProperty('--secondary-bg', secondary)
 }
 
-function preloadLogo(url) {
-    if (!url) return
-
-    const link = document.createElement('link')
-    link.rel = 'preload'
-    link.as = 'image'
-    link.href = url
-    document.head.appendChild(link)
-}
-
 export function applyBranding(branding) {
     setVariables(branding)
 
@@ -81,8 +71,18 @@ export function applyCachedBranding() {
     if (!branding) return false
 
     setVariables(branding)
-    preloadLogo(branding.logoUrl)
     return true
+}
+
+export function clearBranding() {
+    const userId = storedUserId()
+    if (!userId) return
+
+    try {
+        localStorage.removeItem(cacheKey(userId))
+    } catch {
+        return
+    }
 }
 
 export const getCachedBranding = () => currentCache()
