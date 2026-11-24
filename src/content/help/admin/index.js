@@ -575,7 +575,7 @@ export const adminHelp = {
               ['position_title', 'Yes', 'Job title.', 'Home Health Aide'],
               ['employment_type', 'Yes', 'Hourly, Part-Time, Hourly, Full-Time or Independent Contractor.', 'Hourly, Full-Time'],
               ['phone', 'No', '10 digits, any format.', '(704) 555-0123'],
-              ['start_date', 'No', 'A real date: YYYY-MM-DD or M/D/YYYY.', '2025-03-14'],
+              ['start_date', 'No', 'A real date: YYYY-MM-DD, M/D/YYYY or M/D/YY.', '2025-03-14'],
               ['employee_id', 'No', 'Your own employee number.', 'E-1001'],
               ['gender', 'No', 'Female, Male, Non-binary, Other or Prefer not to say.', 'Female'],
               ['pay_rate', 'No', 'Hourly rate as a number.', '18.50'],
@@ -601,7 +601,7 @@ export const adminHelp = {
               ['emergency_zip', 'No', '5-digit zip code.', '60433'],
             ] } },
             { tip: 'Zip codes that start with 0 lose the zero when Excel opens a CSV (02134 becomes 2134). The import adds it back.' },
-            { tip: 'Excel often changes dates to the **M/D/YYYY** style when you open a CSV. That is fine, the import reads both styles. Dates are read as month first, so 3/4/2025 is March 4.' },
+            { tip: 'Excel often changes dates to the **M/D/YYYY** or **M/D/YY** style when you open a CSV. That is fine, the import reads them. Dates are read as month first, so 3/4/2025 is March 4. A two-digit year means 20xx unless that would be more than 10 years from now, so 3/14/25 is 2025 and 3/14/99 is 1999.' },
             { tip: 'Keep the column names exactly as in the template and use each one once. If a name is misspelled, the review shows a yellow note listing the columns that were ignored.' },
             'If a value contains a comma, such as **Hourly, Full-Time**, Excel and Google Sheets add the quotation marks for you when you save as CSV.',
           ],
@@ -624,7 +624,7 @@ export const adminHelp = {
               'Both columns must be filled in for every employee. Employment type must be one of the three choices in the table.',
             ] },
             { q: 'A row says the start date is not valid.', a: [
-              'Check that the date is real (for example, there is no February 30) and written as **YYYY-MM-DD** or **M/D/YYYY** with a four-digit year.',
+              'Check that the date is real (for example, there is no February 30) and written as **YYYY-MM-DD**, **M/D/YYYY** or **M/D/YY**.',
             ] },
             { q: 'A yellow note says some columns were ignored.', a: [
               'Those column names do not match the template, usually because of a spelling difference. Rename them to match, or download the template again.',

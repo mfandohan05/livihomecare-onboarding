@@ -81,14 +81,24 @@ const caseInsensitiveLookup = (values: string[]) => new Map(values.map((v) => [v
 const employmentTypeByInput = caseInsensitiveLookup(EMPLOYMENT_TYPES)
 const genderByInput = caseInsensitiveLookup(GENDERS)
 
-function toIsoDate(value: string): string | null {
+const YEARS_AHEAD_FOR_TWO_DIGIT = 10
+
+function fullYear(digits: string, now: Date): number {
+  if (digits.length === 4) return Number(digits)
+
+  const currentYear = now.getUTCFullYear()
+  const candidate = Math.floor(currentYear / 100) * 100 + Number(digits)
+  return candidate > currentYear + YEARS_AHEAD_FOR_TWO_DIGIT ? candidate - 100 : candidate
+}
+
+function toIsoDate(value: string, now = new Date()): string | null {
   const iso = value.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/)
-  const us = value.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/)
+  const us = value.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{2}|\d{4})$/)
 
   const parts = iso
     ? { year: Number(iso[1]), month: Number(iso[2]), day: Number(iso[3]) }
     : us
-    ? { year: Number(us[3]), month: Number(us[1]), day: Number(us[2]) }
+    ? { year: fullYear(us[3], now), month: Number(us[1]), day: Number(us[2]) }
     : null
   if (!parts) return null
 
@@ -248,7 +258,7 @@ function validateRow(raw: RawRow, lookups: Lookups): Validation {
   const gender = parseOptional(field('gender'), (v) => genderByInput.get(v.toLowerCase()) ?? null,
     `Gender must be one of: ${GENDERS.join(' | ')}`)
   const startDate = parseOptional(field('start_date'), toIsoDate,
-    'Start date is not a valid date. Use YYYY-MM-DD or M/D/YYYY, e.g. 2025-03-14')
+    'Start date is not a valid date. Use YYYY-MM-DD, M/D/YYYY or M/D/YY, e.g. 2025-03-14')
   const payRate = parseOptional(field('pay_rate'), toPayRate, 'Pay rate must be a number, e.g. 18.50')
   const phone = parseOptional(field('phone'), toPhone, 'Phone must have 10 digits, e.g. (704) 555-0123')
   const state = parseOptional(field('state'), toState, 'State must be a 2-letter code, e.g. NC')

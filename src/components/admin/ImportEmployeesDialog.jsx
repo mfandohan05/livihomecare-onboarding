@@ -25,7 +25,7 @@ const FORMAT_GUIDE = [
             { column: 'position_title', required: true, hint: 'Job title', example: 'Home Health Aide' },
             { column: 'employment_type', required: true, hint: 'Hourly, Part-Time / Hourly, Full-Time / Independent Contractor', example: 'Hourly, Full-Time' },
             { column: 'phone', hint: '10 digits, any format', example: '(704) 555-0123' },
-            { column: 'start_date', hint: 'A real date: YYYY-MM-DD or M/D/YYYY', example: '2025-03-14' },
+            { column: 'start_date', hint: 'A real date: YYYY-MM-DD, M/D/YYYY or M/D/YY', example: '2025-03-14' },
             { column: 'employee_id', hint: 'Your own employee number', example: 'E-1001' },
             { column: 'gender', hint: 'Female, Male, Non-binary, Other or Prefer not to say', example: 'Female' },
             { column: 'pay_rate', hint: 'Hourly rate as a number', example: '18.50' },
