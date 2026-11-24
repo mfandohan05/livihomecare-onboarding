@@ -52,6 +52,7 @@ type RowResult = {
   status: 'valid' | 'created' | 'invalid' | 'duplicate'
   reason?: string
   emailSent?: boolean
+  startDate?: string | null
 }
 
 type Lookups = {
@@ -483,7 +484,7 @@ Deno.serve(async (req) => {
       }
 
       lookups.seenEmails.add(email)
-      results.push({ line, email, status: 'valid' })
+      results.push({ line, email, status: 'valid', startDate: check.record.start_date as string | null })
       records.push({ ...check.record, company_id: companyId })
       personalInfoByEmail.set(email, check.personalInfo)
     })

@@ -165,6 +165,19 @@ function csvToEmployees(fileText) {
     return { employees, ignoredColumns }
 }
 
+const formatDate = (iso) =>
+    new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-US', {
+        month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC',
+    })
+
+function understoodDates(results, employees) {
+    const rawByLine = new Map(employees.map((e) => [e.line, e.start_date]))
+
+    return results
+        .filter((r) => r.status === 'valid' && r.startDate && rawByLine.get(r.line) !== r.startDate)
+        .map((r) => ({ line: r.line, email: r.email, typed: rawByLine.get(r.line), understood: formatDate(r.startDate) }))
+}
+
 function SummaryTile({ label, value, tone }) {
     const TONES = { good: 'text-[var(--primary-color)]', warn: 'text-amber-600', bad: 'text-red-500' }
     const color = TONES[tone] || 'text-foreground'
@@ -295,6 +308,7 @@ export default function ImportEmployeesDialog({ open, onClose, onImported, roleO
     const summary = review?.summary
     const problems = (review?.results || []).filter((r) => r.status === 'invalid' || r.status === 'duplicate')
     const readyCount = summary?.valid ?? 0
+    const dateChanges = understoodDates(review?.results || [], employees)
     const unsentEmails = (outcome?.results || []).filter((r) => r.status === 'created' && r.emailSent === false)
 
     return (
@@ -406,6 +420,25 @@ export default function ImportEmployeesDialog({ open, onClose, onImported, roleO
                                 <ProblemList rows={problems} />
                                 <p className="text-xs text-muted-foreground mt-2">
                                     Fix these in your file and upload it again, or import the ready rows now.
+                                </p>
+                            </div>
+                        )}
+
+                        {dateChanges.length > 0 && (
+                            <div>
+                                <h3 className="text-sm font-medium mb-4 pb-2 border-b">Start dates as we read them</h3>
+                                <div className="border border-border rounded-lg divide-y max-h-48 overflow-y-auto scrollbar-hide">
+                                    {dateChanges.map((d) => (
+                                        <div key={`${d.line}-${d.email}`} className="px-3 py-2 text-sm">
+                                            <p className="font-medium truncate">Row {d.line} · {d.email}</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {d.typed} <span aria-hidden="true">→</span> <span className="font-medium text-foreground">{d.understood}</span>
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-2">
+                                    Check these before importing. Two-digit years are read as 20xx unless that is more than 10 years away.
                                 </p>
                             </div>
                         )}
