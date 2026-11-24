@@ -97,7 +97,11 @@ export default function AdminLayout({ children }) {
             <div className="bg-white border-b border-border px-4 sm:px-6 md:px-8 py-3 flex items-center justify-between gap-2 sticky top-0 z-50">
                 <div className="flex items-center gap-3 md:gap-8 min-w-0">
                     <div className="flex items-center gap-2.5 cursor-pointer min-w-0" onClick={() => navigate('/admin/dashboard')}>
-                        <img src={logoUrl} alt={companyName + " logo"} className="w-9 h-9 md:w-[50px] md:h-[50px] object-contain shrink-0" />
+                        {logoUrl ? (
+                            <img src={logoUrl} alt={`${companyName} logo`} className="w-9 h-9 md:w-[50px] md:h-[50px] object-contain shrink-0" />
+                        ) : loading ? (
+                            <div className="w-9 h-9 md:w-[50px] md:h-[50px] shrink-0" />
+                        ) : null}
                         <div className="min-w-0">
                             <p className="font-semibold text-sm leading-none truncate">{companyName}</p>
                             <p className="text-xs text-muted-foreground leading-none mt-0.5 hidden sm:block truncate">RSOnboard Admin Portal v.{APP_VERSION}</p>

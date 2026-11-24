@@ -5,11 +5,19 @@ const sessionKey = () => {
 
 const cacheKey = (userId) => `rs_branding_${userId}`
 
-let restoredFromCache = false
+let cachedBranding = null
 
 function storedUserId() {
     try {
         return JSON.parse(localStorage.getItem(sessionKey()))?.user?.id ?? null
+    } catch {
+        return null
+    }
+}
+
+function readCache(userId) {
+    try {
+        return JSON.parse(localStorage.getItem(cacheKey(userId)))
     } catch {
         return null
     }
@@ -22,14 +30,28 @@ function setVariables({ primary, hover, secondary }) {
     if (secondary) style.setProperty('--secondary-bg', secondary)
 }
 
-export function applyBranding(colors) {
-    setVariables(colors)
+function preloadLogo(url) {
+    if (!url) return
+
+    const link = document.createElement('link')
+    link.rel = 'preload'
+    link.as = 'image'
+    link.href = url
+    document.head.appendChild(link)
+}
+
+export function applyBranding(branding) {
+    setVariables(branding)
 
     const userId = storedUserId()
     if (!userId) return
 
+    const provided = Object.fromEntries(
+        Object.entries(branding).filter(([, value]) => value !== undefined)
+    )
+
     try {
-        localStorage.setItem(cacheKey(userId), JSON.stringify(colors))
+        localStorage.setItem(cacheKey(userId), JSON.stringify({ ...readCache(userId), ...provided }))
     } catch {
         return
     }
@@ -39,16 +61,15 @@ export function applyCachedBranding() {
     const userId = storedUserId()
     if (!userId) return false
 
-    try {
-        const colors = JSON.parse(localStorage.getItem(cacheKey(userId)))
-        if (!colors) return false
+    const branding = readCache(userId)
+    if (!branding) return false
 
-        setVariables(colors)
-        restoredFromCache = true
-        return true
-    } catch {
-        return false
-    }
+    setVariables(branding)
+    preloadLogo(branding.logoUrl)
+    cachedBranding = branding
+    return true
 }
 
-export const hasCachedBranding = () => restoredFromCache
+export const hasCachedBranding = () => cachedBranding !== null
+
+export const getCachedBranding = () => cachedBranding
