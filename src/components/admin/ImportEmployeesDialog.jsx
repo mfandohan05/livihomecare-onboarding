@@ -260,7 +260,7 @@ export default function ImportEmployeesDialog({ open, onClose, onImported, roleO
         setError(null)
 
         if (!/\.csv$/i.test(picked.name)) {
-            setError('Please choose a .csv file. Excel (.xlsx) support is coming soon.')
+            setError('Please choose a .csv file.')
             return
         }
         if (picked.size > MAX_FILE_BYTES) {
@@ -382,9 +382,6 @@ export default function ImportEmployeesDialog({ open, onClose, onImported, roleO
                                     {loading ? 'Checking file...' : 'Choose CSV file...'}
                                 </span>
                             </label>
-                            <p className="text-xs text-muted-foreground mt-2">
-                                Excel (.xlsx) files will be supported soon. For now, save your spreadsheet as CSV.
-                            </p>
                         </div>
 
                         {error && <p className="text-sm text-red-500">{error}</p>}
@@ -437,9 +434,6 @@ export default function ImportEmployeesDialog({ open, onClose, onImported, roleO
                                         </div>
                                     ))}
                                 </div>
-                                <p className="text-xs text-muted-foreground mt-2">
-                                    Check these before importing. Two-digit years are read as 20xx unless that is more than 10 years away.
-                                </p>
                             </div>
                         )}
 
