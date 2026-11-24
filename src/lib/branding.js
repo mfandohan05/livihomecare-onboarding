@@ -5,7 +5,7 @@ const sessionKey = () => {
 
 const cacheKey = (userId) => `rs_branding_${userId}`
 
-let cachedBranding = null
+const TEXT_FIELDS = ['primary', 'hover', 'secondary', 'companyName']
 
 function storedUserId() {
     try {
@@ -15,12 +15,31 @@ function storedUserId() {
     }
 }
 
+function cleanBranding(value) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+
+    const clean = {}
+    for (const field of TEXT_FIELDS) {
+        if (typeof value[field] === 'string') clean[field] = value[field]
+    }
+    if (typeof value.logoUrl === 'string' && /^https?:\/\//i.test(value.logoUrl)) {
+        clean.logoUrl = value.logoUrl
+    }
+
+    return Object.keys(clean).length > 0 ? clean : null
+}
+
 function readCache(userId) {
     try {
-        return JSON.parse(localStorage.getItem(cacheKey(userId)))
+        return cleanBranding(JSON.parse(localStorage.getItem(cacheKey(userId))))
     } catch {
         return null
     }
+}
+
+function currentCache() {
+    const userId = storedUserId()
+    return userId ? readCache(userId) : null
 }
 
 function setVariables({ primary, hover, secondary }) {
@@ -58,18 +77,14 @@ export function applyBranding(branding) {
 }
 
 export function applyCachedBranding() {
-    const userId = storedUserId()
-    if (!userId) return false
-
-    const branding = readCache(userId)
+    const branding = currentCache()
     if (!branding) return false
 
     setVariables(branding)
     preloadLogo(branding.logoUrl)
-    cachedBranding = branding
     return true
 }
 
-export const hasCachedBranding = () => cachedBranding !== null
+export const getCachedBranding = () => currentCache()
 
-export const getCachedBranding = () => cachedBranding
+export const hasCachedBranding = () => currentCache() !== null

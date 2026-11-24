@@ -369,7 +369,7 @@ export default function TrainingEditor({ companyId, trainingId, backPath }) {
                             <Trash2 className="w-4 h-4 text-red-500" /> Delete
                         </Button>
                     )}
-                    <Button onClick={handleSave} disabled={saving || (!isNew && !dirty)} className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white w-full sm:w-auto">
+                    <Button onClick={handleSave} disabled={saving || (!isNew && !dirty)} className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white">
                         {saving ? 'Saving...' : 'Save training'}
                     </Button>
                 </div>
@@ -421,7 +421,7 @@ export default function TrainingEditor({ companyId, trainingId, backPath }) {
             <Card
                 title="Slides"
                 description="Each slide can have a title, text, an image, an embedded video, or a mix."
-                action={<Button size="sm" onClick={() => updateSlides((prev) => [...prev, newSlide()])} className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white w-full sm:w-auto">
+                action={<Button size="sm" onClick={() => updateSlides((prev) => [...prev, newSlide()])} className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white">
                             <Plus className="w-3.5 h-3.5" /> 
                             Add slide
                         </Button>
@@ -450,7 +450,7 @@ export default function TrainingEditor({ companyId, trainingId, backPath }) {
             <Card
                 title="Quiz questions"
                 description="Employees must score at least the passing score to finish. Correct answers are never shown to them."
-                action={<Button size="sm" onClick={() => updateQuestions((prev) => [...prev, newQuestion()])} className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white w-full sm:w-auto">
+                action={<Button size="sm" onClick={() => updateQuestions((prev) => [...prev, newQuestion()])} className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white">
                     <Plus className="w-3.5 h-3.5" /> Add question</Button>}
             >
                 {questions.length === 0 ? (

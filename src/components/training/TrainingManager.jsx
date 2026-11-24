@@ -56,7 +56,7 @@ export default function TrainingManager({ companyId, basePath, backPath, backLab
                 </div>
                 <Button 
                     onClick={() => navigate(`${basePath}/new`)} 
-                    className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white w-full sm:w-auto">
+                    className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white">
                     <Plus className="w-4 h-4" />
                     New training
                 </Button>
