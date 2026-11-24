@@ -62,7 +62,13 @@ type Validation =
 
 type Parsed<T> = { value: T | null; error: string | null }
 
-const text = (value: unknown): string => (value == null ? '' : String(value).trim())
+const text = (value: unknown): string =>
+  value == null
+    ? ''
+    : String(value)
+      .replace(/[​-‍⁠﻿]/g, '')
+      .replace(/[\u0000-\u001f\u007f]/g, ' ')
+      .trim()
 
 const roleLookupKey = (value: string) => value.trim().toLowerCase().replace(/[\s-]+/g, '_')
 
@@ -304,6 +310,15 @@ function validateRow(raw: RawRow, lookups: Lookups): Validation {
   }
 }
 
+async function saveProfiles(supabase: SupabaseClient, rows: Record<string, unknown>[]): Promise<boolean> {
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const { error } = await supabase.from('caregiver_progress').upsert(rows, { onConflict: 'caregiver_id' })
+    if (!error) return true
+    console.error(`profile data could not be saved (attempt ${attempt}):`, error)
+  }
+  return false
+}
+
 const countByStatus = (results: RowResult[], status: RowResult['status']) =>
   results.filter((r) => r.status === status).length
 
@@ -445,8 +460,8 @@ Deno.serve(async (req) => {
       if (result) result.status = 'created'
     }
 
-    let profileFailures = 0
-    const { error: profileError } = await supabase.from('caregiver_progress').insert(
+    const profilesSaved = await saveProfiles(
+      supabase,
       created.map((employee) => ({
         caregiver_id: employee.id,
         company_id: employee.company_id,
@@ -456,10 +471,7 @@ Deno.serve(async (req) => {
         last_saved: new Date().toISOString(),
       }))
     )
-    if (profileError) {
-      profileFailures = created.length
-      console.error('profile data could not be saved:', profileError)
-    }
+    const profileFailures = profilesSaved ? 0 : created.length
 
     let trainingFailures = 0
     for (const employee of created) {

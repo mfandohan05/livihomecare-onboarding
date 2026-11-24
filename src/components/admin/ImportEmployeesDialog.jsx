@@ -78,49 +78,81 @@ const KNOWN_COLUMNS = GUIDE_ITEMS.map((item) => item.column)
 const REQUIRED_COLUMNS = GUIDE_ITEMS.filter((item) => item.required).map((item) => item.column)
 
 function parseCsv(input) {
-    const text = input.charCodeAt(0) === 0xfeff ? input.slice(1) : input
+    const text = (input.charCodeAt(0) === 0xfeff ? input.slice(1) : input).replace(/\r\n?/g, '\n')
     const rows = []
     let row = []
+    const lines = []
     let field = ''
     let inQuotes = false
+    let line = 1
+    let rowLine = 1
+
+    const endRow = () => {
+        row.push(field)
+        field = ''
+        rows.push(row)
+        lines.push(rowLine)
+        row = []
+        rowLine = line
+    }
 
     for (let i = 0; i < text.length; i++) {
         const ch = text[i]
+        if (ch === '\n') line++
+
         if (inQuotes) {
             if (ch === '"' && text[i + 1] === '"') { field += '"'; i++ }
             else if (ch === '"') inQuotes = false
             else field += ch
-        } else if (ch === '"') {
+        } else if (ch === '"' && field === '') {
             inQuotes = true
         } else if (ch === ',') {
             row.push(field); field = ''
-        } else if (ch === '\n' || ch === '\r') {
-            if (ch === '\r' && text[i + 1] === '\n') i++
-            row.push(field); field = ''
-            rows.push(row); row = []
+        } else if (ch === '\n') {
+            endRow()
         } else {
             field += ch
         }
     }
-    if (field !== '' || row.length > 0) { row.push(field); rows.push(row) }
 
-    return rows
+    if (inQuotes) {
+        throw new Error(`The quotation mark opened on row ${rowLine} is never closed. Check that row in your file.`)
+    }
+    if (field !== '' || row.length > 0) endRow()
+
+    return { rows, lines }
 }
 
 function csvToEmployees(fileText) {
-    const table = parseCsv(fileText)
-    if (table.length === 0) throw new Error('The file is empty.')
+    const { rows, lines } = parseCsv(fileText)
 
-    const headers = table[0].map((h) => h.trim().toLowerCase().replace(/[\s-]+/g, '_'))
+    const headerRow = rows.findIndex((cells) => cells.some((c) => c.trim() !== ''))
+    if (headerRow === -1) throw new Error('The file is empty.')
+
+    const headerCells = rows[headerRow].map((h) => h.trim())
+    if (headerCells.length === 1 && headerCells[0].includes(';')) {
+        throw new Error('This file looks semicolon-separated. Save it as CSV (comma delimited) and try again.')
+    }
+
+    const headers = headerCells.map((h) => h.toLowerCase().replace(/[\s-]+/g, '_'))
+
+    const duplicates = headers.filter((h, i) => h && headers.indexOf(h) !== i)
+    if (duplicates.length > 0) {
+        const names = [...new Set(duplicates)]
+        throw new Error(`Column${names.length > 1 ? 's' : ''} listed more than once: ${names.join(', ')}. Each column should appear once.`)
+    }
+
     const missing = REQUIRED_COLUMNS.filter((c) => !headers.includes(c))
     if (missing.length > 0) {
         throw new Error(`Missing required column${missing.length > 1 ? 's' : ''}: ${missing.join(', ')}. Please start from the template.`)
     }
 
+    const ignoredColumns = headerCells.filter((_, i) => headers[i] && !KNOWN_COLUMNS.includes(headers[i]))
+
     const employees = []
-    table.slice(1).forEach((cells, index) => {
+    rows.slice(headerRow + 1).forEach((cells, offset) => {
         if (cells.every((c) => c.trim() === '')) return
-        const record = { line: index + 2 }
+        const record = { line: lines[headerRow + 1 + offset] }
         headers.forEach((header, col) => {
             if (KNOWN_COLUMNS.includes(header)) record[header] = (cells[col] ?? '').trim()
         })
@@ -129,7 +161,7 @@ function csvToEmployees(fileText) {
 
     if (employees.length === 0) throw new Error('No employees found in the file.')
     if (employees.length > MAX_ROWS) throw new Error(`Please import at most ${MAX_ROWS} employees at a time.`)
-    return employees
+    return { employees, ignoredColumns }
 }
 
 async function functionError(error, fallback) {
@@ -177,6 +209,7 @@ export default function ImportEmployeesDialog({ open, onClose, onImported, roleO
     const [step, setStep] = useState('upload')
     const [file, setFile] = useState(null)
     const [employees, setEmployees] = useState([])
+    const [ignoredColumns, setIgnoredColumns] = useState([])
     const [review, setReview] = useState(null)
     const [outcome, setOutcome] = useState(null)
     const [sendEmails, setSendEmails] = useState(true)
@@ -187,6 +220,7 @@ export default function ImportEmployeesDialog({ open, onClose, onImported, roleO
         setStep('upload')
         setFile(null)
         setEmployees([])
+        setIgnoredColumns([])
         setReview(null)
         setOutcome(null)
         setSendEmails(true)
@@ -231,7 +265,7 @@ export default function ImportEmployeesDialog({ open, onClose, onImported, roleO
 
         setLoading(true)
         try {
-            const parsed = csvToEmployees(await picked.text())
+            const { employees: parsed, ignoredColumns: ignored } = csvToEmployees(await picked.text())
             const { data, error: fnError } = await supabase.functions.invoke('admin-import-employees', {
                 body: { rows: parsed, validateOnly: true },
             })
@@ -239,6 +273,7 @@ export default function ImportEmployeesDialog({ open, onClose, onImported, roleO
 
             setFile(picked)
             setEmployees(parsed)
+            setIgnoredColumns(ignored)
             setReview(data)
             setStep('review')
         } catch (err) {
@@ -366,6 +401,11 @@ export default function ImportEmployeesDialog({ open, onClose, onImported, roleO
                                 <SummaryTile label="Need fixing" value={summary.invalid} tone={summary.invalid ? 'warn' : undefined} />
                                 <SummaryTile label="Already exist" value={summary.duplicate} tone={summary.duplicate ? 'bad' : undefined} />
                             </div>
+                            {ignoredColumns.length > 0 && (
+                                <p className="text-xs text-amber-700 mt-3">
+                                    These columns are not recognized and were ignored: {ignoredColumns.join(', ')}. Check the spelling against the template.
+                                </p>
+                            )}
                         </div>
 
                         {problems.length > 0 && (
