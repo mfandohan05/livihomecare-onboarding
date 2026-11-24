@@ -344,6 +344,7 @@ export default function ImportEmployeesDialog({ open, onClose, onImported, roleO
     const problems = (review?.results || []).filter((r) => SKIPPED_STATUSES.includes(r.status))
     const skippedRows = (outcome?.results || []).filter((r) => SKIPPED_STATUSES.includes(r.status))
     const readyCount = summary?.valid ?? 0
+    const needFixingCount = (summary?.invalid ?? 0) + (summary?.repeated ?? 0)
     const dateChanges = understoodDates(review?.results || [], employees)
     const unsentEmails = (outcome?.results || []).filter((r) => r.status === 'created' && r.emailSent === false)
 
@@ -435,10 +436,9 @@ export default function ImportEmployeesDialog({ open, onClose, onImported, roleO
                         <div>
                             <h3 className="text-sm font-medium mb-4 pb-2 border-b">Review</h3>
                             <p className="text-sm text-muted-foreground mb-3 truncate">{file?.name}</p>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <div className="grid grid-cols-3 gap-3">
                                 <SummaryTile label="Ready to import" value={readyCount} tone="good" />
-                                <SummaryTile label="Need fixing" value={summary.invalid} tone={summary.invalid ? 'warn' : undefined} />
-                                <SummaryTile label="Repeated in file" value={summary.repeated} tone={summary.repeated ? 'warn' : undefined} />
+                                <SummaryTile label="Need fixing" value={needFixingCount} tone={needFixingCount ? 'warn' : undefined} />
                                 <SummaryTile label="Already exist" value={summary.duplicate} tone={summary.duplicate ? 'bad' : undefined} />
                             </div>
                             {ignoredColumns.length > 0 && (
