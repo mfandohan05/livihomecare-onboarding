@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
+import { functionError } from '@/lib/functionError'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Upload, Eye, EyeOff, Loader2, CheckCircle, Pencil, CalendarClock } from 'lucide-react'
 import {
@@ -648,7 +649,8 @@ export default function AdminCaregiverDetail() {
         setResending(false)
 
         if (error || !data?.success) {
-            toast.error(data?.error || 'Could not send the invitation. Please try again.')
+            const fallback = 'Could not send the invitation. Please try again.'
+            toast.error(error ? await functionError(error, fallback) : data?.error || fallback)
             return
         }
         setCaregiver(prev => ({ ...prev, welcome_email_sent_at: data.welcomeEmailSentAt }))

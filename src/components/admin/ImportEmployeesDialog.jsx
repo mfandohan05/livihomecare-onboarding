@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Download, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
+import { functionError } from '@/lib/functionError'
 import { Button } from '@/components/ui/button'
 import HowDoesThisWork from '@/components/help/HowDoesThisWork'
 import {
@@ -162,15 +163,6 @@ function csvToEmployees(fileText) {
     if (employees.length === 0) throw new Error('No employees found in the file.')
     if (employees.length > MAX_ROWS) throw new Error(`Please import at most ${MAX_ROWS} employees at a time.`)
     return { employees, ignoredColumns }
-}
-
-async function functionError(error, fallback) {
-    try {
-        const body = await error.context.json()
-        return body?.error || fallback
-    } catch {
-        return fallback
-    }
 }
 
 function SummaryTile({ label, value, tone }) {

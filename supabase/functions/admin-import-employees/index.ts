@@ -1,6 +1,6 @@
 import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { requireAdminContext } from '../_shared/requireAdmin.ts'
-import { assignTrainings, CAREGIVER_ROLES } from '../_shared/training.ts'
+import { assignTrainingsToMany, CAREGIVER_ROLES } from '../_shared/training.ts'
 import { buildWelcomeEmail, loadBranding, sendWelcomeEmails } from '../_shared/importWelcomeEmail.ts'
 
 const corsHeaders = {
@@ -22,7 +22,12 @@ const TEMPLATE_PATH = 'templates/default/employee-import-template.csv'
 const TEMPLATE_FILENAME = 'employee-import-template.csv'
 const TEMPLATE_URL_TTL_SECONDS = 600
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const EMAIL_PATTERN = /^[a-z0-9._%+'-]+@([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/
+const PHONE_CHARACTERS = /^[\d\s().+-]+$/
+const ZIP_PATTERN = /^(\d{4,5})(?:-?\d{4})?$/
+const PAY_RATE_PATTERN = /^\d+(\.\d{1,2})?$/
+const THOUSANDS_PATTERN = /^\d{1,3}(,\d{3})+(\.\d+)?$/
+const RESEND_COOLDOWN_MS = 60 * 1000
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const EMPLOYMENT_TYPES = ['Hourly, Part-Time', 'Hourly, Full-Time', 'Independent Contractor']
 const GENDERS = ['Female', 'Male', 'Non-binary', 'Other', 'Prefer not to say']
@@ -99,6 +104,8 @@ function toIsoDate(value: string): string | null {
 }
 
 function toPhone(value: string): string | null {
+  if (!PHONE_CHARACTERS.test(value)) return null
+
   let digits = value.replace(/\D/g, '')
   if (digits.length === 11 && digits.startsWith('1')) digits = digits.slice(1)
   if (digits.length !== 10) return null
@@ -111,20 +118,27 @@ function toState(value: string): string | null {
 }
 
 function toZip(value: string): string | null {
-  const digits = value.replace(/\D/g, '')
-  if (digits.length === 4) return digits.padStart(5, '0')
-  if (digits.length === 5 || digits.length === 9) return digits.slice(0, 5)
-  return null
+  const match = value.match(ZIP_PATTERN)
+  return match ? match[1].padStart(5, '0') : null
 }
 
 function toPayRate(value: string): number | null {
-  const rate = Number(value.replace(/[$,\s]/g, ''))
-  return Number.isFinite(rate) && rate >= 0 && rate < 10000 ? rate : null
+  let amount = value.replace(/^\$\s*/, '').trim()
+  if (THOUSANDS_PATTERN.test(amount)) amount = amount.replace(/,/g, '')
+  if (!PAY_RATE_PATTERN.test(amount)) return null
+
+  const rate = Number(amount)
+  return rate < 10000 ? rate : null
 }
 
 function toEmail(value: string): string | null {
   const email = value.toLowerCase()
-  return EMAIL_PATTERN.test(email) && email.length <= 254 ? email : null
+  if (email.length > 254 || email.includes('..')) return null
+
+  const [local] = email.split('@')
+  if (local.length > 64 || local.startsWith('.') || local.endsWith('.')) return null
+
+  return EMAIL_PATTERN.test(email) ? email : null
 }
 
 function parseOptional<T>(raw: string, parse: (value: string) => T | null, message: string): Parsed<T> {
@@ -356,7 +370,7 @@ Deno.serve(async (req) => {
 
       const { data: employee } = await supabase
         .from('caregivers')
-        .select('id, name, email, token, user_id, source')
+        .select('id, name, email, token, user_id, source, welcome_email_sent_at')
         .eq('id', caregiverId)
         .eq('company_id', companyId)
         .maybeSingle()
@@ -364,15 +378,30 @@ Deno.serve(async (req) => {
       if (!employee || employee.source !== 'imported') return json({ error: 'Employee not found' }, 404)
       if (employee.user_id) return json({ error: 'This employee already has an account.' }, 400)
 
+      const lastSent = employee.welcome_email_sent_at ? Date.parse(employee.welcome_email_sent_at) : 0
+      if (Date.now() - lastSent < RESEND_COOLDOWN_MS) {
+        return json({ error: 'An invitation was sent a moment ago. Please wait a minute before sending another.' }, 429)
+      }
+
       const token = employee.token ?? crypto.randomUUID()
-      if (!employee.token) await supabase.from('caregivers').update({ token }).eq('id', employee.id)
+      if (!employee.token) {
+        const { error: tokenError } = await supabase.from('caregivers').update({ token }).eq('id', employee.id)
+        if (tokenError) {
+          console.error('invitation token could not be saved:', tokenError)
+          return json({ error: 'Could not prepare the invitation link. Please try again.' }, 500)
+        }
+      }
 
       const branding = await loadBranding(supabase, companyId)
       const [sent] = await sendWelcomeEmails([buildWelcomeEmail({ name: employee.name, email: employee.email, token }, branding)])
       if (!sent) return json({ error: 'The email could not be sent. Please try again.' }, 502)
 
       const welcomeEmailSentAt = new Date().toISOString()
-      await supabase.from('caregivers').update({ welcome_email_sent_at: welcomeEmailSentAt }).eq('id', employee.id)
+      const { error: stampError } = await supabase
+        .from('caregivers')
+        .update({ welcome_email_sent_at: welcomeEmailSentAt })
+        .eq('id', employee.id)
+      if (stampError) console.error('welcome_email_sent_at update failed:', stampError)
 
       const { error: auditError } = await supabase.from('audit_logs').insert({
         admin_id: admin.userId,
@@ -454,7 +483,7 @@ Deno.serve(async (req) => {
       return json({ error: message }, insertError?.code === UNIQUE_VIOLATION ? 409 : 500)
     }
 
-    const resultByEmail = new Map(results.map((r) => [r.email, r]))
+    const resultByEmail = new Map(results.filter((r) => r.status === 'valid').map((r) => [r.email, r]))
     for (const employee of created) {
       const result = resultByEmail.get(String(employee.email).toLowerCase())
       if (result) result.status = 'created'
@@ -474,17 +503,15 @@ Deno.serve(async (req) => {
     const profileFailures = profilesSaved ? 0 : created.length
 
     let trainingFailures = 0
-    for (const employee of created) {
-      try {
-        await assignTrainings(supabase, {
-          id: employee.id,
-          company_id: employee.company_id,
-          role: String(employee.role || ''),
-        })
-      } catch (err) {
-        trainingFailures++
-        console.error('training assignment failed for', employee.id, err)
-      }
+    try {
+      trainingFailures = await assignTrainingsToMany(
+        supabase,
+        companyId,
+        created.map((employee) => ({ id: employee.id, role: String(employee.role || '') }))
+      )
+    } catch (err) {
+      trainingFailures = created.length
+      console.error('training assignment failed:', err)
     }
 
     if (sendEmails) {
