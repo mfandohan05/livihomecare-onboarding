@@ -14,7 +14,9 @@ import {
 
 const MAX_ROWS = 1000
 const MAX_FILE_BYTES = 2 * 1024 * 1024
-const STATUS_LABELS = { invalid: 'Needs fixing', duplicate: 'Already exists' }
+const STATUS_LABELS = { invalid: 'Needs fixing', duplicate: 'Already exists', repeated: 'Repeated in file' }
+const STATUS_STYLES = { invalid: 'text-amber-700', duplicate: 'text-red-600', repeated: 'text-amber-700' }
+const SKIPPED_STATUSES = Object.keys(STATUS_LABELS)
 const FORMAT_GUIDE = [
     {
         title: 'Employee',
@@ -189,6 +191,39 @@ function SummaryTile({ label, value, tone }) {
     )
 }
 
+function SkippedTable({ rows, employees }) {
+    const nameByLine = new Map(employees.map((e) => [e.line, e.name]))
+
+    return (
+        <div className="border border-border rounded-lg max-h-64 overflow-auto scrollbar-hide">
+            <table className="w-full min-w-[480px] border-collapse text-left text-xs">
+                <thead className="sticky top-0 bg-muted">
+                    <tr>
+                        <th scope="col" className="px-3 py-2 font-semibold">Row</th>
+                        <th scope="col" className="px-3 py-2 font-semibold">Employee</th>
+                        <th scope="col" className="px-3 py-2 font-semibold">Why it was skipped</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {rows.map((r) => (
+                        <tr key={`${r.line}-${r.email}`} className="border-t border-border align-top">
+                            <td className="px-3 py-2 whitespace-nowrap">{r.line}</td>
+                            <td className="px-3 py-2">
+                                <p className="font-medium">{nameByLine.get(r.line) || '—'}</p>
+                                <p className="text-muted-foreground break-all">{r.email || 'No email'}</p>
+                            </td>
+                            <td className="px-3 py-2">
+                                <p className={`font-medium ${STATUS_STYLES[r.status]}`}>{STATUS_LABELS[r.status]}</p>
+                                <p className="text-muted-foreground">{r.reason}</p>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    )
+}
+
 function ProblemList({ rows }) {
     return (
         <div className="border border-border rounded-lg divide-y max-h-48 overflow-y-auto scrollbar-hide">
@@ -198,7 +233,7 @@ function ProblemList({ rows }) {
                         Row {r.line}{r.email ? ` · ${r.email}` : ''}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                        <span className={`font-medium ${r.status === 'invalid' ? 'text-amber-700' : 'text-red-600'}`}>
+                        <span className={`font-medium ${STATUS_STYLES[r.status]}`}>
                             {STATUS_LABELS[r.status] || r.status}
                         </span>
                         : {r.reason}
@@ -306,7 +341,8 @@ export default function ImportEmployeesDialog({ open, onClose, onImported, roleO
     }
 
     const summary = review?.summary
-    const problems = (review?.results || []).filter((r) => r.status === 'invalid' || r.status === 'duplicate')
+    const problems = (review?.results || []).filter((r) => SKIPPED_STATUSES.includes(r.status))
+    const skippedRows = (outcome?.results || []).filter((r) => SKIPPED_STATUSES.includes(r.status))
     const readyCount = summary?.valid ?? 0
     const dateChanges = understoodDates(review?.results || [], employees)
     const unsentEmails = (outcome?.results || []).filter((r) => r.status === 'created' && r.emailSent === false)
@@ -399,9 +435,10 @@ export default function ImportEmployeesDialog({ open, onClose, onImported, roleO
                         <div>
                             <h3 className="text-sm font-medium mb-4 pb-2 border-b">Review</h3>
                             <p className="text-sm text-muted-foreground mb-3 truncate">{file?.name}</p>
-                            <div className="grid grid-cols-3 gap-3">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                                 <SummaryTile label="Ready to import" value={readyCount} tone="good" />
                                 <SummaryTile label="Need fixing" value={summary.invalid} tone={summary.invalid ? 'warn' : undefined} />
+                                <SummaryTile label="Repeated in file" value={summary.repeated} tone={summary.repeated ? 'warn' : undefined} />
                                 <SummaryTile label="Already exist" value={summary.duplicate} tone={summary.duplicate ? 'bad' : undefined} />
                             </div>
                             {ignoredColumns.length > 0 && (
@@ -488,8 +525,8 @@ export default function ImportEmployeesDialog({ open, onClose, onImported, roleO
                                 <SummaryTile label="Emailed" value={outcome.summary.emailed} />
                                 <SummaryTile
                                     label="Skipped"
-                                    value={outcome.summary.invalid + outcome.summary.duplicate}
-                                    tone={outcome.summary.invalid + outcome.summary.duplicate > 0 ? 'bad' : undefined}
+                                    value={skippedRows.length}
+                                    tone={skippedRows.length > 0 ? 'bad' : undefined}
                                 />
                             </div>
                             {outcome.summary.profileFailures > 0 && (
@@ -503,6 +540,16 @@ export default function ImportEmployeesDialog({ open, onClose, onImported, roleO
                                 </p>
                             )}
                         </div>
+
+                        {skippedRows.length > 0 && (
+                            <div>
+                                <h3 className="text-sm font-medium mb-4 pb-2 border-b">Skipped rows</h3>
+                                <SkippedTable rows={skippedRows} employees={employees} />
+                                <p className="text-xs text-muted-foreground mt-2">
+                                    These rows were not imported. Fix them in your file and upload it again, or add them with New Employee.
+                                </p>
+                            </div>
+                        )}
 
                         {unsentEmails.length > 0 && (
                             <div>

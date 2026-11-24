@@ -49,7 +49,7 @@ type RawRow = Record<string, unknown>
 type RowResult = {
   line: number
   email: string
-  status: 'valid' | 'created' | 'invalid' | 'duplicate'
+  status: 'valid' | 'created' | 'invalid' | 'duplicate' | 'repeated'
   reason?: string
   emailSent?: boolean
   startDate?: string | null
@@ -64,7 +64,7 @@ type Lookups = {
 
 type Validation =
   | { ok: true; record: Record<string, unknown>; personalInfo: Record<string, string> }
-  | { ok: false; status: 'invalid' | 'duplicate'; reason: string }
+  | { ok: false; status: 'invalid' | 'duplicate' | 'repeated'; reason: string }
 
 type Parsed<T> = { value: T | null; error: string | null }
 
@@ -248,7 +248,7 @@ function validateRow(raw: RawRow, lookups: Lookups): Validation {
     return { ok: false, status: 'duplicate', reason: 'An employee with this email already exists' }
   }
   if (lookups.seenEmails.has(email)) {
-    return { ok: false, status: 'duplicate', reason: 'This email appears more than once in the file' }
+    return { ok: false, status: 'repeated', reason: 'This email already appears on an earlier row of the file' }
   }
 
   if (!positionTitle) return invalid('Position title is required')
@@ -495,6 +495,7 @@ Deno.serve(async (req) => {
       created: countByStatus(results, 'created'),
       invalid: countByStatus(results, 'invalid'),
       duplicate: countByStatus(results, 'duplicate'),
+      repeated: countByStatus(results, 'repeated'),
       emailed: results.filter((r) => r.emailSent === true).length,
       trainingFailures,
       profileFailures,
@@ -577,7 +578,7 @@ Deno.serve(async (req) => {
       metadata: {
         admin_name: admin.name,
         created: summary.created,
-        skipped: summary.invalid + summary.duplicate,
+        skipped: summary.invalid + summary.duplicate + summary.repeated,
         emailed: summary.emailed,
         emails_requested: sendEmails,
       },

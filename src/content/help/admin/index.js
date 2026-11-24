@@ -561,9 +561,9 @@ export const adminHelp = {
             'In step 1, select **Download CSV template** and open it in Excel or Google Sheets. The window lists what to enter in each column.',
             'Fill in one employee per row. Keep the first row (the column names) exactly as it is.',
             'Save the file as **CSV**. In step 2, select **Choose CSV file...** and pick it.',
-            'Check the review: **Ready to import**, **Need fixing** and **Already exist**. Problem rows are listed under **Rows that will be skipped**, each with the reason.',
+            'Check the review: **Ready to import**, **Need fixing**, **Repeated in file** and **Already exist**. Problem rows are listed under **Rows that will be skipped**, each with the reason.',
             'Tick or untick **Send a welcome email to each imported employee**, then select **Import** (the button shows how many employees).',
-            'When it finishes you see **Imported**, **Emailed** and **Skipped**. Select **Done**.',
+            'When it finishes you see **Imported**, **Emailed** and **Skipped**, and a **Skipped rows** table that lists who was skipped and why. Select **Done**.',
           ],
           details: [
             'The columns come in three groups. Columns marked **Yes** are required; leave any other cell empty if you do not have the information.',
@@ -606,16 +606,18 @@ export const adminHelp = {
             'If a value contains a comma, such as **Hourly, Full-Time**, Excel and Google Sheets add the quotation marks for you when you save as CSV.',
           ],
           seeing: [
-            'The review shows how many rows are **Ready to import**, **Need fixing** (yellow) and **Already exist** (red).',
+            'The review shows how many rows are **Ready to import**, **Need fixing** (yellow), **Repeated in file** (yellow) and **Already exist** (red).',
+            'After importing, the **Skipped rows** table shows each skipped row with the employee\'s name, email and the reason.',
             'Imported employees appear in the Employees list with an **Imported** badge instead of Completed. They skip onboarding, so the onboarding panels are not shown on their page.',
             'On an imported employee\'s page, the **Invitation** card shows **Send invitation** or **Resend invitation** until they create an account, then **Account created**.',
             'If you left **Send a welcome email** ticked, each employee is emailed that they were added by your company, with a link to create their account.',
           ],
           problems: [
-            { q: 'What is the difference between "Need fixing" and "Already exist"?', a: [
+            { q: 'What do "Need fixing", "Repeated in file" and "Already exist" mean?', a: [
               '**Need fixing** means a value in the row is wrong, for example an unknown role or an impossible date. Correct it in your file and upload again.',
-              '**Already exist** means that email already belongs to an employee in your company, or it appears twice in your file.',
-              'Both kinds of row are skipped. The ready rows are imported.',
+              '**Repeated in file** means the same email is on an earlier row of your file. The first row is imported and the later rows are skipped. Remove the extra rows, or fix the email if it was a typo.',
+              '**Already exist** means that email already belongs to an employee in your company.',
+              'All three kinds of row are skipped. The ready rows are imported.',
             ] },
             { q: 'A row says the role is not valid.', a: [
               'Use one of the role names listed in the import window, the same ones you see when you add an employee. Roles are set up by your platform administrator.',
