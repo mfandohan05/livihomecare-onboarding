@@ -571,7 +571,7 @@ export const adminHelp = {
             { table: { head: ['Column', 'Required', 'What to enter', 'Example'], rows: [
               ['name', 'Yes', 'Full name.', 'Maria Santos'],
               ['email', 'Yes', 'Must not belong to another employee. It is used for their account.', 'maria@email.com'],
-              ['role', 'Yes', 'One of your company\'s role names. The import window lists them. Capital letters, spaces and hyphens do not matter.', 'Nurse Director'],
+              ['role', 'Yes', 'One of your company\'s role names. The import window lists them. Capital letters, spaces and hyphens do not matter, and you can leave out anything in brackets (for example **Qualified Professional** or **QP** for Qualified Professional (QP)).', 'Nurse Director'],
               ['position_title', 'Yes', 'Job title.', 'Home Health Aide'],
               ['employment_type', 'Yes', 'Hourly, Part-Time, Hourly, Full-Time or Independent Contractor.', 'Hourly, Full-Time'],
               ['phone', 'No', '10 digits, any format.', '(704) 555-0123'],

@@ -147,6 +147,16 @@ function parseOptional<T>(raw: string, parse: (value: string) => T | null, messa
   return value === null ? { value: null, error: message } : { value, error: null }
 }
 
+function roleAliases(label: string): string[] {
+  const open = label.indexOf('(')
+  if (open === -1) return []
+
+  const close = label.lastIndexOf(')')
+  const beforeBrackets = label.slice(0, open).trim()
+  const insideBrackets = label.slice(open + 1, close > open ? close : undefined).trim()
+  return [beforeBrackets, insideBrackets].filter(Boolean)
+}
+
 function splitName(name: string) {
   const parts = name.split(/\s+/).filter(Boolean)
   return { firstName: parts[0] || '', lastName: parts.slice(1).join(' ') }
@@ -166,6 +176,19 @@ async function loadRoles(supabase: SupabaseClient, companyId: string) {
   for (const label of labels ?? []) {
     if (label.display_label) roleByInput.set(roleLookupKey(String(label.display_label)), label.role_key)
   }
+  const aliasOwners = new Map<string, Set<string>>()
+  for (const label of labels ?? []) {
+    if (!label.display_label) continue
+    for (const alias of roleAliases(String(label.display_label))) {
+      const aliasKey = roleLookupKey(alias)
+      if (!aliasOwners.has(aliasKey)) aliasOwners.set(aliasKey, new Set())
+      aliasOwners.get(aliasKey)!.add(label.role_key)
+    }
+  }
+  for (const [aliasKey, owners] of aliasOwners) {
+    if (owners.size === 1 && !roleByInput.has(aliasKey)) roleByInput.set(aliasKey, [...owners][0])
+  }
+
   const roleNames: string[] = labels?.length
     ? labels.map((l) => l.display_label || l.role_key)
     : CAREGIVER_ROLES
