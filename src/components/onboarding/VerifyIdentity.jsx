@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import AuthCard from './AuthCard'
 
-export default function VerifyIdentity({ token, firstName, companyName, maskedEmail, onVerified }) {
+export default function VerifyIdentity({ token, firstName, companyName, maskedEmail, imported, onVerified }) {
     const [codeSent, setCodeSent] = useState(false)
     const [code, setCode] = useState('')
     const [sending, setSending] = useState(false)
@@ -58,9 +58,7 @@ export default function VerifyIdentity({ token, firstName, companyName, maskedEm
     return (
         <AuthCard
             title={firstName ? `Welcome, ${firstName}` : 'Welcome'}
-            subtitle={companyName
-                ? `Verify your identity to start your onboarding with ${companyName}.`
-                : 'Verify your identity to start your onboarding.'}
+            subtitle={`Verify your identity to ${imported ? 'set up your account' : 'start your onboarding'}${companyName ? ` with ${companyName}` : ''}.`}
         >
             {!codeSent ? (
                 <div className="space-y-4">

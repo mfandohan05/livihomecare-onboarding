@@ -26,6 +26,8 @@ const ACTION_LABELS = {
     updated_employee_info: "Updated Employee Info",
     cancelled_onboarding: "Cancelled Onboarding",
     reset_caregiver_password: "Reset Employee Password",
+    imported_employees: "Imported Employees",
+    resent_invitation: "Resent Invitation",
 }
 
 const actionColor = (action) => {

@@ -74,6 +74,7 @@ Deno.serve(async (req) => {
       firstName: firstName(caregiver.name),
       companyName: company?.company_name || null,
       maskedEmail: maskEmail(caregiver.email),
+      imported: caregiver.source === 'imported',
     })
   } catch {
     return NOT_FOUND()

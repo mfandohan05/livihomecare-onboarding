@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Upload, Eye, EyeOff, Loader2, CheckCircle, Pencil, CalendarClock } from 'lucide-react'
 import {
@@ -30,14 +31,16 @@ import {
     toExpirationTimestamp,
 } from '@/lib/documentExpiration'
 
-const statusColor = (status) => {
+const statusColor = (status, source) => {
+    if (source === 'imported' && status === 'completed') return 'text-sky-700 bg-sky-50'
     if (status === 'completed') return 'text-[#577C09] bg-[#E8F0D0]'
     if (status === 'in_progress') return 'text-amber-700 bg-amber-50'
     if (status === 'cancelled') return 'text-red-700 bg-red-50'
     return 'text-muted-foreground bg-muted'
 }
 
-const statusLabel = (status) => {
+const statusLabel = (status, source) => {
+    if (source === 'imported' && status === 'completed') return 'Imported'
     if (status === 'completed') return 'Completed'
     if (status === 'in_progress') return 'In Progress'
     if (status === 'cancelled') return 'Cancelled'
@@ -637,6 +640,21 @@ export default function AdminCaregiverDetail() {
         setResending(false);
     }
 
+    const handleResendWelcome = async () => {
+        setResending(true)
+        const { data, error } = await supabase.functions.invoke('admin-import-employees', {
+            body: { action: 'resend', caregiverId: id }
+        })
+        setResending(false)
+
+        if (error || !data?.success) {
+            toast.error(data?.error || 'Could not send the invitation. Please try again.')
+            return
+        }
+        setCaregiver(prev => ({ ...prev, welcome_email_sent_at: data.welcomeEmailSentAt }))
+        toast.success('Invitation sent')
+    }
+
     const handleMarkReadyForPayroll = async () => {
         setMarkingPayroll(true);
         await supabase
@@ -887,6 +905,7 @@ export default function AdminCaregiverDetail() {
     }
     const isNurse = caregiver.role === 'nurse_prn' || caregiver.role === 'nurse_director'
     const isCancelled = caregiver.status === 'cancelled'
+    const isImported = caregiver.source === 'imported'
     const uploadableDocs = isNurse
         ? ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'nursingLicense', 'bloodborne_certificate', 'certifications', 'criminal-background-results', 'nc-healthcare-personnel-check', 'resume', 'competency_skills_assessment', 'drug_test_results', 'oig_exclusion', 'reference_check']
         : ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'bloodborne_certificate', 'certifications', 'criminal-background-results', 'nc-healthcare-personnel-check', 'resume', 'competency_skills_assessment', 'drug_test_results', 'oig_exclusion', 'reference_check']
@@ -1475,8 +1494,8 @@ export default function AdminCaregiverDetail() {
                 </div>
                 <div className='flex flex-row items-center gap-3'>
                     <HowDoesThisWork article="employee-page" />
-                    <span className={`text-sm font-medium px-3 py-1.5 rounded-full shrink-0 ${statusColor(caregiver.status)}`}>
-                        {statusLabel(caregiver.status)}
+                    <span className={`text-sm font-medium px-3 py-1.5 rounded-full shrink-0 ${statusColor(caregiver.status, caregiver.source)}`}>
+                        {statusLabel(caregiver.status, caregiver.source)}
                     </span>
 
                 </div>
@@ -2019,92 +2038,128 @@ export default function AdminCaregiverDetail() {
 
                 <div className="space-y-6">
 
-                    <div className="bg-white rounded-xl border border-border p-6">
-                        <h2 className="font-semibold mb-4">Onboarding Link Management</h2>
-                        {caregiver.token && new Date(caregiver.link_expires_at) > new Date() ? (
-                            <>
-                                <div className="flex items-start gap-3 flex-col">
+                    {isImported ? (
+                        <div className="bg-white rounded-xl border border-border p-6">
+                            <h2 className="font-semibold mb-4">Invitation</h2>
+                            {caregiver.user_id ? (
+                                <div className="flex items-center gap-2 text-sm text-[var(--primary-color)]">
+                                    <CheckCircle className="w-4 h-4 shrink-0" />
+                                    <span>Account created</span>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    <p className="text-sm text-muted-foreground">
+                                        {caregiver.welcome_email_sent_at
+                                            ? `Invitation sent ${new Date(caregiver.welcome_email_sent_at).toLocaleDateString('en-US', {
+                                                month: 'short', day: 'numeric', year: 'numeric',
+                                                hour: '2-digit', minute: '2-digit'
+                                            })}. They have not created an account yet.`
+                                            : 'No invitation has been sent yet.'}
+                                    </p>
                                     <button
-                                        onClick={handleResendInvite}
+                                        onClick={handleResendWelcome}
                                         disabled={resending}
                                         className="flex items-center gap-2 text-sm text-[var(--primary-color)] hover:underline disabled:opacity-50"
                                     >
                                         {resending ? (
                                             <><Loader2 className="w-4 h-4 animate-spin" />Sending...</>
                                         ) : (
-                                            'Resend invite email'
+                                            caregiver.welcome_email_sent_at ? 'Resend invitation' : 'Send invitation'
                                         )}
                                     </button>
-                                    {caregiver.token && <button
-                                        onClick={openCaregiverView}
-                                        className='flex items-center gap-2 text-sm text-[var(--primary-color)] hover:underline'>
-                                        Open Caregiver View
-                                    </button>}
                                 </div>
-                                {caregiver.link_expires_at && (
-                                    <p className="text-xs text-muted-foreground mt-2">
-                                        Expires {new Date(caregiver.link_expires_at).toLocaleDateString('en-US', {
-                                            month: 'short', day: 'numeric', year: 'numeric',
-                                            hour: '2-digit', minute: '2-digit'
-                                        })}
-                                    </p>
-                                )}
-                            </>
-                        ) : (
-                            <div>
-                                <p className="text-sm text-muted-foreground mb-3">Link expired</p>
-                                <button
-                                    onClick={handleRegenerateLink}
-                                    className="flex items-center gap-2 text-sm text-[var(--primary-color)] hover:underline"
-                                    disabled={regenerating}
-                                >
-                                    {regenerating ? (
-                                        <>
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                            Regenerating...
-                                        </>
-                                    ) : (
-                                        'Regenerate link'
-                                    )}
-                                </button>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="bg-white rounded-xl border border-border p-6">
-                        <h2 className="font-semibold mb-4">Onboarding Progress</h2>
-                        {progress ? (
-                            <div className="space-y-3">
-                                <div>
-                                    <p className="text-xs text-muted-foreground">Steps completed</p>
-                                    <p className="text-2xl font-bold">{progress.completed_steps?.length || 0}</p>
-                                </div>
-                                {caregiver.status === 'completed' ? (
-                                    <div className="flex items-center gap-2 text-[#577C09]">
-                                        <CheckCircle className="w-4 h-4" />
-                                        <p className="text-sm font-medium">Onboarding complete</p>
-                                    </div>
+                            )}
+                        </div>
+                    ) : (
+                        <>
+                            <div className="bg-white rounded-xl border border-border p-6">
+                                <h2 className="font-semibold mb-4">Onboarding Link Management</h2>
+                                {caregiver.token && new Date(caregiver.link_expires_at) > new Date() ? (
+                                    <>
+                                        <div className="flex items-start gap-3 flex-col">
+                                            <button
+                                                onClick={handleResendInvite}
+                                                disabled={resending}
+                                                className="flex items-center gap-2 text-sm text-[var(--primary-color)] hover:underline disabled:opacity-50"
+                                            >
+                                                {resending ? (
+                                                    <><Loader2 className="w-4 h-4 animate-spin" />Sending...</>
+                                                ) : (
+                                                    'Resend invite email'
+                                                )}
+                                            </button>
+                                            {caregiver.token && <button
+                                                onClick={openCaregiverView}
+                                                className='flex items-center gap-2 text-sm text-[var(--primary-color)] hover:underline'>
+                                                Open Caregiver View
+                                            </button>}
+                                        </div>
+                                        {caregiver.link_expires_at && (
+                                            <p className="text-xs text-muted-foreground mt-2">
+                                                Expires {new Date(caregiver.link_expires_at).toLocaleDateString('en-US', {
+                                                    month: 'short', day: 'numeric', year: 'numeric',
+                                                    hour: '2-digit', minute: '2-digit'
+                                                })}
+                                            </p>
+                                        )}
+                                    </>
                                 ) : (
                                     <div>
-                                        <p className="text-xs text-muted-foreground">Currently on step</p>
-                                        <p className="text-sm font-medium">{progress.active_step}</p>
+                                        <p className="text-sm text-muted-foreground mb-3">Link expired</p>
+                                        <button
+                                            onClick={handleRegenerateLink}
+                                            className="flex items-center gap-2 text-sm text-[var(--primary-color)] hover:underline"
+                                            disabled={regenerating}
+                                        >
+                                            {regenerating ? (
+                                                <>
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                    Regenerating...
+                                                </>
+                                            ) : (
+                                                'Regenerate link'
+                                            )}
+                                        </button>
                                     </div>
                                 )}
-                                <div>
-                                    <p className="text-xs text-muted-foreground">Last saved</p>
-                                    <p className="text-sm font-medium">
-                                        {new Date(progress.last_saved).toLocaleDateString('en-US', {
-                                            month: 'short', day: 'numeric', year: 'numeric',
-                                            hour: '2-digit', minute: '2-digit'
-                                        })}
-                                    </p>
-                                </div>
                             </div>
-                        ) : (
-                            <p className="text-sm text-muted-foreground">Not started yet</p>
-                        )}
-                    </div>
-                    {progress && (
+
+                            <div className="bg-white rounded-xl border border-border p-6">
+                                <h2 className="font-semibold mb-4">Onboarding Progress</h2>
+                                {progress ? (
+                                    <div className="space-y-3">
+                                        <div>
+                                            <p className="text-xs text-muted-foreground">Steps completed</p>
+                                            <p className="text-2xl font-bold">{progress.completed_steps?.length || 0}</p>
+                                        </div>
+                                        {caregiver.status === 'completed' ? (
+                                            <div className="flex items-center gap-2 text-[#577C09]">
+                                                <CheckCircle className="w-4 h-4" />
+                                                <p className="text-sm font-medium">Onboarding complete</p>
+                                            </div>
+                                        ) : (
+                                            <div>
+                                                <p className="text-xs text-muted-foreground">Currently on step</p>
+                                                <p className="text-sm font-medium">{progress.active_step}</p>
+                                            </div>
+                                        )}
+                                        <div>
+                                            <p className="text-xs text-muted-foreground">Last saved</p>
+                                            <p className="text-sm font-medium">
+                                                {new Date(progress.last_saved).toLocaleDateString('en-US', {
+                                                    month: 'short', day: 'numeric', year: 'numeric',
+                                                    hour: '2-digit', minute: '2-digit'
+                                                })}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-muted-foreground">Not started yet</p>
+                                )}
+                            </div>
+                        </>
+                    )}
+                    {progress && !isImported && (
                         <div className="bg-white rounded-xl border border-border p-6">
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="font-semibold">Manage Progress</h2>
@@ -2173,7 +2228,7 @@ export default function AdminCaregiverDetail() {
                         </div>
                     )}
 
-                    {caregiver.status === 'completed' && (
+                    {caregiver.status === 'completed' && !isImported && (
                         <div className="bg-white rounded-xl border border-border p-6">
                             <h2 className="font-semibold mb-4">Orientation Time & Pay</h2>
                             {timeLog ? (
@@ -2211,7 +2266,7 @@ export default function AdminCaregiverDetail() {
                         </div>
                     )}
 
-                    {caregiver.status === 'completed' && (
+                    {caregiver.status === 'completed' && !isImported && (
                         <div className="bg-white rounded-xl border border-border p-6">
                             <h2 className="font-semibold mb-4">Payroll Readiness</h2>
                             {caregiver.ready_for_payroll ? (
@@ -2250,34 +2305,36 @@ export default function AdminCaregiverDetail() {
                         <AdminCaregiverTraining caregiverId={id} companyId={companyId} />
                     )}
 
-                    <div className="bg-white rounded-xl border border-border p-6">
-                        <h2 className="font-semibold mb-4">New Hire Orientation Quiz Results</h2>
-                        {quizProgress && quizProgress.length > 0 ? (
-                            <div className="space-y-2">
-                                {quizProgress.map((section, index) => (
-                                    <div key={index} className="flex items-center justify-between gap-2 py-2 px-3 rounded-lg border border-border">
-                                        <div className="flex items-center gap-2 min-w-0">
-                                            {section.passedStatus
-                                                ? <CheckCircle className="w-4 h-4 text-[var(--primary-color)] shrink-0" />
-                                                : <div className="w-4 h-4 rounded-full border-2 border-muted-foreground shrink-0" />
-                                            }
-                                            <p className={`text-sm font-medium truncate ${section.passedStatus ? 'text-[var(--primary-color)]' : 'text-foreground'}`}>
-                                                {section.sectionTitle}
-                                            </p>
+                    {!isImported && (
+                        <div className="bg-white rounded-xl border border-border p-6">
+                            <h2 className="font-semibold mb-4">New Hire Orientation Quiz Results</h2>
+                            {quizProgress && quizProgress.length > 0 ? (
+                                <div className="space-y-2">
+                                    {quizProgress.map((section, index) => (
+                                        <div key={index} className="flex items-center justify-between gap-2 py-2 px-3 rounded-lg border border-border">
+                                            <div className="flex items-center gap-2 min-w-0">
+                                                {section.passedStatus
+                                                    ? <CheckCircle className="w-4 h-4 text-[var(--primary-color)] shrink-0" />
+                                                    : <div className="w-4 h-4 rounded-full border-2 border-muted-foreground shrink-0" />
+                                                }
+                                                <p className={`text-sm font-medium truncate ${section.passedStatus ? 'text-[var(--primary-color)]' : 'text-foreground'}`}>
+                                                    {section.sectionTitle}
+                                                </p>
+                                            </div>
+                                            <span className={`text-xs font-medium px-2.5 py-1 rounded-full shrink-0 ${section.passedStatus
+                                                ? 'bg-[var(--secondary-bg)] text-[var(--primary-color)]'
+                                                : 'bg-muted text-muted-foreground'
+                                                }`}>
+                                                {section.passedStatus ? 'Passed' : 'Not passed'}
+                                            </span>
                                         </div>
-                                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full shrink-0 ${section.passedStatus
-                                            ? 'bg-[var(--secondary-bg)] text-[var(--primary-color)]'
-                                            : 'bg-muted text-muted-foreground'
-                                            }`}>
-                                            {section.passedStatus ? 'Passed' : 'Not passed'}
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-sm text-muted-foreground">No quiz progress recorded yet</p>
-                        )}
-                    </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-muted-foreground">No quiz progress recorded yet</p>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

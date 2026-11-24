@@ -72,6 +72,7 @@ export type CaregiverForVerification = {
   status: string | null
   link_expires_at: string | null
   user_id: string | null
+  source: string | null
 }
 
 export async function findVerifiableCaregiver(
@@ -82,7 +83,7 @@ export async function findVerifiableCaregiver(
 
   const { data: caregiver, error } = await supabase
     .from('caregivers')
-    .select('id, name, email, company_id, status, link_expires_at, user_id')
+    .select('id, name, email, company_id, status, link_expires_at, user_id, source')
     .eq('token', token)
     .maybeSingle()
 
