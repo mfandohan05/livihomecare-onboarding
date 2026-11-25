@@ -1,5 +1,5 @@
 import { serviceClient } from '../_shared/caregiverAccess.ts'
-import { consumeProof, findValidProof } from '../_shared/caregiverVerification.ts'
+import { consumeProof, findValidProof, isInviteLinkExpired } from '../_shared/caregiverVerification.ts'
 import { MAX_PASSWORD_LENGTH, meetsPasswordRules, PASSWORD_REQUIREMENTS_MESSAGE } from '../_shared/passwordPolicy.js'
 
 const corsHeaders = {
@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
 
     const { data: caregiver, error: lookupError } = await supabase
       .from('caregivers')
-      .select('id, email, status, link_expires_at, user_id')
+      .select('id, email, status, source, link_expires_at, user_id')
       .eq('token', token)
       .maybeSingle()
 
@@ -48,10 +48,7 @@ Deno.serve(async (req) => {
       return json({ success: false, alreadyExists: true, error: 'An account already exists. Please sign in.' })
     }
 
-    const isExpired = caregiver.status === 'pending' &&
-      caregiver.link_expires_at &&
-      new Date() > new Date(caregiver.link_expires_at)
-    if (isExpired) return json({ error: 'Invalid or expired link' }, 404)
+    if (isInviteLinkExpired(caregiver)) return json({ error: 'Invalid or expired link' }, 404)
 
     const proofRowId = await findValidProof(supabase, caregiver.id, proof)
     if (!proofRowId) {

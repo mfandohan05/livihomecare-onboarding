@@ -1,42 +1,47 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
+import { applyBranding, clearBranding, getCachedBranding } from '@/lib/branding'
+
+const NO_ROW = 'PGRST116'
 
 const CompanyContext = createContext(null)
 
 export function CompanyProvider({ children }) {
     const [companyId, setCompanyId] = useState(null)
-    const [companyName, setCompanyName] = useState('')
+    const [companyName, setCompanyName] = useState(() => getCachedBranding()?.companyName ?? '')
     const [primaryColor, setPrimaryColor] = useState(null)
     const [secondaryColor, setSecondaryColor] = useState(null)
     const [hoverColor, setHoverColor] = useState(null);
-    const [logoUrl, setLogoUrl] = useState(null)
     const [subscriptionStatus, setSubscriptionStatus] = useState(null)
+    const [logoUrl, setLogoUrl] = useState(() => getCachedBranding()?.logoUrl ?? null)
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         let cancelled = false
 
+        const forgetCompany = () => {
+            clearBranding()
+            setCompanyName('')
+            setLogoUrl(null)
+        }
+
         const fetchAdminAndCompany = async () => {
-            const { data: { session } } = await supabase.auth.getSession()
-            if (!session) {
-                if (!cancelled) setLoading(false)
-                return
-            }
+            try {
+                const { data: { session } } = await supabase.auth.getSession()
+                if (!session) return
 
-            const { data: admin, error: adminError } = await supabase
-                .from('admin_users')
-                .select('company_id')
-                .eq('id', session.user.id)
-                .single()
+                const { data: admin, error: adminError } = await supabase
+                    .from('admin_users')
+                    .select('company_id')
+                    .eq('id', session.user.id)
+                    .single()
 
-            if (cancelled) return
+                if (cancelled) return
 
-            if (adminError || !admin) {
-                setLoading(false)
-                return
-            }
+                if (adminError?.code === NO_ROW) forgetCompany()
+                if (adminError || !admin) return
 
-            setCompanyId(admin.company_id)
+                setCompanyId(admin.company_id)
 
             const { data: company, error: companyError } = await supabase
                 .from('company_data')
@@ -44,9 +49,13 @@ export function CompanyProvider({ children }) {
                 .eq('company_id', admin.company_id)
                 .maybeSingle()
 
-            if (cancelled) return
+                if (cancelled || companyError) return
 
-            if (!companyError && company) {
+                if (!company) {
+                    forgetCompany()
+                    return
+                }
+
                 setCompanyName(company.company_name || '')
                 setSubscriptionStatus(company.subscription_status || 'none')
                 setPrimaryColor(company.primary_color || '#577C09')
@@ -58,10 +67,14 @@ export function CompanyProvider({ children }) {
                         .from('company_assets')
                         .getPublicUrl(company.logo_path)
                     setLogoUrl(urlData.publicUrl)
+                } else {
+                    setLogoUrl(null)
                 }
+            } catch (err) {
+                console.error('Company branding could not be loaded:', err)
+            } finally {
+                if (!cancelled) setLoading(false)
             }
-
-            setLoading(false)
         }
 
         fetchAdminAndCompany()
@@ -70,13 +83,13 @@ export function CompanyProvider({ children }) {
     }, [])
     useEffect(() => {
         if (primaryColor) {
-            document.documentElement.style.setProperty('--primary-color', primaryColor);
-        }
-        if (hoverColor) {
-            document.documentElement.style.setProperty('--hover-color', hoverColor);
-        }
-        if (secondaryColor) {
-            document.documentElement.style.setProperty('--secondary-bg', secondaryColor)
+            applyBranding({
+                primary: primaryColor,
+                hover: hoverColor,
+                secondary: secondaryColor,
+                logoUrl,
+                companyName,
+            })
         }
     }, [primaryColor, secondaryColor])
     const refreshSubscription = useCallback(async () => {
@@ -91,6 +104,7 @@ export function CompanyProvider({ children }) {
 
     const hasAccess = subscriptionStatus === 'active' || subscriptionStatus === 'trialing'
 
+    }, [primaryColor, hoverColor, secondaryColor, logoUrl, companyName])
     return (
         <CompanyContext.Provider
             value={{ companyId, companyName, primaryColor, secondaryColor, logoUrl, loading, subscriptionStatus, hasAccess, refreshSubscription }}

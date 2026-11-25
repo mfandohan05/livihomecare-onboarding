@@ -13,8 +13,9 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { LayoutDashboard, Users, LogOut, ChevronDown, Map, Logs, Menu, BookOpen, GraduationCap, Settings } from 'lucide-react'
+import { LayoutDashboard, Users, LogOut, ChevronDown, Map, Logs, Menu, BookOpen, GraduationCap, Loader2 } from 'lucide-react'
 import { APP_VERSION } from '@/version'
+import { getCachedBranding } from '@/lib/branding'
 import { useCompany } from '@/context/CompanyContext'
 
 export default function AdminLayout({ children }) {
@@ -82,6 +83,14 @@ export default function AdminLayout({ children }) {
     ]
 
     const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/')
+
+    if (loading && !getCachedBranding()?.companyName) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+        )
+    }
 
     return (
         <div className="min-h-screen bg-muted/30">

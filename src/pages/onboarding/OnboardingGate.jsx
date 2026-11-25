@@ -29,7 +29,12 @@ function linkSsoOnce(token, proof) {
 }
 
 async function resolveSignup(token, res) {
-    const info = { firstName: res.firstName, companyName: res.companyName, maskedEmail: res.maskedEmail }
+    const info = {
+        firstName: res.firstName,
+        companyName: res.companyName,
+        maskedEmail: res.maskedEmail,
+        imported: res.imported === true,
+    }
     const proof = getVerificationProof(token)
     if (!proof) return { status: 'verify', ...info }
 
@@ -132,6 +137,7 @@ export default function OnboardingGate() {
                     firstName={result.firstName}
                     companyName={result.companyName}
                     maskedEmail={result.maskedEmail}
+                    imported={result.imported}
                     onVerified={(proof) => {
                         setVerificationProof(token, proof)
                         refresh()
@@ -145,6 +151,7 @@ export default function OnboardingGate() {
                     proof={result.proof}
                     firstName={result.firstName}
                     maskedEmail={result.maskedEmail}
+                    imported={result.imported}
                     initialError={result.initialError}
                     onCreated={refresh}
                     onExistingAccount={refresh}
@@ -155,7 +162,7 @@ export default function OnboardingGate() {
             if (
                 result.viewer !== 'admin' &&
                 result.caregiver.status === 'completed' &&
-                !searchParams.has('certificate')
+                (!searchParams.has('certificate') || result.caregiver.source === 'imported')
             ) {
                 return <Navigate to="/my-profile" replace />
             }

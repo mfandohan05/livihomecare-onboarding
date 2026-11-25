@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { isInviteLinkExpired } from '../_shared/caregiverVerification.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -26,7 +27,7 @@ Deno.serve(async (req) => {
 
     const { data: caregiver, error: lookupError } = await supabase
       .from('caregivers')
-      .select('id, status, link_expires_at, user_id')
+      .select('id, status, source, link_expires_at, user_id')
       .eq('token', token)
       .maybeSingle()
 
@@ -35,11 +36,7 @@ Deno.serve(async (req) => {
     // Once a caregiver has an account the token only redirects to sign-in, so it must stay resolvable.
     if (caregiver.user_id) return NOT_FOUND
 
-    const isExpired = caregiver.status === 'pending' &&
-      caregiver.link_expires_at &&
-      new Date() > new Date(caregiver.link_expires_at)
-
-    if (!isExpired) return NOT_FOUND
+    if (!isInviteLinkExpired(caregiver)) return NOT_FOUND
 
     const { error } = await supabase
       .from('caregivers')

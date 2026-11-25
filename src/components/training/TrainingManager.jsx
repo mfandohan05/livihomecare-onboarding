@@ -54,7 +54,9 @@ export default function TrainingManager({ companyId, basePath, backPath, backLab
                     <h1 className="text-xl font-semibold">Training</h1>
                     <p className="text-sm text-muted-foreground">Slides and quizzes employees complete after onboarding</p>
                 </div>
-                <Button onClick={() => navigate(`${basePath}/new`)}>
+                <Button 
+                    onClick={() => navigate(`${basePath}/new`)} 
+                    className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white">
                     <Plus className="w-4 h-4" />
                     New training
                 </Button>

@@ -132,3 +132,46 @@ export async function assignTrainings(
     .upsert(rows, { onConflict: 'caregiver_id,training_id', ignoreDuplicates: true })
   if (insertError) throw insertError
 }
+
+const ASSIGNMENT_CHUNK = 500
+
+export async function assignTrainingsToMany(
+  supabase: SupabaseClient,
+  companyId: string,
+  caregivers: { id: string; role: string }[]
+): Promise<number> {
+  if (caregivers.length === 0) return 0
+
+  const { data: trainings, error } = await supabase
+    .from('trainings')
+    .select('id, due_days, roles')
+    .eq('company_id', companyId)
+    .eq('is_published', true)
+  if (error) throw error
+
+  const now = Date.now()
+  const rows = caregivers.flatMap((caregiver) =>
+    (trainings || [])
+      .filter((t) => appliesToRole(t, caregiver.role))
+      .map((t) => ({
+        caregiver_id: caregiver.id,
+        training_id: t.id,
+        company_id: companyId,
+        assigned_at: new Date(now).toISOString(),
+        due_date: t.due_days ? new Date(now + t.due_days * 86400000).toISOString() : null,
+      }))
+  )
+
+  const failed = new Set<string>()
+  for (let i = 0; i < rows.length; i += ASSIGNMENT_CHUNK) {
+    const chunk = rows.slice(i, i + ASSIGNMENT_CHUNK)
+    const { error: insertError } = await supabase
+      .from('caregiver_trainings')
+      .upsert(chunk, { onConflict: 'caregiver_id,training_id', ignoreDuplicates: true })
+    if (insertError) {
+      console.error('training assignment chunk failed:', insertError)
+      for (const row of chunk) failed.add(row.caregiver_id)
+    }
+  }
+  return failed.size
+}

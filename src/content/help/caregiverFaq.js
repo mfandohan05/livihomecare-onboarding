@@ -431,10 +431,10 @@ export const caregiverFaq = {
         {
           id: 'my-documents',
           question: 'Where do I find My Documents?',
-          keywords: ['my documents', 'replace', 'expired', 'update document', 'reminder'],
+          keywords: ['my documents', 'upload', 'add document', 'replace', 'expired', 'update document', 'reminder'],
           answer: [
-            'After you finish onboarding, [sign in](/sign-in) with your email and password. You will go to **My Profile**. Choose **My Documents** in the menu at the top.',
-            'There you can replace documents that are expiring. Tap **Replace**, choose the new file, and enter its new expiration date.',
+            '[Sign in](/sign-in) with your email and password. You will go to **My Profile**. Choose **My Documents** in the menu at the top, or tap **Upload documents** on your profile.',
+            'You will see each type of document with what is on file. Tap **Upload** to add one that is missing, or **Replace** to swap one that is expiring. For documents that expire, enter the expiration date shown on the new document.',
             'You will get reminder emails when a document is close to expiring.',
           ],
         },
