@@ -424,8 +424,11 @@ export default function AdminCaregivers() {
         if (debouncedSearch) query = query.or(`name.ilike.%${debouncedSearch}%,email.ilike.%${debouncedSearch}%`)
         if (statusFilter === 'all') {
             query = query.neq('status', 'cancelled')
+        } else if (statusFilter === 'imported') {
+            query = query.eq('status', 'completed').eq('source', 'imported')
         } else {
             query = query.eq('status', statusFilter)
+            if (statusFilter === 'completed') query = query.neq('source', 'imported')
         }
         if (roleFilter !== 'all') query = query.eq('role', roleFilter)
 
@@ -586,6 +589,7 @@ export default function AdminCaregivers() {
                     <option value="pending">Pending</option>
                     <option value="in_progress">In Progress</option>
                     <option value="completed">Completed</option>
+                    <option value="imported">Imported</option>
                     <option value="cancelled">Cancelled</option>
                 </select>
                 <select
