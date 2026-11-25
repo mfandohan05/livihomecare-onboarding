@@ -73,12 +73,14 @@ export default function MyProfile() {
                 </div>
                 )}
 
-                <div className="bg-white rounded-xl border border-border p-4 sm:px-8 shadow-sm flex items-center justify-between gap-3">
-                    <p className="text-sm text-muted-foreground">Your onboarding completion certificate</p>
-                    <Button variant="outline" size="sm" onClick={() => navigate('/onboard?certificate=1')}>
-                        View certificate
-                    </Button>
-                </div>
+                {caregiver.source !== 'imported' && (
+                    <div className="bg-white rounded-xl border border-border p-4 sm:px-8 shadow-sm flex items-center justify-between gap-3">
+                        <p className="text-sm text-muted-foreground">Your onboarding completion certificate</p>
+                        <Button variant="outline" size="sm" onClick={() => navigate('/onboard?certificate=1')}>
+                            View certificate
+                        </Button>
+                    </div>
+                )}
 
                 <div className="bg-white rounded-xl border border-border p-6 sm:p-8 shadow-sm">
                     <div className="flex items-center justify-between gap-3 mb-4">

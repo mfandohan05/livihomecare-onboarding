@@ -162,7 +162,7 @@ export default function OnboardingGate() {
             if (
                 result.viewer !== 'admin' &&
                 result.caregiver.status === 'completed' &&
-                !searchParams.has('certificate')
+                (!searchParams.has('certificate') || result.caregiver.source === 'imported')
             ) {
                 return <Navigate to="/my-profile" replace />
             }
