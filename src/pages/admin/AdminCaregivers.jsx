@@ -559,7 +559,7 @@ export default function AdminCaregivers() {
                         className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white w-full sm:w-auto"
                     >
                         <Import className="w-4 h-4 mr-2" />
-                        Import Employee
+                        Import Employees
                     </Button>
                     <Button
                         onClick={() => setShowNewDialog(true)}

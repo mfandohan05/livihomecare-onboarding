@@ -254,7 +254,7 @@ function validateRow(raw: RawRow, lookups: Lookups): Validation {
   if (!positionTitle) return invalid('Position title is required')
   if (!employmentRaw) return invalid('Employment type is required')
   const employmentType = employmentTypeByInput.get(employmentRaw.toLowerCase())
-  if (!employmentType) return invalid(`Employment type must be one of: ${EMPLOYMENT_TYPES.join(' | ')}`)
+  if (!employmentType) return invalid(`Employment type must be one of the following: ${EMPLOYMENT_TYPES.join(' | ')}`)
 
   if (!field('phone')) return invalid('Phone is required')
   if (!field('gender')) return invalid('Gender is required')

@@ -48,7 +48,7 @@ export default function MyProfile() {
                 <div className="bg-white rounded-xl border border-border p-6 sm:p-8 shadow-sm">
                     <h1 className="text-xl font-semibold">{caregiver.name}</h1>
                     <p className="text-sm text-muted-foreground mt-1">
-                        {[roleLabels[caregiver.role] || caregiver.role, companyName, caregiver.email].filter(Boolean).join(' · ')}
+                        {[companyName, caregiver.email].filter(Boolean).join(' · ')}
                     </p>
                 </div>
 
