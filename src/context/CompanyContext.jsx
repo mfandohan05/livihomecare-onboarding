@@ -11,7 +11,7 @@ export function CompanyProvider({ children }) {
     const [companyName, setCompanyName] = useState(() => getCachedBranding()?.companyName ?? '')
     const [primaryColor, setPrimaryColor] = useState(null)
     const [secondaryColor, setSecondaryColor] = useState(null)
-    const [hoverColor, setHoverColor] = useState(null);
+    const [hoverColor, setHoverColor] = useState(null)
     const [subscriptionStatus, setSubscriptionStatus] = useState(null)
     const [logoUrl, setLogoUrl] = useState(() => getCachedBranding()?.logoUrl ?? null)
     const [loading, setLoading] = useState(true)
@@ -43,11 +43,11 @@ export function CompanyProvider({ children }) {
 
                 setCompanyId(admin.company_id)
 
-            const { data: company, error: companyError } = await supabase
-                .from('company_data')
-                .select('logo_path, company_name, primary_color, secondary_bg_color, hover_color, subscription_status')
-                .eq('company_id', admin.company_id)
-                .maybeSingle()
+                const { data: company, error: companyError } = await supabase
+                    .from('company_data')
+                    .select('logo_path, company_name, primary_color, secondary_bg_color, hover_color, subscription_status')
+                    .eq('company_id', admin.company_id)
+                    .maybeSingle()
 
                 if (cancelled || companyError) return
 
@@ -91,7 +91,8 @@ export function CompanyProvider({ children }) {
                 companyName,
             })
         }
-    }, [primaryColor, secondaryColor])
+    }, [primaryColor, hoverColor, secondaryColor, logoUrl, companyName])
+
     const refreshSubscription = useCallback(async () => {
         if (!companyId) return
         const { data } = await supabase
@@ -104,10 +105,9 @@ export function CompanyProvider({ children }) {
 
     const hasAccess = subscriptionStatus === 'active' || subscriptionStatus === 'trialing'
 
-    }, [primaryColor, hoverColor, secondaryColor, logoUrl, companyName])
     return (
         <CompanyContext.Provider
-            value={{ companyId, companyName, primaryColor, secondaryColor, logoUrl, loading, subscriptionStatus, hasAccess, refreshSubscription }}
+            value={{ companyId, companyName, primaryColor, secondaryColor, hoverColor, logoUrl, loading, subscriptionStatus, hasAccess, refreshSubscription }}
         >
             {children}
         </CompanyContext.Provider>

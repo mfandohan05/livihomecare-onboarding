@@ -13,7 +13,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { LayoutDashboard, Users, LogOut, ChevronDown, Map, Logs, Menu, BookOpen, GraduationCap, Loader2 } from 'lucide-react'
+import { LayoutDashboard, Users, LogOut, ChevronDown, Map, Logs, Menu, BookOpen, GraduationCap, Loader2, Settings } from 'lucide-react'
 import { APP_VERSION } from '@/version'
 import { getCachedBranding } from '@/lib/branding'
 import { useCompany } from '@/context/CompanyContext'
@@ -23,7 +23,7 @@ export default function AdminLayout({ children }) {
     const location = useLocation()
     const [adminName, setAdminName] = useState('');
     const [adminRole, setAdminRole] = useState('');
-    const { companyName, primaryColor, secondaryColor, logoUrl, hasAccess } = useCompany();
+    const { companyName, primaryColor, secondaryColor, logoUrl, hasAccess, loading } = useCompany();
 
     useEffect(() => {
         const fetchAdmin = async () => {
