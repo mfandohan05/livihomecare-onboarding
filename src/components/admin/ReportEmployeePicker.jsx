@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { MAX_REPORT_EMPLOYEES, PAGE_SIZE, STATUS_OPTIONS, listEmployees, listMatchingIds } from '@/lib/reportData'
 import { roleName, statusText } from '@/lib/reportFormat'
+import { statusColor } from '@/lib/statusStyle'
 
 const SEARCH_DELAY_MS = 300
 const FIRST_PAGE = { search: '', status: 'active', role: 'all', page: 1 }
@@ -160,7 +161,9 @@ export default function ReportEmployeePicker({ companyId, roleOptions, selected,
                             <span className="hidden sm:block text-xs text-muted-foreground truncate max-w-[10rem]">
                                 {roleName(employee.role, roleOptions)}
                             </span>
-                            <span className="text-xs text-muted-foreground shrink-0">{statusText(employee)}</span>
+                            <span className={`text-xs font-medium px-2.5 py-1 rounded-full shrink-0 ${statusColor(employee.status, employee.source)}`}>
+                                {statusText(employee)}
+                            </span>
                         </label>
                     ))
                 )}
