@@ -646,31 +646,33 @@ export const adminHelp = {
         {
           id: 'reports',
           title: 'Running reports',
-          summary: 'Download a CSV file with the details or document expirations of the employees you choose.',
+          summary: 'Download an Excel or CSV file with the details or document expirations of the employees you choose.',
           whenToUse: ['Use this when you need a roster, a list of expiring documents, or the details of several employees in one spreadsheet.'],
           steps: [
             'Open **Reports** in the top menu.',
             'Under **1. Choose a report**, pick **Basic roster**, **Compliance status** or **Full employee details**. The **Columns in this report** list under the choices shows exactly what is included.',
             'Under **2. Choose employees**, search by name or email, and filter by status or role. Tick the employees you want, tick **Select this page**, or select **Select all N matching** to take everyone who matches your filters. Your selection stays when you change pages or filters.',
-            'Select **Download CSV**. The file downloads to your computer and opens in Excel or Google Sheets.',
+            'Select **Download Excel (.xlsx)** for a formatted spreadsheet, or **Download CSV** for a plain file. The file downloads to your computer.',
           ],
           details: [
             { table: { head: ['Report', 'What you get'], rows: [
               ['Basic roster', 'One row per employee: name, email, phone, role, position title, employment type, start date, status, the date onboarding was completed, and pay rate.'],
-              ['Compliance status', 'One row per document: expiration date, days until it expires (a negative number means it already expired), and a status of Expired, Expiring soon (30 days or less), Valid or No expiration date. Required documents that are not on file are listed as Not on file.'],
+              ['Compliance status', 'One row per document, most urgent first (expired, then not on file, then expiring soon): employee ID, expiration date, days until it expires (a negative number means it already expired), and a status of Expired, Expiring soon (30 days or less), Valid or No expiration date. Required documents that are not on file are listed as Not on file.'],
               ['Full employee details', 'The roster plus gender, companion pay rate, ready for payroll, home address and emergency contacts.'],
             ] } },
+            { tip: 'In the Compliance status report you can switch **Sort rows by** to **Employee name** to keep each person\'s documents together.' },
+            { note: 'The Excel file has a bold header that stays in view as you scroll, real dates and numbers you can sort and filter, and colored statuses. The CSV file has the same data without formatting.' },
             { note: 'Social security numbers, dates of birth, banking details and tax forms are never included in a report, and the documents themselves are not exported.' },
             { tip: 'Imported employees have no onboarding completion date, because they were not onboarded in RSOnboard.' },
             'Each report is recorded in the audit log under **Exported Report**, with the report type and the number of employees.',
           ],
           seeing: [
-            'A file named like **roster-report-2026-11-25.csv** downloads, and "report downloaded" appears with the number of rows.',
+            'A file named like **roster-report-2026-11-25.xlsx** (or **.csv**) downloads, and "report downloaded" appears with the number of rows.',
           ],
           problems: [
             { q: 'The Download button is greyed out.', a: ['Select at least one employee first. The count next to the button shows how many are selected.'] },
             { q: 'It says a report can include at most 5,000 employees.', a: ['Narrow the filters (for example by status or role) and run the report in more than one go.'] },
-            { q: 'Excel shows strange characters or one column.', a: ['Open the file with **File > Open** or import it as UTF-8 comma-separated text. Opening it by double-clicking normally works.'] },
+            { q: 'The CSV file shows strange characters or one column.', a: ['Use **Download Excel (.xlsx)** instead, or open the CSV with **File > Open** and import it as UTF-8 comma-separated text.'] },
             { q: 'A person is missing from the list.', a: ['Cancelled employees are hidden by default. Set the status filter to **Cancelled** or **All except cancelled**.'] },
           ],
           related: ['employee-page', 'document-expiration', 'import-employees'],

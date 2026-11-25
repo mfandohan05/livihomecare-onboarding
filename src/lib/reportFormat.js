@@ -13,6 +13,8 @@ import {
 const NURSE_ROLES = ['nurse_prn', 'nurse_director']
 const CSV_BOM = '﻿'
 
+// Column = [key, label, type?]. `type` only matters to the Excel export; CSV is always text.
+// Types: 'date' (MM/DD/YYYY text), 'money' (2 decimals), 'integer', 'status' (colored pill), default text.
 const ROSTER_COLUMNS = [
     ['employeeId', 'Employee ID'],
     ['name', 'Full name'],
@@ -21,15 +23,15 @@ const ROSTER_COLUMNS = [
     ['role', 'Role'],
     ['position', 'Position title'],
     ['employmentType', 'Employment type'],
-    ['startDate', 'Start date'],
-    ['status', 'Status'],
-    ['onboardingCompleted', 'Onboarding completed'],
-    ['payRate', 'Pay rate ($/hr)'],
+    ['startDate', 'Start date', 'date'],
+    ['status', 'Status', 'status'],
+    ['onboardingCompleted', 'Onboarding completed', 'date'],
+    ['payRate', 'Pay rate ($/hr)', 'money'],
 ]
 
 const DETAIL_COLUMNS = [
     ...ROSTER_COLUMNS,
-    ['companionPayRate', 'Companion pay rate ($/hr)'],
+    ['companionPayRate', 'Companion pay rate ($/hr)', 'money'],
     ['gender', 'Gender'],
     ['readyForPayroll', 'Ready for payroll'],
     ['street', 'Street address'],
@@ -47,14 +49,15 @@ const DETAIL_COLUMNS = [
 ]
 
 const COMPLIANCE_COLUMNS = [
+    ['employeeId', 'Employee ID'],
     ['name', 'Full name'],
     ['email', 'Email'],
     ['role', 'Role'],
     ['document', 'Document'],
-    ['expirationDate', 'Expiration date'],
-    ['daysUntil', 'Days until expiration'],
+    ['expirationDate', 'Expiration date', 'date'],
+    ['daysUntil', 'Days until expiration', 'integer'],
     ['timeUntil', 'Time until expiration'],
-    ['status', 'Status'],
+    ['status', 'Status', 'status'],
 ]
 
 export const REPORT_TYPES = [
@@ -174,54 +177,77 @@ function documentStatus(expiration) {
     return 'Expiring soon'
 }
 
-export function complianceRows(caregivers, documents, { roleOptions = [], today = todayInTimeZone() } = {}) {
-    const docsById = new Map()
-    for (const doc of documents) {
-        if (!docsById.has(doc.caregiver_id)) docsById.set(doc.caregiver_id, [])
-        docsById.get(doc.caregiver_id).push(doc)
+export const COMPLIANCE_SORTS = [
+    { value: 'urgency', label: 'Most urgent first' },
+    { value: 'name', label: 'Employee name' },
+]
+
+// Lower rank = needs attention sooner.
+const STATUS_URGENCY = ['Expired', 'Not on file', 'Expiring soon', 'Valid', 'No expiration date']
+
+const noDate = (row) => (row.daysUntil === '' ? Infinity : row.daysUntil)
+
+const byUrgency = (a, b) =>
+    STATUS_URGENCY.indexOf(a.status) - STATUS_URGENCY.indexOf(b.status) ||
+    noDate(a) - noDate(b) ||
+    byName(a, b)
+
+const byEmployeeThenUrgency = (a, b) => byName(a, b) || byUrgency(a, b)
+
+function groupBy(items, key) {
+    const groups = new Map()
+    for (const item of items) {
+        if (!groups.has(item[key])) groups.set(item[key], [])
+        groups.get(item[key]).push(item)
+    }
+    return groups
+}
+
+function employeeComplianceRows(caregiver, own, { roleOptions, today }) {
+    const tracked = collapseAliasedDocuments(own.filter((doc) => TRACKED_DOCUMENT_TYPES.includes(doc.document_type)))
+    const isNurse = NURSE_ROLES.includes(caregiver.role)
+
+    const base = {
+        employeeId: text(caregiver.employee_id),
+        name: text(caregiver.name),
+        email: text(caregiver.email),
+        role: roleName(caregiver.role, roleOptions),
     }
 
-    const rows = []
-    for (const caregiver of [...caregivers].sort(byName)) {
-        const own = docsById.get(caregiver.id) || []
-        const tracked = collapseAliasedDocuments(own.filter((doc) => TRACKED_DOCUMENT_TYPES.includes(doc.document_type)))
-        const isNurse = NURSE_ROLES.includes(caregiver.role)
-
-        const base = {
-            name: text(caregiver.name),
-            email: text(caregiver.email),
-            role: roleName(caregiver.role, roleOptions),
+    const onFile = tracked.map((doc) => {
+        const expiration = getExpirationStatus(doc.expiration_date, today)
+        return {
+            ...base,
+            document: documentLabel(canonicalDocumentType(doc.document_type)),
+            expirationDate: expiration ? usDate(expiration.date) : '',
+            daysUntil: expiration ? expiration.daysLeft : '',
+            timeUntil: expiration ? expiration.label : '',
+            status: documentStatus(expiration),
         }
+    })
 
-        const documentRows = tracked.map((doc) => {
-            const expiration = getExpirationStatus(doc.expiration_date, today)
-            return {
-                ...base,
-                document: documentLabel(canonicalDocumentType(doc.document_type)),
-                expirationDate: expiration ? usDate(expiration.date) : '',
-                daysUntil: expiration ? expiration.daysLeft : '',
-                timeUntil: expiration ? expiration.label : '',
-                status: documentStatus(expiration),
-            }
-        })
+    const missing = EXPIRATION_REQUIRED_TYPES
+        .filter((type) => (type !== 'nursingLicense' || isNurse) && !findDocumentByType(own, type))
+        .map((type) => ({
+            ...base,
+            document: documentLabel(type),
+            expirationDate: '',
+            daysUntil: '',
+            timeUntil: '',
+            status: 'Not on file',
+        }))
 
-        const missingRows = EXPIRATION_REQUIRED_TYPES
-            .filter((type) => (type !== 'nursingLicense' || isNurse) && !findDocumentByType(own, type))
-            .map((type) => ({
-                ...base,
-                document: documentLabel(type),
-                expirationDate: '',
-                daysUntil: '',
-                timeUntil: '',
-                status: 'Not on file',
-            }))
+    return [...onFile, ...missing]
+}
 
-        documentRows
-            .sort((a, b) => (a.daysUntil === '' ? Infinity : a.daysUntil) - (b.daysUntil === '' ? Infinity : b.daysUntil))
-            .forEach((row) => rows.push(row))
-        missingRows.forEach((row) => rows.push(row))
-    }
-    return rows
+export function complianceRows(caregivers, documents, { roleOptions = [], today = todayInTimeZone(), sort = 'urgency' } = {}) {
+    const docsById = groupBy(documents, 'caregiver_id')
+
+    const rows = caregivers.flatMap((caregiver) =>
+        employeeComplianceRows(caregiver, docsById.get(caregiver.id) || [], { roleOptions, today })
+    )
+
+    return rows.sort(sort === 'name' ? byEmployeeThenUrgency : byUrgency)
 }
 
 export function csvCell(value) {
@@ -240,8 +266,8 @@ export function toCsv(columns, rows) {
     return CSV_BOM + [header, ...lines].join('\r\n') + '\r\n'
 }
 
-export function reportFilename(reportId, now = new Date()) {
-    return `${reportId}-report-${todayInTimeZone(undefined, now)}.csv`
+export function reportBaseName(reportId, now = new Date()) {
+    return `${reportId}-report-${todayInTimeZone(undefined, now)}`
 }
 
 export function buildReport(reportId, data) {
@@ -254,5 +280,5 @@ export function buildReport(reportId, data) {
             ? complianceRows(data.caregivers, data.documents || [], data)
             : detailRows(data.caregivers, data)
 
-    return { columns: type.columns, rows, csv: toCsv(type.columns, rows), filename: reportFilename(reportId, data.now) }
+    return { columns: type.columns, rows, baseName: reportBaseName(reportId, data.now) }
 }

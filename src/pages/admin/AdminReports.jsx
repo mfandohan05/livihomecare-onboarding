@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Download, Loader2 } from 'lucide-react'
+import { Download, FileSpreadsheet, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { useCompany } from '@/context/CompanyContext'
@@ -7,8 +7,14 @@ import { Button } from '@/components/ui/button'
 import HowDoesThisWork from '@/components/help/HowDoesThisWork'
 import ReportEmployeePicker from '@/components/admin/ReportEmployeePicker'
 import { MAX_REPORT_EMPLOYEES, loadReportData } from '@/lib/reportData'
-import { REPORT_TYPES, buildReport } from '@/lib/reportFormat'
-import { downloadTextFile } from '@/lib/downloadFile'
+import { COMPLIANCE_SORTS, REPORT_TYPES, buildReport, toCsv } from '@/lib/reportFormat'
+import { toXlsxBlob } from '@/lib/reportExcel'
+import { CSV_TYPE, downloadBlob } from '@/lib/downloadFile'
+
+const FORMATS = {
+    xlsx: { extension: 'xlsx', toBlob: toXlsxBlob },
+    csv: { extension: 'csv', toBlob: async (columns, rows) => new Blob([toCsv(columns, rows)], { type: CSV_TYPE }) },
+}
 
 async function recordExport(companyId, reportId, count) {
     const { data: { session } } = await supabase.auth.getSession()
@@ -29,6 +35,7 @@ export default function AdminReports() {
     const [reportId, setReportId] = useState(REPORT_TYPES[0].id)
     const [selected, setSelected] = useState(new Set())
     const [roleOptions, setRoleOptions] = useState([])
+    const [complianceSort, setComplianceSort] = useState(COMPLIANCE_SORTS[0].value)
     const [progress, setProgress] = useState(null)
 
     useEffect(() => {
@@ -43,20 +50,21 @@ export default function AdminReports() {
     const report = REPORT_TYPES.find((type) => type.id === reportId)
     const running = progress !== null
 
-    const runReport = async () => {
+    const runReport = async (format) => {
         if (selected.size > MAX_REPORT_EMPLOYEES) {
             toast.error(`A report can include at most ${MAX_REPORT_EMPLOYEES.toLocaleString()} employees.`)
             return
         }
 
         const ids = [...selected]
-        setProgress({ done: 0, total: ids.length })
+        setProgress({ done: 0, total: ids.length, format })
 
         try {
-            const data = await loadReportData(companyId, reportId, ids, (done, total) => setProgress({ done, total }))
-            const { csv, filename, rows } = buildReport(reportId, { ...data, roleOptions })
+            const data = await loadReportData(companyId, reportId, ids, (done, total) => setProgress({ done, total, format }))
+            const { columns, rows, baseName } = buildReport(reportId, { ...data, roleOptions, sort: complianceSort })
+            const { extension, toBlob } = FORMATS[format]
 
-            downloadTextFile(filename, csv)
+            downloadBlob(`${baseName}.${extension}`, await toBlob(columns, rows, report.label))
             toast.success(`${report.label} report downloaded (${rows.length.toLocaleString()} row${rows.length === 1 ? '' : 's'})`)
             recordExport(companyId, reportId, ids.length)
         } catch (err) {
@@ -71,7 +79,7 @@ export default function AdminReports() {
             <div className="flex items-center justify-between gap-4 mb-8">
                 <div>
                     <h1 className="text-2xl font-bold">Reports</h1>
-                    <p className="text-muted-foreground">Choose a report and the employees to include, then download it as a CSV file that opens in Excel.</p>
+                    <p className="text-muted-foreground">Choose a report and the employees to include, then download it as an Excel spreadsheet or a CSV file.</p>
                 </div>
                 <HowDoesThisWork article="reports" className="shrink-0" />
             </div>
@@ -103,6 +111,20 @@ export default function AdminReports() {
                     <p className="font-medium mb-1.5">Columns in this report</p>
                     <p className="text-muted-foreground">{report.columns.map(([, label]) => label).join(', ')}</p>
                 </div>
+                {reportId === 'compliance' && (
+                    <label className="mt-4 flex items-center gap-2 text-xs">
+                        <span className="font-medium">Sort rows by</span>
+                        <select
+                            value={complianceSort}
+                            onChange={(e) => setComplianceSort(e.target.value)}
+                            className="border border-border rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-[var(--primary-color)]"
+                        >
+                            {COMPLIANCE_SORTS.map((option) => (
+                                <option key={option.value} value={option.value}>{option.label}</option>
+                            ))}
+                        </select>
+                    </label>
+                )}
             </section>
 
             <section className="bg-white rounded-xl border border-border p-6 mb-6">
@@ -122,14 +144,24 @@ export default function AdminReports() {
                         <span className="text-muted-foreground"> · Preparing {progress.done.toLocaleString()} of {progress.total.toLocaleString()}...</span>
                     )}
                 </p>
-                <Button
-                    onClick={runReport}
-                    disabled={selected.size === 0 || running}
-                    className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white disabled:opacity-50 w-full sm:w-auto"
-                >
-                    {running ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
-                    Download CSV
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <Button
+                        variant="outline"
+                        onClick={() => runReport('csv')}
+                        disabled={selected.size === 0 || running}
+                    >
+                        {progress?.format === 'csv' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
+                        Download CSV
+                    </Button>
+                    <Button
+                        onClick={() => runReport('xlsx')}
+                        disabled={selected.size === 0 || running}
+                        className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white disabled:opacity-50"
+                    >
+                        {progress?.format === 'xlsx' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileSpreadsheet className="w-4 h-4 mr-2" />}
+                        Download Excel (.xlsx)
+                    </Button>
+                </div>
             </div>
         </div>
     )
