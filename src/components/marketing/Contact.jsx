@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { formatPhone } from '@/lib/formUtils'
+import { SUPPORT_EMAIL } from '@/lib/siteConfig'
 
 // Set VITE_FORMSPREE_ENDPOINT in .env to enable submissions. Never hardcode the endpoint.
 const FORMSPREE_ENDPOINT = import.meta.env.VITE_FORMSPREE_ENDPOINT || ''
-const FALLBACK_EMAIL = 'mlftechnologiesllc@gmail.com'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const EMPTY = { name: '', email: '', company: '', phone: '', message: '', website: '' } // `website` is the honeypot
@@ -76,7 +76,7 @@ export default function Contact() {
         }
     }
 
-    const mailto = `mailto:${FALLBACK_EMAIL}?subject=${encodeURIComponent('RSOnboard inquiry')}&body=${encodeURIComponent(`Name: ${values.name}\nCompany: ${values.company}\n\n${values.message}`)}`
+    const mailto = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('RSOnboard inquiry')}&body=${encodeURIComponent(`Name: ${values.name}\nCompany: ${values.company}\n\n${values.message}`)}`
 
     return (
         <section id="contact" aria-labelledby="contact-heading" className="lr-dark" style={{ background: 'var(--lr-navy)' }}>
@@ -84,6 +84,8 @@ export default function Contact() {
                 <div className="text-white">
                     <h2 id="contact-heading" className="lr-h2" style={{ color: '#fff' }}>Talk to us about setting this up for your company.</h2>
                     <p className="lr-lead mt-5" style={{ color: 'rgba(255,255,255,0.85)' }}>Tell us a bit about your agency and we will get back to you.</p>
+                    <p className="lr-lead mt-5" style={{ color: 'rgba(255,255,255,0.85)' }}>Prefer email? Write to us at{' '}
+                        <a className="font-semibold text-white underline" href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>.</p>
                 </div>
 
                 <div className="relative rounded-[28px] bg-white p-6 sm:p-8" style={{ color: 'var(--lr-text)' }}>
@@ -132,14 +134,14 @@ export default function Contact() {
                                         <p className="lr-error mt-4 flex items-start gap-2">
                                             <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
                                             <span>Your message did not send. Try again, or email us at{' '}
-                                            <a className="font-semibold underline" href={mailto}>{FALLBACK_EMAIL}</a>.</span>
+                                            <a className="font-semibold underline" href={mailto}>{SUPPORT_EMAIL}</a>.</span>
                                         </p>
                                     )}
                                     {status === 'unconfigured' && (
                                         <p className="mt-4 flex items-start gap-2 text-sm">
                                             <AlertCircle className="mt-0.5 size-4 shrink-0 text-[var(--lr-navy)]" aria-hidden="true" />
                                             <span>The contact form is not available yet. Email us at{' '}
-                                            <a className="font-semibold text-[var(--lr-navy)] underline" href={mailto}>{FALLBACK_EMAIL}</a>.</span>
+                                            <a className="font-semibold text-[var(--lr-navy)] underline" href={mailto}>{SUPPORT_EMAIL}</a>.</span>
                                         </p>
                                     )}
                                 </div>

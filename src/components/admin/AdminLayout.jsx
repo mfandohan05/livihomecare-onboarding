@@ -23,7 +23,7 @@ export default function AdminLayout({ children }) {
     const location = useLocation()
     const [adminName, setAdminName] = useState('');
     const [adminRole, setAdminRole] = useState('');
-    const { companyName, primaryColor, secondaryColor, logoUrl, loading } = useCompany();
+    const { companyName, primaryColor, secondaryColor, logoUrl, hasAccess } = useCompany();
 
     useEffect(() => {
         const fetchAdmin = async () => {
@@ -73,7 +73,7 @@ export default function AdminLayout({ children }) {
         navigate('/admin/login')
     }
 
-    const navItems = [
+    const navItems = !hasAccess ? [] : [
         { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
         { label: 'Employees', path: '/admin/employees', icon: Users },
         { label: 'Caregiver Map', path: '/admin/map', icon: Map },
@@ -96,12 +96,8 @@ export default function AdminLayout({ children }) {
         <div className="min-h-screen bg-muted/30">
             <div className="bg-white border-b border-border px-4 sm:px-6 md:px-8 py-3 flex items-center justify-between gap-2 sticky top-0 z-50">
                 <div className="flex items-center gap-3 md:gap-8 min-w-0">
-                    <div className="flex items-center gap-2.5 cursor-pointer min-w-0" onClick={() => navigate('/admin/dashboard')}>
-                        {logoUrl ? (
-                            <img src={logoUrl} alt={`${companyName} logo`} className="w-9 h-9 md:w-[50px] md:h-[50px] object-contain shrink-0" />
-                        ) : loading ? (
-                            <div className="w-9 h-9 md:w-[50px] md:h-[50px] shrink-0" />
-                        ) : null}
+                    <div className="flex items-center gap-2.5 cursor-pointer min-w-0" onClick={() => navigate(hasAccess ? '/admin/dashboard' : '/admin/billing')}>
+                        <img src={logoUrl} alt={companyName + " logo"} className="w-9 h-9 md:w-[50px] md:h-[50px] object-contain shrink-0" />
                         <div className="min-w-0">
                             <p className="font-semibold text-sm leading-none truncate">{companyName}</p>
                             <p className="text-xs text-muted-foreground leading-none mt-0.5 hidden sm:block truncate">RSOnboard Admin Portal v.{APP_VERSION}</p>
@@ -129,14 +125,14 @@ export default function AdminLayout({ children }) {
                 </div>
 
                 <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-                    <button
+                    {hasAccess && <button
                         onClick={() => navigate('/admin/help')}
                         aria-label="How-To Guide"
                         className={`md:hidden flex items-center justify-center w-9 h-9 rounded-md transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary-color)] ${isActive('/admin/help') ? 'bg-[var(--secondary-bg)] text-[var(--primary-color)]' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
                     >
                         <BookOpen className="w-5 h-5" />
-                    </button>
-                    <div className="md:hidden">
+                    </button>}
+                    {hasAccess && <div className="md:hidden">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <button
@@ -159,7 +155,7 @@ export default function AdminLayout({ children }) {
                                 ))}
                             </DropdownMenuContent>
                         </DropdownMenu>
-                    </div>
+                    </div>}
 
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -172,6 +168,15 @@ export default function AdminLayout({ children }) {
                             </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
+                            {adminRole === 'superadmin' && (
+                                <DropdownMenuItem
+                                    onClick={() => navigate('/admin/billing')}
+                                    className="flex items-center gap-2 cursor-pointer focus:bg-[var(--primary-color)] focus:text-white"
+                                >
+                                    <Settings className="w-4 h-4" />
+                                    Manage
+                                </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem
                                 onClick={handleSignOut}
                                 className="flex items-center gap-2 text-red-600 focus:bg-[var(--primary-color)] cursor-pointer"

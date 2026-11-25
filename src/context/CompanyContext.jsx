@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { applyBranding, clearBranding, getCachedBranding } from '@/lib/branding'
 
@@ -12,6 +12,7 @@ export function CompanyProvider({ children }) {
     const [primaryColor, setPrimaryColor] = useState(null)
     const [secondaryColor, setSecondaryColor] = useState(null)
     const [hoverColor, setHoverColor] = useState(null);
+    const [subscriptionStatus, setSubscriptionStatus] = useState(null)
     const [logoUrl, setLogoUrl] = useState(() => getCachedBranding()?.logoUrl ?? null)
     const [loading, setLoading] = useState(true)
 
@@ -42,11 +43,11 @@ export function CompanyProvider({ children }) {
 
                 setCompanyId(admin.company_id)
 
-                const { data: company, error: companyError } = await supabase
-                    .from('company_data')
-                    .select('logo_path, company_name, primary_color, secondary_bg_color, hover_color')
-                    .eq('company_id', admin.company_id)
-                    .maybeSingle()
+            const { data: company, error: companyError } = await supabase
+                .from('company_data')
+                .select('logo_path, company_name, primary_color, secondary_bg_color, hover_color, subscription_status')
+                .eq('company_id', admin.company_id)
+                .maybeSingle()
 
                 if (cancelled || companyError) return
 
@@ -56,6 +57,7 @@ export function CompanyProvider({ children }) {
                 }
 
                 setCompanyName(company.company_name || '')
+                setSubscriptionStatus(company.subscription_status || 'none')
                 setPrimaryColor(company.primary_color || '#577C09')
                 setSecondaryColor(company.secondary_bg_color || '#E8F0D0')
                 setHoverColor(company.hover_color || '#3D5906')
@@ -89,10 +91,23 @@ export function CompanyProvider({ children }) {
                 companyName,
             })
         }
+    }, [primaryColor, secondaryColor])
+    const refreshSubscription = useCallback(async () => {
+        if (!companyId) return
+        const { data } = await supabase
+            .from('company_data')
+            .select('subscription_status')
+            .eq('company_id', companyId)
+            .maybeSingle()
+        setSubscriptionStatus(data?.subscription_status || 'none')
+    }, [companyId])
+
+    const hasAccess = subscriptionStatus === 'active' || subscriptionStatus === 'trialing'
+
     }, [primaryColor, hoverColor, secondaryColor, logoUrl, companyName])
     return (
         <CompanyContext.Provider
-            value={{ companyId, companyName, primaryColor, secondaryColor, logoUrl, loading }}
+            value={{ companyId, companyName, primaryColor, secondaryColor, logoUrl, loading, subscriptionStatus, hasAccess, refreshSubscription }}
         >
             {children}
         </CompanyContext.Provider>

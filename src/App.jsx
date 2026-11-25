@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
 import Landing from './pages/marketing/Landing'
 import Login from './pages/Login'
+import PrivacyPolicy from './pages/legal/PrivacyPolicy'
+import TermsOfService from './pages/legal/TermsOfService'
 import NotFound from './pages/NotFound'
 import OnboardingGate from './pages/onboarding/OnboardingGate'
 import CaregiverSignIn from './pages/onboarding/CaregiverSignIn'
@@ -15,8 +17,11 @@ import AdminCaregivers from './pages/admin/AdminCaregivers';
 import AdminCaregiverDetail from './pages/admin/AdminCaregiverDetail';
 import AdminCaregiverMap from './pages/admin/AdminCaregiverMap';
 import AdminLayout from './components/admin/AdminLayout';
+import BillingGate from './components/admin/BillingGate';
+import RefundCancellation from './pages/legal/RefundCancellation';
 import AdminLogs from './pages/admin/AdminLogs';
 import AdminHelp from './pages/admin/AdminHelp';
+import AdminBilling from './pages/admin/AdminBilling';
 import StudioLogin from './pages/studio/StudioLogin';
 import PlatformAdminRoute from './components/studio/PlatformAdminRoute';
 import StudioLayout from './components/studio/StudioLayout';
@@ -51,7 +56,9 @@ function AdminLayoutWrapper() {
         <AdminRoute>
             <CompanyProvider>
                 <AdminLayout>
-                    <Outlet />
+                    <BillingGate>
+                        <Outlet />
+                    </BillingGate>
                 </AdminLayout>
             </CompanyProvider>
         </AdminRoute>
@@ -70,7 +77,7 @@ function StudioLayoutWrapper() {
 
 // Public pages only: start at the top when moving between them (e.g. landing page -> /login).
 // App routes (/admin, /studio, /onboard) are left alone, and same-page #anchors don't change pathname.
-const PUBLIC_PATHS = ['/', '/login', '/admin/login']
+const PUBLIC_PATHS = ['/', '/login', '/admin/login', '/privacy', '/terms', '/refund-cancellation']
 function ScrollToTopOnPublicNav() {
     const { pathname } = useLocation()
     useEffect(() => {
@@ -88,6 +95,9 @@ function App() {
             <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/refund-cancellation" element={<RefundCancellation />} />
                 {/* Public, static help content: no sign-in needed */}
                 <Route path='/help' element={<CaregiverFaq />} />
                 {/* Every caregiver route lives under CaregiverLayout, which adds the Help button */}
@@ -112,6 +122,7 @@ function App() {
                     <Route path="training" element={<AdminTrainings />} />
                     <Route path="training/:trainingId" element={<AdminTrainingEditor />} />
                     <Route path="logs" element={<AdminLogs />} />
+                    <Route path="billing" element={<AdminBilling />} />
                     <Route path="help" element={<AdminHelp />} />
                     <Route path="help/:articleId" element={<AdminHelp />} />
                 </Route>
