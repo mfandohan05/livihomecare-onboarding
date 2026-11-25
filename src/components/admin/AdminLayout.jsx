@@ -13,7 +13,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { LayoutDashboard, Users, LogOut, ChevronDown, Map, Logs, Menu, BookOpen, GraduationCap } from 'lucide-react'
+import { LayoutDashboard, Users, LogOut, ChevronDown, Map, Logs, Menu, BookOpen, GraduationCap, Settings } from 'lucide-react'
 import { APP_VERSION } from '@/version'
 import { useCompany } from '@/context/CompanyContext'
 
@@ -159,6 +159,15 @@ export default function AdminLayout({ children }) {
                             </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
+                            {adminRole === 'superadmin' && (
+                                <DropdownMenuItem
+                                    onClick={() => navigate('/admin/billing')}
+                                    className="flex items-center gap-2 cursor-pointer focus:bg-[var(--primary-color)] focus:text-white"
+                                >
+                                    <Settings className="w-4 h-4" />
+                                    Manage
+                                </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem
                                 onClick={handleSignOut}
                                 className="flex items-center gap-2 text-red-600 focus:bg-[var(--primary-color)] cursor-pointer"

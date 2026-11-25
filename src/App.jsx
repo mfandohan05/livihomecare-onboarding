@@ -19,6 +19,7 @@ import AdminCaregiverMap from './pages/admin/AdminCaregiverMap';
 import AdminLayout from './components/admin/AdminLayout';
 import AdminLogs from './pages/admin/AdminLogs';
 import AdminHelp from './pages/admin/AdminHelp';
+import AdminBilling from './pages/admin/AdminBilling';
 import StudioLogin from './pages/studio/StudioLogin';
 import PlatformAdminRoute from './components/studio/PlatformAdminRoute';
 import StudioLayout from './components/studio/StudioLayout';
@@ -116,6 +117,7 @@ function App() {
                     <Route path="training" element={<AdminTrainings />} />
                     <Route path="training/:trainingId" element={<AdminTrainingEditor />} />
                     <Route path="logs" element={<AdminLogs />} />
+                    <Route path="billing" element={<AdminBilling />} />
                     <Route path="help" element={<AdminHelp />} />
                     <Route path="help/:articleId" element={<AdminHelp />} />
                 </Route>
