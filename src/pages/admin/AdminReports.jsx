@@ -99,10 +99,10 @@ export default function AdminReports() {
                         </label>
                     ))}
                 </div>
-                <details className="mt-4 text-xs text-muted-foreground">
-                    <summary className="cursor-pointer font-medium text-foreground">Columns in this report</summary>
-                    <p className="mt-2">{report.columns.map(([, label]) => label).join(', ')}</p>
-                </details>
+                <div className="mt-4 text-xs">
+                    <p className="font-medium mb-1.5">Columns in this report</p>
+                    <p className="text-muted-foreground">{report.columns.map(([, label]) => label).join(', ')}</p>
+                </div>
             </section>
 
             <section className="bg-white rounded-xl border border-border p-6 mb-6">
