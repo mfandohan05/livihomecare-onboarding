@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import HowDoesThisWork from '@/components/help/HowDoesThisWork'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import { Search } from 'lucide-react'
+import { Import, Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -17,6 +17,7 @@ import { Upload, ChevronDown } from 'lucide-react'
 import { formatPhone } from '@/lib/formUtils'
 import { useCompany } from '@/context/CompanyContext'
 import { ExpirationSummaryBadge } from '@/components/admin/ExpirationBadge'
+import ImportEmployeesDialog from '@/components/admin/ImportEmployeesDialog'
 import {
     EXPIRY_FILTERS,
     fetchCompanyExpirySummaries,
@@ -33,7 +34,6 @@ const Field = ({ label, id, children, required }) => (
         {children}
     </div>
 )
-
 
 function NewCaregiverDialog({ open, onClose, onCreated, companyId, roleOptions }) {
     const [loading, setLoading] = useState(false)
@@ -333,6 +333,7 @@ export default function AdminCaregivers() {
     const [searchParams] = useSearchParams()
     const navigate = useNavigate()
     const [showNewDialog, setShowNewDialog] = useState(searchParams.get('new') === 'true')
+    const [showImportDialog, setShowImportDialog] = useState(false)
     const [caregivers, setCaregivers] = useState([])
     const [filtered, setFiltered] = useState([])
     const [search, setSearch] = useState('')
@@ -423,8 +424,11 @@ export default function AdminCaregivers() {
         if (debouncedSearch) query = query.or(`name.ilike.%${debouncedSearch}%,email.ilike.%${debouncedSearch}%`)
         if (statusFilter === 'all') {
             query = query.neq('status', 'cancelled')
+        } else if (statusFilter === 'imported') {
+            query = query.eq('status', 'completed').eq('source', 'imported')
         } else {
             query = query.eq('status', statusFilter)
+            if (statusFilter === 'completed') query = query.neq('source', 'imported')
         }
         if (roleFilter !== 'all') query = query.eq('role', roleFilter)
 
@@ -488,14 +492,16 @@ export default function AdminCaregivers() {
         setPage(1)
     }, [debouncedSearch, statusFilter, roleFilter, skillFilters, expiryFilter])
 
-    const statusColor = (status) => {
+    const statusColor = (status, source) => {
+        if (source === 'imported' && status === 'completed') return 'text-sky-700 bg-sky-50'
         if (status === 'completed') return 'text-[#577C09] bg-[#E8F0D0]'
         if (status === 'in_progress') return 'text-amber-700 bg-amber-50'
         if (status === 'cancelled') return 'text-red-700 bg-red-50'
         return 'text-muted-foreground bg-muted'
     }
 
-    const statusLabel = (status) => {
+    const statusLabel = (status, source) => {
+        if (source === 'imported' && status === 'completed') return 'Imported'
         if (status === 'completed') return 'Completed'
         if (status === 'in_progress') return 'In Progress'
         if (status === 'cancelled') return 'Cancelled'
@@ -534,6 +540,12 @@ export default function AdminCaregivers() {
                 companyId={companyId}
                 roleOptions={roleOptions}
             />
+            <ImportEmployeesDialog
+                open={showImportDialog}
+                onClose={() => setShowImportDialog(false)}
+                roleOptions={roleOptions}
+                onImported={() => (page === 1 ? fetchCaregivers() : setPage(1))}
+            />
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
                 <div>
@@ -541,12 +553,21 @@ export default function AdminCaregivers() {
                     <p className="text-muted-foreground">{totalCount} total employees</p>
                     <HowDoesThisWork article="finding-employees" className="mt-1" />
                 </div>
-                <Button
-                    onClick={() => setShowNewDialog(true)}
-                    className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white w-full sm:w-auto"
-                >
-                    + New Employee
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <Button
+                        onClick={() => setShowImportDialog(true)}
+                        className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white w-full sm:w-auto"
+                    >
+                        <Import className="w-4 h-4 mr-2" />
+                        Import Employees
+                    </Button>
+                    <Button
+                        onClick={() => setShowNewDialog(true)}
+                        className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white w-full sm:w-auto"
+                    >
+                        + New Employee
+                    </Button>
+                </div>
             </div>
 
             <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 mb-6">
@@ -568,6 +589,7 @@ export default function AdminCaregivers() {
                     <option value="pending">Pending</option>
                     <option value="in_progress">In Progress</option>
                     <option value="completed">Completed</option>
+                    <option value="imported">Imported</option>
                     <option value="cancelled">Cancelled</option>
                 </select>
                 <select
@@ -729,8 +751,8 @@ export default function AdminCaregivers() {
                                         <td className="px-6 py-4 text-sm text-muted-foreground">{activeTime}</td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
-                                                <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusColor(caregiver.status)}`}>
-                                                    {statusLabel(caregiver.status)}
+                                                <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusColor(caregiver.status, caregiver.source)}`}>
+                                                    {statusLabel(caregiver.status, caregiver.source)}
                                                 </span>
                                                 <ExpirationSummaryBadge summary={expirySummaries.get(caregiver.id)} />
                                             </div>

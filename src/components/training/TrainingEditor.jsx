@@ -27,6 +27,7 @@ import TrainingSlideView from '@/components/training/TrainingSlideView'
 import {
     TRAINING_ROLES,
     fileToBase64,
+    loadTrainingRoles,
     parseVideoUrl,
     trainingAdmin,
     trainingImageUrl,
@@ -252,6 +253,15 @@ export default function TrainingEditor({ companyId, trainingId, backPath }) {
     })
     const [slides, setSlides] = useState(isNew ? [newSlide()] : [])
     const [questions, setQuestions] = useState([])
+    const [roleOptions, setRoleOptions] = useState(TRAINING_ROLES)
+
+    useEffect(() => {
+        let cancelled = false
+        loadTrainingRoles(companyId).then((roles) => {
+            if (!cancelled) setRoleOptions(roles)
+        })
+        return () => { cancelled = true }
+    }, [companyId])
 
     useEffect(() => {
         if (isNew) return
@@ -304,6 +314,13 @@ export default function TrainingEditor({ companyId, trainingId, backPath }) {
         setQuestions(updater)
         setDirty(true)
     }
+
+    const allRoleOptions = [
+        ...roleOptions,
+        ...form.roles
+            .filter((role) => !roleOptions.some((option) => option.value === role))
+            .map((role) => ({ value: role, label: role })),
+    ]
 
     const toggleRole = (role) => {
         setField({ roles: form.roles.includes(role) ? form.roles.filter((r) => r !== role) : [...form.roles, role] })
@@ -402,7 +419,7 @@ export default function TrainingEditor({ companyId, trainingId, backPath }) {
                     <div className="space-y-1.5 sm:col-span-2">
                         <Label>Who sees this training</Label>
                         <div className="flex flex-wrap gap-x-5 gap-y-2">
-                            {TRAINING_ROLES.map((role) => (
+                            {allRoleOptions.map((role) => (
                                 <label key={role.value} className="flex items-center gap-2 text-sm cursor-pointer">
                                     <input type="checkbox" checked={form.roles.includes(role.value)} onChange={() => toggleRole(role.value)} />
                                     {role.label}

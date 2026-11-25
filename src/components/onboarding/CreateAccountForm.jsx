@@ -10,7 +10,7 @@ import { MAX_PASSWORD_LENGTH, meetsPasswordRules } from '@/lib/passwordPolicy'
 import PasswordRequirements from './PasswordRequirements'
 import SsoButtons, { OrDivider } from './SsoButtons'
 
-export default function CreateAccountForm({ token, proof, firstName, maskedEmail, initialError, onCreated, onExistingAccount, onVerificationExpired }) {
+export default function CreateAccountForm({ token, proof, firstName, maskedEmail, imported, initialError, onCreated, onExistingAccount, onVerificationExpired }) {
     const [password, setPassword] = useState('')
     const [confirm, setConfirm] = useState('')
     const [loading, setLoading] = useState(false)
@@ -66,7 +66,9 @@ export default function CreateAccountForm({ token, proof, firstName, maskedEmail
     return (
         <AuthCard
             title={firstName ? `Welcome, ${firstName}` : 'Welcome'}
-            subtitle="Create your account to begin onboarding. You'll use it to sign back in any time."
+            subtitle={imported
+                ? "Create your account to manage your profile, documents and trainings. You'll use it to sign back in any time."
+                : "Create your account to begin onboarding. You'll use it to sign back in any time."}
         >
             <SsoButtons
                 redirectTo={`${window.location.origin}/onboard/${token}`}

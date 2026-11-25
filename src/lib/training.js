@@ -30,6 +30,15 @@ async function invoke(name, body) {
 }
 
 export const trainingAdmin = (action, body = {}) => invoke('training-admin', { action, ...body })
+
+export async function loadTrainingRoles(companyId) {
+    try {
+        const roles = await trainingAdmin('roles', { companyId })
+        return Array.isArray(roles) && roles.length > 0 ? roles : TRAINING_ROLES
+    } catch {
+        return TRAINING_ROLES
+    }
+}
 export const trainingCaregiver = (action, body = {}) => invoke('training-caregiver', { action, ...body })
 
 export function trainingImageUrl(path) {

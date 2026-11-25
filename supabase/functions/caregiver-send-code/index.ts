@@ -84,6 +84,7 @@ Deno.serve(async (req) => {
 
     const safeCompany = escapeHtml(companyName)
     const safeName = escapeHtml(firstName(caregiver.name))
+    const purpose = caregiver.source === 'imported' ? 'set up your account' : 'continue your onboarding'
 
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -101,7 +102,7 @@ Deno.serve(async (req) => {
               Hi ${safeName},
             </h1>
             <p style="color: #555; margin-bottom: 24px;">
-              Use the code below to verify your identity and continue your onboarding with ${safeCompany}.
+              Use the code below to verify your identity and ${purpose} with ${safeCompany}.
             </p>
             <div style="font-size: 34px; font-weight: 700; letter-spacing: 10px; color: #0A2E73; background: #f3f5f9; border-radius: 8px; padding: 18px 0; text-align: center; margin-bottom: 24px;">
               ${code}

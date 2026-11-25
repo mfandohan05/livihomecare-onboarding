@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import { Users, Clock, CheckCircle, AlertCircle, XCircle, TriangleAlert } from 'lucide-react'
+import { Users, Clock, CheckCircle, AlertCircle, XCircle, TriangleAlert, Import } from 'lucide-react'
 import { job_label } from '@/lib/labelUtils'
 import { useCompany } from '@/context/CompanyContext'
 import { fetchCompanyExpirySummaries } from '@/lib/documentExpirationQueries'
@@ -14,6 +14,7 @@ export default function AdminDashboard() {
         pending: 0,
         inProgress: 0,
         completed: 0,
+        imported: 0,
         cancelled: 0,
         needsAttention: 0
     })
@@ -49,7 +50,8 @@ export default function AdminDashboard() {
                     total: caregivers.length,
                     pending: caregivers.filter(c => c.status === 'pending').length,
                     inProgress: caregivers.filter(c => c.status === 'in_progress').length,
-                    completed: caregivers.filter(c => c.status === 'completed').length,
+                    completed: caregivers.filter(c => c.status === 'completed' && c.source !== 'imported').length,
+                    imported: caregivers.filter(c => c.status === 'completed' && c.source === 'imported').length,
                     cancelled: caregivers.filter(c => c.status === 'cancelled').length,
                 })
                 const nonCancelledCaregivers = caregivers.filter(c => c.status !== 'cancelled')
@@ -69,13 +71,15 @@ export default function AdminDashboard() {
         fetchRoleLabels();
     }, [companyId])
 
-    const statusColor = (status) => {
+    const statusColor = (status, source) => {
+        if (source === 'imported' && status === 'completed') return 'text-sky-700 bg-sky-50'
         if (status === 'completed') return 'text-[#577C09] bg-[#E8F0D0]'
         if (status === 'in_progress') return 'text-amber-700 bg-amber-50'
         return 'text-muted-foreground bg-muted'
     }
 
-    const statusLabel = (status) => {
+    const statusLabel = (status, source) => {
+        if (source === 'imported' && status === 'completed') return 'Imported'
         if (status === 'completed') return 'Completed'
         if (status === 'in_progress') return 'In Progress'
         return 'Pending'
@@ -99,12 +103,13 @@ export default function AdminDashboard() {
                 <HowDoesThisWork article="dashboard" />
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 sm:gap-4 mb-8">
                 {[
                     { label: 'Total Employees Enrolled', value: stats.total, icon: Users, color: 'text-blue-600 bg-blue-50' },
                     { label: 'Pending', value: stats.pending, icon: AlertCircle, color: 'text-muted-foreground bg-muted' },
                     { label: 'In Progress', value: stats.inProgress, icon: Clock, color: 'text-amber-600 bg-amber-50' },
                     { label: 'Completed', value: stats.completed, icon: CheckCircle, color: 'text-[#577C09] bg-[#E8F0D0]' },
+                    { label: 'Imported', value: stats.imported, icon: Import, color: 'text-sky-700 bg-sky-50' },
                     { label: 'Cancelled', value: stats.cancelled, icon: XCircle, color: 'text-red-600 bg-red-50' },
                     {
                         label: 'Documents needing attention',
@@ -164,8 +169,8 @@ export default function AdminDashboard() {
                                         <p className="text-xs text-muted-foreground truncate"><span className='capitalize'>{job_label(caregiver.role, roleOptions)}</span> · {(caregiver.email).toLowerCase()}</p>
                                     </div>
                                 </div>
-                                <span className={`text-xs font-medium px-2.5 py-1 rounded-full shrink-0 ${statusColor(caregiver.status)}`}>
-                                    {statusLabel(caregiver.status)}
+                                <span className={`text-xs font-medium px-2.5 py-1 rounded-full shrink-0 ${statusColor(caregiver.status, caregiver.source)}`}>
+                                    {statusLabel(caregiver.status, caregiver.source)}
                                 </span>
                             </div>
                         ))

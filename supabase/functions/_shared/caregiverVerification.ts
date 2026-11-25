@@ -64,6 +64,17 @@ export function escapeHtml(value: string): string {
     .replace(/'/g, '&#39;')
 }
 
+export function isInviteLinkExpired(caregiver: {
+  status: string | null
+  source?: string | null
+  link_expires_at: string | null
+}): boolean {
+  if (!caregiver.link_expires_at) return false
+
+  const linkExpires = caregiver.status === 'pending' || caregiver.source === 'imported'
+  return linkExpires && new Date() > new Date(caregiver.link_expires_at)
+}
+
 export type CaregiverForVerification = {
   id: string
   name: string | null
@@ -72,6 +83,7 @@ export type CaregiverForVerification = {
   status: string | null
   link_expires_at: string | null
   user_id: string | null
+  source: string | null
 }
 
 export async function findVerifiableCaregiver(
@@ -82,16 +94,13 @@ export async function findVerifiableCaregiver(
 
   const { data: caregiver, error } = await supabase
     .from('caregivers')
-    .select('id, name, email, company_id, status, link_expires_at, user_id')
+    .select('id, name, email, company_id, status, link_expires_at, user_id, source')
     .eq('token', token)
     .maybeSingle()
 
   if (error || !caregiver || caregiver.user_id) return null
 
-  const isExpired = caregiver.status === 'pending' &&
-    caregiver.link_expires_at &&
-    new Date() > new Date(caregiver.link_expires_at)
-  if (isExpired) return null
+  if (isInviteLinkExpired(caregiver)) return null
 
   return caregiver as CaregiverForVerification
 }

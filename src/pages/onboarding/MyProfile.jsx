@@ -48,7 +48,7 @@ export default function MyProfile() {
                 <div className="bg-white rounded-xl border border-border p-6 sm:p-8 shadow-sm">
                     <h1 className="text-xl font-semibold">{caregiver.name}</h1>
                     <p className="text-sm text-muted-foreground mt-1">
-                        {[roleLabels[caregiver.role] || caregiver.role, companyName, caregiver.email].filter(Boolean).join(' · ')}
+                        {[companyName, caregiver.email].filter(Boolean).join(' · ')}
                     </p>
                 </div>
 
@@ -73,18 +73,20 @@ export default function MyProfile() {
                 </div>
                 )}
 
-                <div className="bg-white rounded-xl border border-border p-4 sm:px-8 shadow-sm flex items-center justify-between gap-3">
-                    <p className="text-sm text-muted-foreground">Your onboarding completion certificate</p>
-                    <Button variant="outline" size="sm" onClick={() => navigate('/onboard?certificate=1')}>
-                        View certificate
-                    </Button>
-                </div>
+                {caregiver.source !== 'imported' && (
+                    <div className="bg-white rounded-xl border border-border p-4 sm:px-8 shadow-sm flex items-center justify-between gap-3">
+                        <p className="text-sm text-muted-foreground">Your onboarding completion certificate</p>
+                        <Button variant="outline" size="sm" onClick={() => navigate('/onboard?certificate=1')}>
+                            View certificate
+                        </Button>
+                    </div>
+                )}
 
                 <div className="bg-white rounded-xl border border-border p-6 sm:p-8 shadow-sm">
                     <div className="flex items-center justify-between gap-3 mb-4">
                         <h2 className="font-semibold">My uploaded documents</h2>
                         <Button variant="outline" size="sm" onClick={() => navigate('/my-documents')}>
-                            Update expiring documents
+                            Upload documents
                         </Button>
                     </div>
                     {documents === null ? (

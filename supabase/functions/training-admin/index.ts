@@ -29,7 +29,7 @@ function cleanText(value: unknown, max: number): string {
   return typeof value === 'string' ? value.trim().slice(0, max) : ''
 }
 
-function validateTraining(input: any) {
+function validateTraining(input: any, allowedRoles: string[]) {
   if (!input || typeof input !== 'object') throw new TrainingError('training is required')
 
   const title = cleanText(input.title, 200)
@@ -49,7 +49,7 @@ function validateTraining(input: any) {
   }
 
   const roles = Array.isArray(input.roles) ? input.roles : []
-  if (roles.some((r: unknown) => typeof r !== 'string' || !CAREGIVER_ROLES.includes(r))) {
+  if (roles.some((r: unknown) => typeof r !== 'string' || !allowedRoles.includes(r))) {
     throw new TrainingError('Invalid role selected')
   }
 
@@ -121,6 +121,16 @@ Deno.serve(async (req) => {
       return data
     }
 
+    const loadRoleOptions = async (): Promise<{ value: string; label: string }[]> => {
+      const { data, error } = await supabase
+        .from('role_labels')
+        .select('role_key, display_label')
+        .eq('company_id', companyId)
+        .order('display_label', { ascending: true })
+      if (error) throw error
+      return (data || []).map((r) => ({ value: r.role_key, label: r.display_label || r.role_key }))
+    }
+
     const loadCaregiver = async (id: unknown) => {
       if (typeof id !== 'string' || !id) throw new TrainingError('caregiverId is required')
       const { data, error } = await supabase
@@ -149,6 +159,9 @@ Deno.serve(async (req) => {
     }
 
     switch (action) {
+      case 'roles':
+        return trainingJson(await loadRoleOptions())
+
       case 'list': {
         const { data: trainings, error } = await supabase
           .from('trainings')
@@ -195,7 +208,9 @@ Deno.serve(async (req) => {
       }
 
       case 'save': {
-        const { fields, slides, questions } = validateTraining(body.training)
+        const roleOptions = await loadRoleOptions()
+        const allowedRoles = [...new Set([...CAREGIVER_ROLES, ...roleOptions.map((r) => r.value)])]
+        const { fields, slides, questions } = validateTraining(body.training, allowedRoles)
         let trainingId: string
 
         if (body.training.id) {
