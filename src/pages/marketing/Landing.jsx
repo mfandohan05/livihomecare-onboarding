@@ -5,6 +5,7 @@ import Showcases from '@/components/marketing/Showcases'
 import Features from '@/components/marketing/Features'
 import HowItWorks from '@/components/marketing/HowItWorks'
 import Benefits from '@/components/marketing/Benefits'
+import Pricing from '@/components/marketing/Pricing'
 import Contact from '@/components/marketing/Contact'
 import Footer from '@/components/marketing/Footer'
 import '@/components/marketing/marketing.css'
@@ -24,6 +25,7 @@ export default function Landing() {
                 <Features />
                 <HowItWorks />
                 <Benefits />
+                <Pricing />
                 <Contact />
             </main>
             <Footer />

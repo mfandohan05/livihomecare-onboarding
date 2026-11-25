@@ -17,6 +17,8 @@ import AdminCaregivers from './pages/admin/AdminCaregivers';
 import AdminCaregiverDetail from './pages/admin/AdminCaregiverDetail';
 import AdminCaregiverMap from './pages/admin/AdminCaregiverMap';
 import AdminLayout from './components/admin/AdminLayout';
+import BillingGate from './components/admin/BillingGate';
+import RefundCancellation from './pages/legal/RefundCancellation';
 import AdminLogs from './pages/admin/AdminLogs';
 import AdminHelp from './pages/admin/AdminHelp';
 import AdminBilling from './pages/admin/AdminBilling';
@@ -54,7 +56,9 @@ function AdminLayoutWrapper() {
         <AdminRoute>
             <CompanyProvider>
                 <AdminLayout>
-                    <Outlet />
+                    <BillingGate>
+                        <Outlet />
+                    </BillingGate>
                 </AdminLayout>
             </CompanyProvider>
         </AdminRoute>
@@ -73,7 +77,7 @@ function StudioLayoutWrapper() {
 
 // Public pages only: start at the top when moving between them (e.g. landing page -> /login).
 // App routes (/admin, /studio, /onboard) are left alone, and same-page #anchors don't change pathname.
-const PUBLIC_PATHS = ['/', '/login', '/admin/login', '/privacy', '/terms']
+const PUBLIC_PATHS = ['/', '/login', '/admin/login', '/privacy', '/terms', '/refund-cancellation']
 function ScrollToTopOnPublicNav() {
     const { pathname } = useLocation()
     useEffect(() => {
@@ -93,6 +97,7 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/refund-cancellation" element={<RefundCancellation />} />
                 {/* Public, static help content: no sign-in needed */}
                 <Route path='/help' element={<CaregiverFaq />} />
                 {/* Every caregiver route lives under CaregiverLayout, which adds the Help button */}

@@ -72,6 +72,7 @@ export default function PrivacyPolicy() {
                         'Name, work email address and password hash, role and company association.',
                         'Audit log entries describing actions you take in the Service, such as viewing or editing an employee record, signing documents, completing Form I-9 Section 2, and viewing sensitive fields, along with your account identifier, email and a timestamp.',
                         'Your signature image, when you sign documents on behalf of your employer.',
+                        'Billing details for the subscription: a Stripe customer identifier, your subscription status and current billing period. Card and payment details are entered on Stripe’s pages and are never stored by us.',
                         'Company details you configure, including company name, logo, contact details, notification email addresses, onboarding steps, forms, templates, orientation content and role labels.',
                     ]} />
                 </Sub>
@@ -147,6 +148,7 @@ export default function PrivacyPolicy() {
                             ['Vercel', 'Hosting and delivery of the website.', 'Technical connection data such as IP address and requested pages.'],
                             ['Google', 'Optional sign-in.', 'The sign-in details described above.'],
                             ['Resend', 'Sending service emails.', 'Recipient name and email address and the email content, such as invitations, codes and reminders.'],
+                            ['Stripe', 'Processing subscription payments and hosting the billing portal.', 'Company name, an administrator’s email address, and payment details you enter on Stripe’s pages. We do not receive or store card numbers.'],
                             ['Twilio', 'Sending and receiving text messages.', 'Mobile number, message content and STOP or START replies.'],
                             ['Mapbox', 'Address autocomplete while you type an address, and map display for administrators.', 'The address text you are typing and map queries.'],
                             ['Formspree', 'Delivering contact form submissions to us.', 'Name, email, company, phone and message.'],

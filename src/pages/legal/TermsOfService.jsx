@@ -9,6 +9,7 @@ const TOC = [
     { id: 'accounts', title: 'Accounts and sign-in' },
     { id: 'employees', title: 'Terms for employees' },
     { id: 'customers', title: 'Terms for employers' },
+    { id: 'subscriptions', title: 'Subscriptions and billing' },
     { id: 'acceptable-use', title: 'Acceptable use' },
     { id: 'electronic', title: 'Electronic signatures and records' },
     { id: 'messages', title: 'Emails and text messages' },
@@ -74,6 +75,12 @@ export default function TermsOfService() {
                     'You will not use the Service to make decisions that unlawfully discriminate, and you remain solely responsible for your hiring decisions.',
                     'Fees, term and any service levels are set out in your order form or separate agreement with us. If those conflict with these terms, the agreement with us controls.',
                 ]} />
+            </Section>
+
+            <Section id="subscriptions" title="Subscriptions and billing">
+                <p>
+                    Employers use the Service under a monthly subscription. Payments are processed by Stripe, and we do not store card numbers. Pricing is set for each employer and agreed with us. An employer’s administrator tools are available while its subscription is active; if the subscription is not active, administrator access is limited to the billing page until it is. You can cancel at any time and keep access through the end of the period you have paid for. Fees are not refunded for a partial month. See our <Link to="/refund-cancellation" className="font-semibold underline">Refund &amp; Cancellation Policy</Link> for details.
+                </p>
             </Section>
 
             <Section id="acceptable-use" title="Acceptable use">

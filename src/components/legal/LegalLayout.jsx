@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Nav from '@/components/marketing/Nav'
 import Footer from '@/components/marketing/Footer'
+import { PRODUCT_LINE } from '@/lib/siteConfig'
 import '@/components/marketing/marketing.css'
 
 export function Section({ id, title, children }) {
@@ -68,7 +69,8 @@ export default function LegalLayout({ title, updated, intro, toc, children }) {
                     <p className="lr-caption">
                         <Link to="/" className="font-medium underline">Home</Link> / {title}
                     </p>
-                    <h1 className="lr-h2 mt-4">{title}</h1>
+                    <p className="lr-caption mt-4 font-medium">{PRODUCT_LINE}</p>
+                    <h1 className="lr-h2 mt-2">{title}</h1>
                     <p className="lr-caption mt-3">Last updated: {updated}</p>
                     <p className="lr-lead mt-6">{intro}</p>
 
