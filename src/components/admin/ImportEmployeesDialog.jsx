@@ -350,7 +350,7 @@ export default function ImportEmployeesDialog({ open, onClose, onImported, roleO
 
     return (
         <Dialog open={open} onOpenChange={handleClose}>
-            <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-hide">
+            <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto scrollbar-hide">
                 <DialogHeader>
                     <DialogTitle>Import Employees</DialogTitle>
                     <HowDoesThisWork article="import-employees" className="mt-1" />
@@ -370,7 +370,7 @@ export default function ImportEmployeesDialog({ open, onClose, onImported, roleO
                                             <p className="font-semibold">{group.title}</p>
                                             {group.note && <p className="mt-0.5 text-muted-foreground">{group.note}</p>}
                                         </div>
-                                        <div className="hidden sm:grid sm:grid-cols-[11rem_1fr_11rem] sm:gap-4 border-t border-border px-3 py-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                                        <div className="hidden sm:grid sm:grid-cols-[9.5rem_1fr_9rem] sm:gap-4 border-t border-border px-3 py-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
                                             <span>Column</span>
                                             <span>What to enter</span>
                                             <span>Example</span>
@@ -379,7 +379,7 @@ export default function ImportEmployeesDialog({ open, onClose, onImported, roleO
                                             {group.items.map((item) => (
                                                 <li
                                                     key={item.column}
-                                                    className="grid grid-cols-1 gap-1 px-3 py-2.5 sm:grid-cols-[11rem_1fr_11rem] sm:items-center sm:gap-4"
+                                                    className="grid grid-cols-1 gap-1 px-3 py-2.5 sm:grid-cols-[9.5rem_1fr_9rem] sm:items-center sm:gap-4"
                                                 >
                                                     <p className="break-words font-medium">
                                                         {item.column}{item.required && <span className="text-red-500"> *</span>}
@@ -546,7 +546,7 @@ export default function ImportEmployeesDialog({ open, onClose, onImported, roleO
                                 <h3 className="text-sm font-medium mb-4 pb-2 border-b">Skipped rows</h3>
                                 <SkippedTable rows={skippedRows} employees={employees} />
                                 <p className="text-xs text-muted-foreground mt-2">
-                                    These rows were not imported. Fix them in your file and upload it again, or add them with New Employee.
+                                    These rows were not imported. Fix them in your file and upload it again.
                                 </p>
                             </div>
                         )}
