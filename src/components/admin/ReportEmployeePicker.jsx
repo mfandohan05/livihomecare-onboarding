@@ -48,9 +48,9 @@ export default function ReportEmployeePicker({ companyId, roleOptions, selected,
     const loading = result.key !== queryKey(companyId, query)
     const { employees, total } = result
     const inSelectedView = query.view === 'selected'
-    const everyoneSelected = total > 0 && selected.size === total && pageFullySelected
     const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE))
     const pageFullySelected = employees.length > 0 && employees.every((e) => selected.has(e.id))
+    const everyoneSelected = total > 0 && selected.size === total && pageFullySelected
 
     const updateFilters = (patch) => setQuery((current) => ({ ...current, ...patch, page: 1 }))
 
