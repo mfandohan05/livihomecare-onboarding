@@ -121,7 +121,7 @@ export default function ReportEmployeePicker({ companyId, roleOptions, selected,
                     />
                     Select this page
                 </label>
-                {total > PAGE_SIZE && (
+                {total > 0 && (
                     <button
                         type="button"
                         onClick={selectAllMatching}
