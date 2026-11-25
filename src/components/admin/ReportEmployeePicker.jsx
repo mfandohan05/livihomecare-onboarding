@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { Loader2, Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { MAX_REPORT_EMPLOYEES, PAGE_SIZE, STATUS_OPTIONS, listEmployees, listMatchingIds } from '@/lib/reportData'
+import { MAX_REPORT_EMPLOYEES, PAGE_SIZE, STATUS_OPTIONS, listEmployees, listEmployeesByIds, listMatchingIds } from '@/lib/reportData'
 import { roleName, statusText } from '@/lib/reportFormat'
 import { statusColor } from '@/lib/statusStyle'
 
 const SEARCH_DELAY_MS = 300
-const FIRST_PAGE = { search: '', status: 'active', role: 'all', page: 1 }
+const FIRST_PAGE = { search: '', status: 'active', role: 'all', view: 'all', page: 1 }
 
 const isNarrowed = ({ search, status, role }) =>
     search.trim() !== '' || status !== FIRST_PAGE.status || role !== FIRST_PAGE.role
@@ -24,12 +24,19 @@ export default function ReportEmployeePicker({ companyId, roleOptions, selected,
     const [selectingAll, setSelectingAll] = useState(false)
     const [selectAllError, setSelectAllError] = useState(null)
     const searchTimer = useRef(null)
+    const selectedSnapshot = useRef([])
 
     useEffect(() => {
+        if (!companyId) return
+
         let cancelled = false
         const key = queryKey(companyId, query)
 
-        listEmployees(companyId, filtersOf(query), query.page)
+        const request = query.view === 'selected'
+            ? listEmployeesByIds(companyId, selectedSnapshot.current, query.page)
+            : listEmployees(companyId, filtersOf(query), query.page)
+
+        request
             .then(({ employees, total }) => !cancelled && setResult({ key, employees, total, error: null }))
             .catch((err) => !cancelled && setResult({ key, employees: [], total: 0, error: err.message }))
 
@@ -40,6 +47,7 @@ export default function ReportEmployeePicker({ companyId, roleOptions, selected,
 
     const loading = result.key !== queryKey(companyId, query)
     const { employees, total } = result
+    const inSelectedView = query.view === 'selected'
     const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE))
     const pageFullySelected = employees.length > 0 && employees.every((e) => selected.has(e.id))
 
@@ -50,6 +58,15 @@ export default function ReportEmployeePicker({ companyId, roleOptions, selected,
         clearTimeout(searchTimer.current)
         searchTimer.current = setTimeout(() => updateFilters({ search: value }), SEARCH_DELAY_MS)
     }
+
+    // The "selected only" view lists the selection as it was when opened, so a row you untick stays
+    // visible (unticked) instead of jumping out from under the cursor.
+    const showSelected = () => {
+        selectedSnapshot.current = [...selected]
+        setQuery((current) => ({ ...current, view: 'selected', page: 1 }))
+    }
+
+    const showAll = () => setQuery((current) => ({ ...current, view: 'all', page: 1 }))
 
     const toggleOne = (id) => {
         const next = new Set(selected)
@@ -67,9 +84,15 @@ export default function ReportEmployeePicker({ companyId, roleOptions, selected,
         onChange(next)
     }
 
+    // The selection is locked while this runs, so the merge below cannot overwrite a change made meanwhile.
     const selectAllMatching = async () => {
-        setSelectingAll(true)
         setSelectAllError(null)
+        if (total > MAX_REPORT_EMPLOYEES) {
+            setSelectAllError(`A report can include at most ${MAX_REPORT_EMPLOYEES.toLocaleString()} employees. Narrow the filters and try again.`)
+            return
+        }
+
+        setSelectingAll(true)
         try {
             const ids = await listMatchingIds(companyId, filtersOf(query))
             const next = new Set([...selected, ...ids])
@@ -87,41 +110,47 @@ export default function ReportEmployeePicker({ companyId, roleOptions, selected,
 
     return (
         <div>
-            <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 mb-4">
-                <div className="relative flex-1 min-w-[200px]">
-                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                        value={searchInput}
-                        onChange={(e) => handleSearch(e.target.value)}
-                        placeholder="Search by name or email..."
-                        className="pl-9 focus-visible:border-[var(--primary-color)] focus-visible:ring-[var(--primary-color)]/30"
-                    />
+            {inSelectedView ? (
+                <p className="mb-4 text-sm text-muted-foreground">
+                    Showing the employees you have selected. Search and filters are paused.
+                </p>
+            ) : (
+                <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 mb-4">
+                    <div className="relative flex-1 min-w-[200px]">
+                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            value={searchInput}
+                            onChange={(e) => handleSearch(e.target.value)}
+                            placeholder="Search by name or email..."
+                            className="pl-9 focus-visible:border-[var(--primary-color)] focus-visible:ring-[var(--primary-color)]/30"
+                        />
+                    </div>
+                    <select value={query.status} onChange={(e) => updateFilters({ status: e.target.value })} className={SELECT_CLASS}>
+                        {STATUS_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                    </select>
+                    <select value={query.role} onChange={(e) => updateFilters({ role: e.target.value })} className={SELECT_CLASS}>
+                        <option value="all">All roles</option>
+                        {roleOptions.map((role) => (
+                            <option key={role.role_key} value={role.role_key}>{role.display_label}</option>
+                        ))}
+                    </select>
                 </div>
-                <select value={query.status} onChange={(e) => updateFilters({ status: e.target.value })} className={SELECT_CLASS}>
-                    {STATUS_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                </select>
-                <select value={query.role} onChange={(e) => updateFilters({ role: e.target.value })} className={SELECT_CLASS}>
-                    <option value="all">All roles</option>
-                    {roleOptions.map((role) => (
-                        <option key={role.role_key} value={role.role_key}>{role.display_label}</option>
-                    ))}
-                </select>
-            </div>
+            )}
 
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-3 text-sm">
                 <label className="flex items-center gap-2 cursor-pointer">
                     <input
                         type="checkbox"
                         checked={pageFullySelected}
-                        disabled={employees.length === 0}
+                        disabled={employees.length === 0 || selectingAll}
                         onChange={togglePage}
                         className="h-4 w-4 accent-[var(--primary-color)]"
                     />
                     Select this page
                 </label>
-                {total > 0 && (
+                {total > 0 && !inSelectedView && (
                     <button
                         type="button"
                         onClick={selectAllMatching}
@@ -132,8 +161,17 @@ export default function ReportEmployeePicker({ companyId, roleOptions, selected,
                         Select all {total.toLocaleString()} {isNarrowed(query) ? 'matching' : `employee${total === 1 ? '' : 's'}`}
                     </button>
                 )}
+                {inSelectedView ? (
+                    <button type="button" onClick={showAll} className="text-[var(--primary-color)] hover:underline">
+                        Back to all employees
+                    </button>
+                ) : selected.size > 0 && (
+                    <button type="button" onClick={showSelected} disabled={selectingAll} className="text-[var(--primary-color)] hover:underline disabled:opacity-50">
+                        Show selected ({selected.size.toLocaleString()})
+                    </button>
+                )}
                 {selected.size > 0 && (
-                    <button type="button" onClick={() => onChange(new Set())} className="text-muted-foreground hover:text-foreground hover:underline">
+                    <button type="button" onClick={() => onChange(new Set())} disabled={selectingAll} className="text-muted-foreground hover:text-foreground hover:underline disabled:opacity-50">
                         Clear selection
                     </button>
                 )}
@@ -146,7 +184,7 @@ export default function ReportEmployeePicker({ companyId, roleOptions, selected,
                     <p className="px-4 py-6 text-sm text-red-500">{result.error}</p>
                 ) : employees.length === 0 ? (
                     <p className="px-4 py-6 text-sm text-muted-foreground">
-                        {loading ? 'Loading...' : 'No employees match these filters.'}
+                        {loading ? 'Loading...' : inSelectedView ? 'No employees selected.' : 'No employees match these filters.'}
                     </p>
                 ) : (
                     employees.map((employee) => (
@@ -154,6 +192,7 @@ export default function ReportEmployeePicker({ companyId, roleOptions, selected,
                             <input
                                 type="checkbox"
                                 checked={selected.has(employee.id)}
+                                disabled={selectingAll}
                                 onChange={() => toggleOne(employee.id)}
                                 className="h-4 w-4 shrink-0 accent-[var(--primary-color)]"
                             />
@@ -173,7 +212,7 @@ export default function ReportEmployeePicker({ companyId, roleOptions, selected,
             </div>
 
             <div className="flex items-center justify-between gap-3 mt-3 text-sm text-muted-foreground">
-                <span>{total.toLocaleString()} employee{total === 1 ? '' : 's'}</span>
+                <span>{total.toLocaleString()} {inSelectedView ? 'selected' : `employee${total === 1 ? '' : 's'}`}</span>
                 <div className="flex items-center gap-2">
                     <Button
                         variant="outline"

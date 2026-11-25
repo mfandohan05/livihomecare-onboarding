@@ -16,18 +16,22 @@ const FORMATS = {
     csv: { extension: 'csv', toBlob: async (columns, rows) => new Blob([toCsv(columns, rows)], { type: CSV_TYPE }) },
 }
 
-async function recordExport(companyId, reportId, count) {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) return
+async function recordExport(companyId, reportId, count, format) {
+    try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) return
 
-    const { error } = await supabase.from('audit_logs').insert({
-        admin_id: session.user.id,
-        admin_email: session.user.email,
-        action: 'exported_report',
-        company_id: companyId,
-        metadata: { report: reportId, employees: count },
-    })
-    if (error) console.error('audit log failed', error)
+        const { error } = await supabase.from('audit_logs').insert({
+            admin_id: session.user.id,
+            admin_email: session.user.email,
+            action: 'exported_report',
+            company_id: companyId,
+            metadata: { report: reportId, employees: count, format },
+        })
+        if (error) throw error
+    } catch (err) {
+        console.error('audit log failed', err)
+    }
 }
 
 export default function AdminReports() {
@@ -66,7 +70,7 @@ export default function AdminReports() {
 
             downloadBlob(`${baseName}.${extension}`, await toBlob(columns, rows, report.label))
             toast.success(`${report.label} report downloaded (${rows.length.toLocaleString()} row${rows.length === 1 ? '' : 's'})`)
-            recordExport(companyId, reportId, ids.length)
+            recordExport(companyId, reportId, ids.length, format)
         } catch (err) {
             toast.error(err.message || 'The report could not be created. Please try again.')
         } finally {

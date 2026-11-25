@@ -5,7 +5,8 @@ import { mapChunks } from '@/lib/chunks'
 export const PAGE_SIZE = 25
 export const MAX_REPORT_EMPLOYEES = 5000
 
-const ID_PAGE_SIZE = 1000
+// Matches the API's max_rows (supabase/config.toml). A query returns at most this many rows per request.
+const ROWS_PER_REQUEST = 1000
 const CHUNK_SIZE = 100
 const CONCURRENCY = 3
 
@@ -13,6 +14,8 @@ const EMPLOYEE_COLUMNS = [
     'id', 'name', 'email', 'phone', 'role', 'position_title', 'employment_type', 'start_date',
     'status', 'source', 'pay_rate', 'companion_pay_rate', 'gender', 'employee_id', 'ready_for_payroll',
 ].join(', ')
+
+const LIST_COLUMNS = 'id, name, email, role, status, source'
 
 export const STATUS_OPTIONS = [
     { value: 'active', label: 'All except cancelled' },
@@ -55,7 +58,7 @@ export async function listEmployees(companyId, filters, page) {
     const { data, count, error } = await filteredEmployees(
         companyId,
         filters,
-        'id, name, email, role, status, source',
+        LIST_COLUMNS,
         { count: 'exact' }
     )
         .order('name', { ascending: true })
@@ -65,18 +68,40 @@ export async function listEmployees(companyId, filters, page) {
     return { employees: data || [], total: count || 0 }
 }
 
-export async function listMatchingIds(companyId, filters) {
-    const ids = []
+// One page of a fixed list of employees (the "selected only" view), in the order given.
+export async function listEmployeesByIds(companyId, ids, page) {
+    const from = (page - 1) * PAGE_SIZE
+    const pageIds = ids.slice(from, from + PAGE_SIZE)
+    if (pageIds.length === 0) return { employees: [], total: ids.length }
 
-    for (let from = 0; ; from += ID_PAGE_SIZE) {
-        const page = unwrap(
-            await filteredEmployees(companyId, filters, 'id')
-                .order('id', { ascending: true })
-                .range(from, from + ID_PAGE_SIZE - 1)
-        )
-        ids.push(...page.map((row) => row.id))
-        if (page.length < ID_PAGE_SIZE) return ids
+    const { data, error } = await supabase
+        .from('caregivers')
+        .select(LIST_COLUMNS)
+        .eq('company_id', companyId)
+        .in('id', pageIds)
+        .order('name', { ascending: true })
+
+    if (error) throw new Error(error.message || 'Could not load employees.')
+    return { employees: data || [], total: ids.length }
+}
+
+// Reads every row of a query, one request-sized page at a time. `buildQuery` must return a fresh,
+// deterministically ordered query; the loop adds the range. Without this, rows past max_rows are dropped silently.
+async function fetchAllRows(buildQuery) {
+    const rows = []
+
+    for (let from = 0; ; from += ROWS_PER_REQUEST) {
+        const page = unwrap(await buildQuery().range(from, from + ROWS_PER_REQUEST - 1))
+        rows.push(...page)
+        if (page.length < ROWS_PER_REQUEST) return rows
     }
+}
+
+export async function listMatchingIds(companyId, filters) {
+    const rows = await fetchAllRows(() =>
+        filteredEmployees(companyId, filters, 'id').order('id', { ascending: true })
+    )
+    return rows.map((row) => row.id)
 }
 
 async function loadChunk(companyId, reportId, ids) {
@@ -89,16 +114,18 @@ async function loadChunk(companyId, reportId, ids) {
 
     const [timeLogs, personalInfo, documents] = await Promise.all([
         needsTimeLogs && completedIds.length
-            ? supabase.from('caregiver_time_logs').select('caregiver_id, session_end')
-                .eq('company_id', companyId).in('caregiver_id', completedIds).not('session_end', 'is', null).then(unwrap)
+            ? fetchAllRows(() => supabase.from('caregiver_time_logs').select('caregiver_id, session_end')
+                .eq('company_id', companyId).in('caregiver_id', completedIds).not('session_end', 'is', null)
+                .order('caregiver_id').order('session_end'))
             : [],
         reportId === 'details'
             ? supabase.from('caregiver_progress').select('caregiver_id, personalInfo:form_data->personalInfo')
                 .eq('company_id', companyId).in('caregiver_id', ids).then(unwrap)
             : [],
         reportId === 'compliance'
-            ? supabase.from('caregiver_documents').select('caregiver_id, document_type, expiration_date')
-                .eq('company_id', companyId).in('caregiver_id', ids).in('document_type', TRACKED_DOCUMENT_TYPES).then(unwrap)
+            ? fetchAllRows(() => supabase.from('caregiver_documents').select('caregiver_id, document_type, expiration_date')
+                .eq('company_id', companyId).in('caregiver_id', ids).in('document_type', TRACKED_DOCUMENT_TYPES)
+                .order('caregiver_id').order('document_type').order('expiration_date'))
             : [],
     ])
 
@@ -106,7 +133,7 @@ async function loadChunk(companyId, reportId, ids) {
 }
 
 export async function loadReportData(companyId, reportId, ids, onProgress) {
-    const chunks = await mapChunks(ids, {
+    const chunks = await mapChunks([...new Set(ids)], {
         size: CHUNK_SIZE,
         concurrency: CONCURRENCY,
         worker: (chunk) => loadChunk(companyId, reportId, chunk),

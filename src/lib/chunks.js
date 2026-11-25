@@ -9,11 +9,20 @@ export async function mapChunks(items, { size, concurrency, worker, onProgress }
     const results = new Array(chunks.length)
     let next = 0
     let finished = 0
+    let failed = false
 
+    // After one chunk fails the others stop picking up work and stay quiet, so a failed
+    // report neither keeps hitting the database nor reports progress after the error.
     const runner = async () => {
-        while (next < chunks.length) {
+        while (!failed && next < chunks.length) {
             const index = next++
-            results[index] = await worker(chunks[index])
+            try {
+                results[index] = await worker(chunks[index])
+            } catch (error) {
+                failed = true
+                throw error
+            }
+            if (failed) return
             finished += chunks[index].length
             onProgress?.(finished, items.length)
         }

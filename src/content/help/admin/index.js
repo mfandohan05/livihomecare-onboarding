@@ -651,7 +651,7 @@ export const adminHelp = {
           steps: [
             'Open **Reports** in the top menu.',
             'Under **1. Choose a report**, pick **Basic roster**, **Compliance status** or **Full employee details**. The **Columns in this report** list under the choices shows exactly what is included.',
-            'Under **2. Choose employees**, search by name or email, and filter by status or role. Tick the employees you want, tick **Select this page**, or select **Select all N matching** to take everyone who matches your filters. Your selection stays when you change pages or filters.',
+            'Under **2. Choose employees**, search by name or email, and filter by status or role. Tick the employees you want, tick **Select this page**, or select **Select all N matching** to take everyone who matches your filters. Your selection stays when you change pages or filters. Select **Show selected** to review everyone you have picked, and **Back to all employees** to return.',
             'Select **Download Excel (.xlsx)** for a formatted spreadsheet, or **Download CSV** for a plain file. The file downloads to your computer.',
           ],
           details: [
