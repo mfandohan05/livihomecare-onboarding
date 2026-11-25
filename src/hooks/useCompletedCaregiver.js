@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { getMyCaregiver } from '@/lib/caregiver'
+import { applyBranding } from '@/lib/branding'
 
 export function useCompletedCaregiver() {
     const [state, setState] = useState({ status: 'loading' })
@@ -33,9 +34,11 @@ export function useCompletedCaregiver() {
 
             if (cancelled) return
             if (branding) {
-                document.documentElement.style.setProperty('--primary-color', branding.primary_color)
-                document.documentElement.style.setProperty('--secondary-bg', branding.secondary_bg_color)
-                document.documentElement.style.setProperty('--hover-color', branding.hover_color)
+                applyBranding({
+                    primary: branding.primary_color,
+                    hover: branding.hover_color,
+                    secondary: branding.secondary_bg_color,
+                })
             }
             setState({ status: 'ready', caregiver, companyName: branding?.company_name || '' })
         }
