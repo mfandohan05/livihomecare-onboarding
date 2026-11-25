@@ -48,6 +48,7 @@ export default function ReportEmployeePicker({ companyId, roleOptions, selected,
     const loading = result.key !== queryKey(companyId, query)
     const { employees, total } = result
     const inSelectedView = query.view === 'selected'
+    const everyoneSelected = total > 0 && selected.size === total && pageFullySelected
     const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE))
     const pageFullySelected = employees.length > 0 && employees.every((e) => selected.has(e.id))
 
@@ -165,7 +166,7 @@ export default function ReportEmployeePicker({ companyId, roleOptions, selected,
                     <button type="button" onClick={showAll} className="text-[var(--primary-color)] hover:underline">
                         Back to all employees
                     </button>
-                ) : selected.size > 0 && (
+                ) : selected.size > 0 && !everyoneSelected && (
                     <button type="button" onClick={showSelected} disabled={selectingAll} className="text-[var(--primary-color)] hover:underline disabled:opacity-50">
                         Show selected ({selected.size.toLocaleString()})
                     </button>
