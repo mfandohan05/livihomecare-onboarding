@@ -661,7 +661,7 @@ export const adminHelp = {
               ['Full employee details', 'The roster plus gender, companion pay rate, ready for payroll, home address and emergency contacts.'],
             ] } },
             { tip: 'In the Compliance status report you can switch **Sort rows by** to **Employee name** to keep each person\'s documents together.' },
-            { note: 'The Excel file has a bold header that stays in view as you scroll, real dates and numbers you can sort and filter, and colored statuses. The CSV file has the same data without formatting.' },
+            { note: 'The Excel file has a bold header that stays in view as you scroll, real dates and numbers you can sort and filter. The CSV file has the same data without formatting.' },
             { note: 'Social security numbers, dates of birth, banking details and tax forms are never included in a report, and the documents themselves are not exported.' },
             { tip: 'Imported employees have no onboarding completion date, because they were not onboarded in RSOnboard.' },
             'Each report is recorded in the audit log under **Exported Report**, with the report type and the number of employees.',

@@ -14,7 +14,7 @@ const NURSE_ROLES = ['nurse_prn', 'nurse_director']
 const CSV_BOM = '﻿'
 
 // Column = [key, label, type?]. `type` only matters to the Excel export; CSV is always text.
-// Types: 'date' (MM/DD/YYYY text), 'money' (2 decimals), 'integer', 'status' (colored pill), default text.
+// Types: 'date' (MM/DD/YYYY text), 'money' (2 decimals), 'integer', default text.
 const ROSTER_COLUMNS = [
     ['employeeId', 'Employee ID'],
     ['name', 'Full name'],
@@ -24,7 +24,7 @@ const ROSTER_COLUMNS = [
     ['position', 'Position title'],
     ['employmentType', 'Employment type'],
     ['startDate', 'Start date', 'date'],
-    ['status', 'Status', 'status'],
+    ['status', 'Status'],
     ['onboardingCompleted', 'Onboarding completed', 'date'],
     ['payRate', 'Pay rate ($/hr)', 'money'],
 ]
@@ -57,7 +57,7 @@ const COMPLIANCE_COLUMNS = [
     ['expirationDate', 'Expiration date', 'date'],
     ['daysUntil', 'Days until expiration', 'integer'],
     ['timeUntil', 'Time until expiration'],
-    ['status', 'Status', 'status'],
+    ['status', 'Status'],
 ]
 
 export const REPORT_TYPES = [
