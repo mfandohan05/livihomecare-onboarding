@@ -9,6 +9,9 @@ import { statusColor } from '@/lib/statusStyle'
 const SEARCH_DELAY_MS = 300
 const FIRST_PAGE = { search: '', status: 'active', role: 'all', page: 1 }
 
+const isNarrowed = ({ search, status, role }) =>
+    search.trim() !== '' || status !== FIRST_PAGE.status || role !== FIRST_PAGE.role
+
 const SELECT_CLASS = 'w-full sm:w-auto border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[var(--primary-color)]'
 
 const queryKey = (companyId, query) => JSON.stringify([companyId, query])
@@ -126,7 +129,7 @@ export default function ReportEmployeePicker({ companyId, roleOptions, selected,
                         className="inline-flex items-center gap-1.5 text-[var(--primary-color)] hover:underline disabled:opacity-50"
                     >
                         {selectingAll && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                        Select all {total.toLocaleString()} matching
+                        Select all {total.toLocaleString()} {isNarrowed(query) ? 'matching' : `employee${total === 1 ? '' : 's'}`}
                     </button>
                 )}
                 {selected.size > 0 && (
