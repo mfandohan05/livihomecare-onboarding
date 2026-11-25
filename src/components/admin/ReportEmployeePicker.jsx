@@ -140,7 +140,7 @@ export default function ReportEmployeePicker({ companyId, roleOptions, selected,
                 </div>
             )}
 
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-3 text-sm">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-3 px-[17px] text-sm">
                 <label className="flex items-center gap-2 cursor-pointer">
                     <input
                         type="checkbox"
