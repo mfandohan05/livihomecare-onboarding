@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Added Reports: admins choose employees and download a CSV roster, a document compliance report (expiration dates and days until expiry) or full employee details, without sensitive information such as social security numbers or banking details
 - Employees now verify their identity with an emailed 6-digit code (valid for 5 minutes) before creating an account from their onboarding link
 - Admins can reset an employee's password from the employee page: password accounts get a reset email, Google accounts are unlinked and the employee verifies and signs in with Google again
 - Employees can sign up and sign in with Google, in addition to email and password

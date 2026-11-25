@@ -20,6 +20,7 @@ import AdminLayout from './components/admin/AdminLayout';
 import BillingGate from './components/admin/BillingGate';
 import RefundCancellation from './pages/legal/RefundCancellation';
 import AdminLogs from './pages/admin/AdminLogs';
+import AdminReports from './pages/admin/AdminReports';
 import AdminHelp from './pages/admin/AdminHelp';
 import AdminBilling from './pages/admin/AdminBilling';
 import StudioLogin from './pages/studio/StudioLogin';
@@ -121,6 +122,7 @@ function App() {
                     <Route path="map" element={<AdminCaregiverMap />} />
                     <Route path="training" element={<AdminTrainings />} />
                     <Route path="training/:trainingId" element={<AdminTrainingEditor />} />
+                    <Route path="reports" element={<AdminReports />} />
                     <Route path="logs" element={<AdminLogs />} />
                     <Route path="billing" element={<AdminBilling />} />
                     <Route path="help" element={<AdminHelp />} />
