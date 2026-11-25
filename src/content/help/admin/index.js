@@ -562,7 +562,7 @@ export const adminHelp = {
             'Fill in one employee per row. Keep the first row (the column names) exactly as it is.',
             'Save the file as **CSV**. In step 2, select **Choose CSV file...** and pick it.',
             'Check the review: **Ready to import**, **Need fixing** and **Already exist**. Problem rows are listed under **Rows that will be skipped**, each with the reason.',
-            'Tick or untick **Send a welcome email to each imported employee**, then select **Import** (the button shows how many employees).',
+            'Tick or untick **Send a welcome email to each imported employee**, then select **Import** (the button shows how many employees). A progress bar shows the import as it goes, so keep the window open until it finishes.',
             'When it finishes you see **Imported**, **Emailed** and **Skipped**, and a **Skipped rows** table that lists who was skipped and why, with the kind of problem for each row. Select **Done**.',
           ],
           details: [
@@ -632,6 +632,10 @@ export const adminHelp = {
             ] },
             { q: 'The file is rejected before the review.', a: [
               'You may be missing a required column, listing a column twice, or have a quotation mark that is never closed. The message names the problem, with the row number when it applies.',
+            ] },
+            { q: 'The import stopped early.', a: [
+              'Large files are imported in groups of 100 while a progress bar shows how far it has got. If one group fails, the window says how many employees were imported and how many are still to do, and lists any that were saved by the request that failed.',
+              'Select **Import the remaining** to continue with only the employees that are still missing. Employees who were already saved are not added twice. For the employees listed as possibly saved, open their pages to check that they have an invitation, and use **Send invitation** if not.',
             ] },
             { q: 'An employee did not get the invitation email.', a: [
               'Ask them to check Spam or Junk. Then open their page and select **Resend invitation** in the **Invitation** card.',

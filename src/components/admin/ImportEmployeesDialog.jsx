@@ -4,6 +4,8 @@ import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { functionError } from '@/lib/functionError'
 import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
+import { emptyOutcome, runChunkedImport } from '@/lib/employeeImport'
 import HowDoesThisWork from '@/components/help/HowDoesThisWork'
 import {
     Dialog,
@@ -252,6 +254,9 @@ export default function ImportEmployeesDialog({ open, onClose, onImported, roleO
     const [ignoredColumns, setIgnoredColumns] = useState([])
     const [review, setReview] = useState(null)
     const [outcome, setOutcome] = useState(null)
+    const [progress, setProgress] = useState(null)
+    const [failure, setFailure] = useState(null)
+    const [maybeSaved, setMaybeSaved] = useState([])
     const [sendEmails, setSendEmails] = useState(true)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
@@ -263,6 +268,9 @@ export default function ImportEmployeesDialog({ open, onClose, onImported, roleO
         setIgnoredColumns([])
         setReview(null)
         setOutcome(null)
+        setProgress(null)
+        setFailure(null)
+        setMaybeSaved([])
         setSendEmails(true)
         setLoading(false)
         setError(null)
@@ -270,7 +278,7 @@ export default function ImportEmployeesDialog({ open, onClose, onImported, roleO
 
     const handleClose = () => {
         if (loading) return
-        const imported = step === 'done' && outcome?.summary?.created > 0
+        const imported = step === 'done' && (outcome?.summary?.created > 0 || maybeSaved.length > 0)
         reset()
         onClose()
         if (imported) onImported?.()
@@ -323,22 +331,40 @@ export default function ImportEmployeesDialog({ open, onClose, onImported, roleO
         }
     }
 
-    const handleImport = async () => {
+    const invokeImport = async (body) => {
+        const { data, error: fnError } = await supabase.functions.invoke('admin-import-employees', { body })
+        if (fnError) throw new Error(await functionError(fnError, 'Import failed. Please try again.'))
+        return data
+    }
+
+    const runImport = async (rows, startingOutcome) => {
         setLoading(true)
         setError(null)
-        try {
-            const { data, error: fnError } = await supabase.functions.invoke('admin-import-employees', {
-                body: { rows: employees, sendEmails },
-            })
-            if (fnError) throw new Error(await functionError(fnError, 'Import failed. Please try again.'))
-            setOutcome(data)
-            setStep('done')
-        } catch (err) {
-            setError(err.message || 'Import failed. Please try again.')
-        } finally {
-            setLoading(false)
-        }
+        setFailure(null)
+
+        const result = await runChunkedImport({
+            rows,
+            sendEmails,
+            invoke: invokeImport,
+            outcome: startingOutcome,
+            onProgress: setProgress,
+        })
+
+        setOutcome(result.outcome)
+        setFailure(result.failure)
+        if (result.failure) setMaybeSaved((previous) => [...previous, ...result.failure.maybeSaved])
+        setProgress(null)
+        setStep('done')
+        setLoading(false)
     }
+
+    const handleImport = () => {
+        const readyLines = new Set((review?.results || []).filter((r) => r.status === 'valid').map((r) => r.line))
+        const skipped = (review?.results || []).filter((r) => r.status !== 'valid')
+        runImport(employees.filter((e) => readyLines.has(e.line)), emptyOutcome(skipped))
+    }
+
+    const handleRetry = () => runImport(failure.stillMissing, outcome)
 
     const summary = review?.summary
     const problems = (review?.results || []).filter((r) => SKIPPED_STATUSES.includes(r.status))
@@ -496,13 +522,24 @@ export default function ImportEmployeesDialog({ open, onClose, onImported, roleO
 
                         {error && <p className="text-sm text-red-500">{error}</p>}
 
+                        {loading && progress && (
+                            <div className="space-y-1.5">
+                                <Progress value={(progress.done / progress.total) * 100} />
+                                <p className="text-xs text-muted-foreground">
+                                    Importing in groups of 100. Please keep this window open.
+                                </p>
+                            </div>
+                        )}
+
                         <div className="flex flex-col sm:flex-row gap-3 pt-2">
                             <Button
                                 onClick={handleImport}
                                 disabled={readyCount === 0 || loading}
                                 className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white disabled:opacity-50 w-full sm:w-auto"
                             >
-                                {loading ? 'Importing...' : `Import ${readyCount} Employee${readyCount === 1 ? '' : 's'}`}
+                                {loading
+                                    ? progress ? `Importing ${progress.done} of ${progress.total}...` : 'Importing...'
+                                    : `Import ${readyCount} Employee${readyCount === 1 ? '' : 's'}`}
                             </Button>
                             <Button
                                 variant="outline"
@@ -519,7 +556,7 @@ export default function ImportEmployeesDialog({ open, onClose, onImported, roleO
                 {step === 'done' && outcome?.summary && (
                     <div className="space-y-6 pt-2">
                         <div>
-                            <h3 className="text-sm font-medium mb-4 pb-2 border-b">Import complete</h3>
+                            <h3 className="text-sm font-medium mb-4 pb-2 border-b">{failure ? 'Import stopped early' : 'Import complete'}</h3>
                             <div className="grid grid-cols-3 gap-3">
                                 <SummaryTile label="Imported" value={outcome.summary.created} tone="good" />
                                 <SummaryTile label="Emailed" value={outcome.summary.emailed} />
@@ -540,6 +577,50 @@ export default function ImportEmployeesDialog({ open, onClose, onImported, roleO
                                 </p>
                             )}
                         </div>
+
+                        {failure && (
+                            <div className="rounded-lg border border-red-200 bg-red-50 p-4 space-y-3">
+                                <p className="text-sm font-medium text-red-700">The import stopped before it finished.</p>
+                                <p className="text-sm text-red-700">{failure.message}</p>
+                                {failure.checked ? (
+                                    <p className="text-sm text-foreground">
+                                        {outcome.summary.created} imported so far. {failure.stillMissing.length} still {failure.stillMissing.length === 1 ? 'needs' : 'need'} to be imported.
+                                        {failure.maybeSaved.length > 0 && ` ${failure.maybeSaved.length} more may have been saved by the request that failed.`}
+                                    </p>
+                                ) : (
+                                    <p className="text-sm text-foreground">
+                                        {outcome.summary.created} imported so far. We could not check what the last request saved, so close this window, look at the Employees list, and upload the file again. Employees already in the system are skipped.
+                                    </p>
+                                )}
+                                {failure.checked && failure.stillMissing.length > 0 && (
+                                    <Button
+                                        onClick={handleRetry}
+                                        disabled={loading}
+                                        className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white"
+                                    >
+                                        {loading && progress
+                                            ? `Importing ${progress.done} of ${progress.total}...`
+                                            : `Import the remaining ${failure.stillMissing.length}`}
+                                    </Button>
+                                )}
+                            </div>
+                        )}
+
+                        {maybeSaved.length > 0 && (
+                            <div>
+                                <h3 className="text-sm font-medium mb-4 pb-2 border-b">May have been saved</h3>
+                                <div className="border border-border rounded-lg divide-y max-h-48 overflow-y-auto scrollbar-hide">
+                                    {maybeSaved.map((r) => (
+                                        <p key={`${r.line}-${r.email}`} className="px-3 py-2 text-sm truncate">
+                                            Row {r.line} · {r.email}
+                                        </p>
+                                    ))}
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-2">
+                                    These employees exist now, but the request that saved them did not finish, so they may be missing the welcome email or their trainings. Open each employee to check, and use Send invitation if needed.
+                                </p>
+                            </div>
+                        )}
 
                         {skippedRows.length > 0 && (
                             <div>
