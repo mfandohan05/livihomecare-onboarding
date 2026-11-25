@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { requireCaregiverAccess } from '../_shared/caregiverAccess.ts'
+import { formatPayRate } from '../_shared/payRate.js'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -75,7 +76,7 @@ Deno.serve(async (req) => {
               ${caregiver.hire_date ? `<p style="margin: 0 0 4px 0; color: #3D5906; font-size: 13px; font-weight: 600;">HIRE DATE</p>
               <p style="margin: 0 0 12px 0; color: #111; font-size: 16px; font-weight: 700;">${new Date(caregiver.hire_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>` : ''}
               ${caregiver.pay_rate ? `<p style="margin: 0 0 4px 0; color: #3D5906; font-size: 13px; font-weight: 600;">PAY RATE</p>
-              <p style="margin: 0; color: #111; font-size: 16px; font-weight: 700;">$${caregiver.pay_rate}/hr</p>` : ''}
+              <p style="margin: 0; color: #111; font-size: 16px; font-weight: 700;">$${formatPayRate(caregiver.pay_rate)}/hr</p>` : ''}
             </div>
 
             <a href="${adminLink}"

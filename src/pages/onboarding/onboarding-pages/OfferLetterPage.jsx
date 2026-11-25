@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { formatPayRate } from '@/lib/formUtils'
 import { Label } from '@/components/ui/label'
 import { FileSignature, CheckCircle, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -30,8 +31,8 @@ const interpolate = (text, caregiver) => {
     .replaceAll('{{today}}', today)
     .replaceAll('{{caregiver.name}}', caregiver?.name || '')
     .replaceAll('{{caregiver.position_title}}', caregiver?.position_title || '')
-    .replaceAll('{{caregiver.pay_rate}}', caregiver?.pay_rate ?? '')
-    .replaceAll('{{caregiver.companion_pay_rate}}', caregiver?.companion_pay_rate ?? '')
+    .replaceAll('{{caregiver.pay_rate}}', formatPayRate(caregiver?.pay_rate))
+    .replaceAll('{{caregiver.companion_pay_rate}}', formatPayRate(caregiver?.companion_pay_rate))
     .replaceAll('{{caregiver.employment_type}}', caregiver?.employment_type || '')
     .replaceAll('{{caregiver.start_date_formatted}}', getFormattedStartDate(caregiver) || '________________')
 }

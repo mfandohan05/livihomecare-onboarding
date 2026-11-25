@@ -1,4 +1,5 @@
 import { PDFDocument, StandardFonts } from 'https://esm.sh/pdf-lib@1.17.1'
+import { formatPayRate } from './payRate.js'
 
 // The exact fixed field names generate-offer-letter/index.ts tries against every offer
 // letter template. Unlike company_forms, offer letters have no admin-configurable
@@ -56,9 +57,9 @@ export async function fillOfferLetterTemplate(
   trySet('start_date', (caregiver.start_date as string) || '')
   trySet('effective_date', (caregiver.start_date as string) || '')
   trySet('letter_date', today)
-  trySet('hourly_rate', caregiver.pay_rate?.toString() || '')
-  trySet('live_in_hourly_rate', caregiver.companion_pay_rate?.toString() || '')
-  trySet('companion_rate', caregiver.companion_pay_rate?.toString() || '')
+  trySet('hourly_rate', formatPayRate(caregiver.pay_rate))
+  trySet('live_in_hourly_rate', formatPayRate(caregiver.companion_pay_rate))
+  trySet('companion_rate', formatPayRate(caregiver.companion_pay_rate))
   trySet('mileage_rate', caregiver.mileage_rate?.toString() || '')
 
   const positionIntro = caregiver.position_title

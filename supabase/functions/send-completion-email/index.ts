@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { requireCaregiverAccess } from '../_shared/caregiverAccess.ts'
+import { formatPayRate } from '../_shared/payRate.js'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -89,7 +90,7 @@ Deno.serve(async (req) => {
             <div style="background: #F4F7EC; border-radius: 8px; padding: 16px 20px; margin-bottom: 24px;">
               <p style="margin: 0 0 4px 0; color: #3D5906; font-size: 13px; font-weight: 600;">ORIENTATION PAY</p>
               <p style="margin: 0; color: #111; font-size: 20px; font-weight: 700;">$${orientationPay}</p>
-              <p style="margin: 4px 0 0 0; color: #555; font-size: 13px;">${activeHours} active hours × $${caregiver.pay_rate}/hr</p>
+              <p style="margin: 4px 0 0 0; color: #555; font-size: 13px;">${activeHours} active hours × $${formatPayRate(caregiver.pay_rate)}/hr</p>
             </div>
             ` : ''}
 
