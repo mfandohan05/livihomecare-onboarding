@@ -250,12 +250,18 @@ export function complianceRows(caregivers, documents, { roleOptions = [], today 
     return rows.sort(sort === 'name' ? byEmployeeThenUrgency : byUrgency)
 }
 
+// Spreadsheets run cells starting with these characters as formulas, so such cells get a leading apostrophe.
+const FORMULA_START = /^[=+\-@\t\r]/
+// An international phone number (+ then only digits and phone punctuation) holds no letters, functions
+// or cell references, so it cannot do anything as a formula and is left as typed.
+const PHONE_NUMBER = /^\+[\d ().-]+$/
+
 export function csvCell(value) {
     if (value === null || value === undefined) return ''
     if (typeof value === 'number') return String(value)
 
     let cell = String(value)
-    if (/^[=+\-@\t\r]/.test(cell)) cell = `'${cell}`
+    if (FORMULA_START.test(cell) && !PHONE_NUMBER.test(cell)) cell = `'${cell}`
     if (/[",\r\n]/.test(cell)) cell = `"${cell.replace(/"/g, '""')}"`
     return cell
 }
