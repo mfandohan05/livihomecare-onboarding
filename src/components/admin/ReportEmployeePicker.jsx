@@ -91,7 +91,7 @@ export default function ReportEmployeePicker({ companyId, roleOptions, selected,
                         value={searchInput}
                         onChange={(e) => handleSearch(e.target.value)}
                         placeholder="Search by name or email..."
-                        className="pl-9"
+                        className="pl-9 focus-visible:border-[var(--primary-color)] focus-visible:ring-[var(--primary-color)]/30"
                     />
                 </div>
                 <select value={query.status} onChange={(e) => updateFilters({ status: e.target.value })} className={SELECT_CLASS}>
