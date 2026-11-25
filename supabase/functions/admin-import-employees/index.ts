@@ -256,6 +256,10 @@ function validateRow(raw: RawRow, lookups: Lookups): Validation {
   const employmentType = employmentTypeByInput.get(employmentRaw.toLowerCase())
   if (!employmentType) return invalid(`Employment type must be one of: ${EMPLOYMENT_TYPES.join(' | ')}`)
 
+  if (!field('phone')) return invalid('Phone is required')
+  if (!field('gender')) return invalid('Gender is required')
+  if (!field('pay_rate')) return invalid('Pay rate is required')
+
   const gender = parseOptional(field('gender'), (v) => genderByInput.get(v.toLowerCase()) ?? null,
     `Gender must be one of: ${GENDERS.join(' | ')}`)
   const startDate = parseOptional(field('start_date'), toIsoDate,

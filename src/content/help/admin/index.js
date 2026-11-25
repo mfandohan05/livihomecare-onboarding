@@ -574,11 +574,11 @@ export const adminHelp = {
               ['role', 'Yes', 'One of your company\'s role names. The import window lists them. Capital letters, spaces and hyphens do not matter, and you can leave out anything in brackets (for example **Qualified Professional** or **QP** for Qualified Professional (QP)).', 'Nurse Director'],
               ['position_title', 'Yes', 'Job title.', 'Home Health Aide'],
               ['employment_type', 'Yes', 'Hourly, Part-Time, Hourly, Full-Time or Independent Contractor.', 'Hourly, Full-Time'],
-              ['phone', 'No', '10 digits, any format.', '(704) 555-0123'],
+              ['phone', 'Yes', '10 digits, any format.', '(704) 555-0123'],
+              ['gender', 'Yes', 'Female, Male, Non-binary, Other or Prefer not to say.', 'Female'],
+              ['pay_rate', 'Yes', 'Hourly rate as a number.', '18.50'],
               ['start_date', 'No', 'A real date: YYYY-MM-DD, M/D/YYYY or M/D/YY.', '2025-03-14'],
               ['employee_id', 'No', 'Your own employee number.', 'E-1001'],
-              ['gender', 'No', 'Female, Male, Non-binary, Other or Prefer not to say.', 'Female'],
-              ['pay_rate', 'No', 'Hourly rate as a number.', '18.50'],
             ] } },
             '**Address** (fill in all four columns, or leave them empty)',
             { table: { head: ['Column', 'Required', 'What to enter', 'Example'], rows: [
@@ -621,8 +621,8 @@ export const adminHelp = {
             { q: 'A row says the role is not valid.', a: [
               'Use one of the role names listed in the import window, the same ones you see when you add an employee. Roles are set up by your platform administrator.',
             ] },
-            { q: 'A row says position title or employment type is required.', a: [
-              'Both columns must be filled in for every employee. Employment type must be one of the three choices in the table.',
+            { q: 'A row says a field is required.', a: [
+              'Every column marked **Yes** in the table must be filled in for every employee, the same fields as when you add an employee by hand. Employment type must be one of the three choices in the table.',
             ] },
             { q: 'A row says the start date is not valid.', a: [
               'Check that the date is real (for example, there is no February 30) and written as **YYYY-MM-DD**, **M/D/YYYY** or **M/D/YY**.',
