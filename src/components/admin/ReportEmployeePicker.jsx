@@ -51,6 +51,7 @@ export default function ReportEmployeePicker({ companyId, roleOptions, selected,
     const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE))
     const pageFullySelected = employees.length > 0 && employees.every((e) => selected.has(e.id))
     const everyoneSelected = total > 0 && selected.size === total && pageFullySelected
+    const hasActions = inSelectedView || total > 0 || selected.size > 0
 
     const updateFilters = (patch) => setQuery((current) => ({ ...current, ...patch, page: 1 }))
 
@@ -140,43 +141,35 @@ export default function ReportEmployeePicker({ companyId, roleOptions, selected,
                 </div>
             )}
 
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-3 px-[17px] text-sm">
-                <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                        type="checkbox"
-                        checked={pageFullySelected}
-                        disabled={employees.length === 0 || selectingAll}
-                        onChange={togglePage}
-                        className="h-4 w-4 accent-[var(--primary-color)]"
-                    />
-                    Select this page
-                </label>
-                {total > 0 && !inSelectedView && (
-                    <button
-                        type="button"
-                        onClick={selectAllMatching}
-                        disabled={selectingAll}
-                        className="inline-flex items-center gap-1.5 text-[var(--primary-color)] hover:underline disabled:opacity-50"
-                    >
-                        {selectingAll && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                        Select all {total.toLocaleString()} {isNarrowed(query) ? 'matching' : `employee${total === 1 ? '' : 's'}`}
-                    </button>
-                )}
-                {inSelectedView ? (
-                    <button type="button" onClick={showAll} className="text-[var(--primary-color)] hover:underline">
-                        Back to all employees
-                    </button>
-                ) : selected.size > 0 && !everyoneSelected && (
-                    <button type="button" onClick={showSelected} disabled={selectingAll} className="text-[var(--primary-color)] hover:underline disabled:opacity-50">
-                        Show selected ({selected.size.toLocaleString()})
-                    </button>
-                )}
-                {selected.size > 0 && (
-                    <button type="button" onClick={() => onChange(new Set())} disabled={selectingAll} className="text-muted-foreground hover:text-foreground hover:underline disabled:opacity-50">
-                        Clear selection
-                    </button>
-                )}
-            </div>
+            {hasActions && (
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-3 text-sm">
+                    {total > 0 && !inSelectedView && (
+                        <button
+                            type="button"
+                            onClick={selectAllMatching}
+                            disabled={selectingAll}
+                            className="inline-flex items-center gap-1.5 text-[var(--primary-color)] hover:underline disabled:opacity-50"
+                        >
+                            {selectingAll && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                            Select all {total.toLocaleString()} {isNarrowed(query) ? 'matching' : `employee${total === 1 ? '' : 's'}`}
+                        </button>
+                    )}
+                    {inSelectedView ? (
+                        <button type="button" onClick={showAll} className="text-[var(--primary-color)] hover:underline">
+                            Back to all employees
+                        </button>
+                    ) : selected.size > 0 && !everyoneSelected && (
+                        <button type="button" onClick={showSelected} disabled={selectingAll} className="text-[var(--primary-color)] hover:underline disabled:opacity-50">
+                            Show selected ({selected.size.toLocaleString()})
+                        </button>
+                    )}
+                    {selected.size > 0 && (
+                        <button type="button" onClick={() => onChange(new Set())} disabled={selectingAll} className="text-muted-foreground hover:text-foreground hover:underline disabled:opacity-50">
+                            Clear selection
+                        </button>
+                    )}
+                </div>
+            )}
 
             {selectAllError && <p className="text-sm text-red-500 mb-3">{selectAllError}</p>}
 
@@ -188,27 +181,39 @@ export default function ReportEmployeePicker({ companyId, roleOptions, selected,
                         {loading ? 'Loading...' : inSelectedView ? 'No employees selected.' : 'No employees match these filters.'}
                     </p>
                 ) : (
-                    employees.map((employee) => (
-                        <label key={employee.id} className="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-muted/30">
+                    <>
+                        <label className="flex items-center gap-3 px-4 py-2.5 cursor-pointer bg-muted/30 text-sm font-medium">
                             <input
                                 type="checkbox"
-                                checked={selected.has(employee.id)}
+                                checked={pageFullySelected}
                                 disabled={selectingAll}
-                                onChange={() => toggleOne(employee.id)}
+                                onChange={togglePage}
                                 className="h-4 w-4 shrink-0 accent-[var(--primary-color)]"
                             />
-                            <span className="min-w-0 flex-1">
-                                <span className="block text-sm font-medium truncate">{employee.name}</span>
-                                <span className="block text-xs text-muted-foreground truncate">{employee.email}</span>
-                            </span>
-                            <span className="hidden sm:block text-xs text-muted-foreground truncate max-w-[10rem]">
-                                {roleName(employee.role, roleOptions)}
-                            </span>
-                            <span className={`text-xs font-medium px-2.5 py-1 rounded-full shrink-0 ${statusColor(employee.status, employee.source)}`}>
-                                {statusText(employee)}
-                            </span>
+                            Select this page
                         </label>
-                    ))
+                        {employees.map((employee) => (
+                            <label key={employee.id} className="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-muted/30">
+                                <input
+                                    type="checkbox"
+                                    checked={selected.has(employee.id)}
+                                    disabled={selectingAll}
+                                    onChange={() => toggleOne(employee.id)}
+                                    className="h-4 w-4 shrink-0 accent-[var(--primary-color)]"
+                                />
+                                <span className="min-w-0 flex-1">
+                                    <span className="block text-sm font-medium truncate">{employee.name}</span>
+                                    <span className="block text-xs text-muted-foreground truncate">{employee.email}</span>
+                                </span>
+                                <span className="hidden sm:block text-xs text-muted-foreground truncate max-w-[10rem]">
+                                    {roleName(employee.role, roleOptions)}
+                                </span>
+                                <span className={`text-xs font-medium px-2.5 py-1 rounded-full shrink-0 ${statusColor(employee.status, employee.source)}`}>
+                                    {statusText(employee)}
+                                </span>
+                            </label>
+                        ))}
+                    </>
                 )}
             </div>
 
