@@ -609,7 +609,7 @@ export const adminHelp = {
             'The review shows how many rows are **Ready to import**, **Need fixing** (yellow) and **Already exist** (red).',
             'After importing, the **Skipped rows** table shows each skipped row with the employee\'s name, email and the reason.',
             'Imported employees appear in the Employees list with an **Imported** badge instead of Completed. They skip onboarding, so the onboarding panels are not shown on their page.',
-            'On an imported employee\'s page, the **Invitation** card shows **Send invitation** or **Resend invitation** until they create an account, then **Account created**.',
+            'On an imported employee\'s page, the **Invitation** card shows **Send invitation** or **Resend invitation** until they create an account, then **Account created**. The sign-up link is valid for **7 days**, and the card shows when it expires.',
             'If you left **Send a welcome email** ticked, each employee is emailed that they were added by your company, with a link to create their account.',
           ],
           problems: [
@@ -638,7 +638,7 @@ export const adminHelp = {
               'Select **Import the remaining** to continue with only the employees that are still missing. Employees who were already saved are not added twice. For the employees listed as possibly saved, open their pages to check that they have an invitation, and use **Send invitation** if not.',
             ] },
             { q: 'An employee did not get the invitation email.', a: [
-              'Ask them to check Spam or Junk. Then open their page and select **Resend invitation** in the **Invitation** card.',
+              'Ask them to check Spam or Junk. Then open their page and select **Resend invitation** in the **Invitation** card. If the link has expired (it lasts 7 days), the same button sends a new one with a fresh 7 days. Wait a minute between sends.',
             ] },
           ],
           related: ['add-employee', 'employee-page', 'document-expiration'],

@@ -64,6 +64,17 @@ export function escapeHtml(value: string): string {
     .replace(/'/g, '&#39;')
 }
 
+export function isInviteLinkExpired(caregiver: {
+  status: string | null
+  source?: string | null
+  link_expires_at: string | null
+}): boolean {
+  if (!caregiver.link_expires_at) return false
+
+  const linkExpires = caregiver.status === 'pending' || caregiver.source === 'imported'
+  return linkExpires && new Date() > new Date(caregiver.link_expires_at)
+}
+
 export type CaregiverForVerification = {
   id: string
   name: string | null
@@ -89,10 +100,7 @@ export async function findVerifiableCaregiver(
 
   if (error || !caregiver || caregiver.user_id) return null
 
-  const isExpired = caregiver.status === 'pending' &&
-    caregiver.link_expires_at &&
-    new Date() > new Date(caregiver.link_expires_at)
-  if (isExpired) return null
+  if (isInviteLinkExpired(caregiver)) return null
 
   return caregiver as CaregiverForVerification
 }

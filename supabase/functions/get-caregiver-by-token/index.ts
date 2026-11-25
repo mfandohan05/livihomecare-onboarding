@@ -1,5 +1,5 @@
 import { getCallerUser, isAdminOfCompany, serviceClient } from '../_shared/caregiverAccess.ts'
-import { firstName, maskEmail } from '../_shared/caregiverVerification.ts'
+import { firstName, isInviteLinkExpired, maskEmail } from '../_shared/caregiverVerification.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -54,11 +54,7 @@ Deno.serve(async (req) => {
     if (caregiver.user_id) return json({ state: 'needs_signin' })
 
     // No account yet: an unused link can still expire.
-    const isExpired = caregiver.status === 'pending' &&
-      caregiver.link_expires_at &&
-      new Date() > new Date(caregiver.link_expires_at)
-
-    if (isExpired) {
+    if (isInviteLinkExpired(caregiver)) {
       await supabase.from('caregivers').update({ token: null }).eq('id', caregiver.id)
       return NOT_FOUND()
     }

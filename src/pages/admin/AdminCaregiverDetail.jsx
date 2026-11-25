@@ -653,7 +653,7 @@ export default function AdminCaregiverDetail() {
             toast.error(error ? await functionError(error, fallback) : data?.error || fallback)
             return
         }
-        setCaregiver(prev => ({ ...prev, welcome_email_sent_at: data.welcomeEmailSentAt }))
+        setCaregiver(prev => ({ ...prev, welcome_email_sent_at: data.welcomeEmailSentAt, link_expires_at: data.linkExpiresAt }))
         toast.success('Invitation sent')
     }
 
@@ -2058,6 +2058,15 @@ export default function AdminCaregiverDetail() {
                                             })}. They have not created an account yet.`
                                             : 'No invitation has been sent yet.'}
                                     </p>
+                                    {caregiver.link_expires_at && (
+                                        <p className={`text-xs ${new Date(caregiver.link_expires_at) < new Date() ? 'text-red-500' : 'text-muted-foreground'}`}>
+                                            {new Date(caregiver.link_expires_at) < new Date() ? 'The invitation link expired' : 'The invitation link expires'}{' '}
+                                            {new Date(caregiver.link_expires_at).toLocaleDateString('en-US', {
+                                                month: 'short', day: 'numeric', year: 'numeric',
+                                            })}.
+                                            {new Date(caregiver.link_expires_at) < new Date() && ' Send a new invitation.'}
+                                        </p>
+                                    )}
                                     <button
                                         onClick={handleResendWelcome}
                                         disabled={resending}

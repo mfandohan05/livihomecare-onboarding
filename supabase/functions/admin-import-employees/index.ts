@@ -1,7 +1,7 @@
 import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { requireAdminContext } from '../_shared/requireAdmin.ts'
 import { assignTrainingsToMany, CAREGIVER_ROLES } from '../_shared/training.ts'
-import { buildWelcomeEmail, loadBranding, sendWelcomeEmails } from '../_shared/importWelcomeEmail.ts'
+import { IMPORT_LINK_DAYS, buildWelcomeEmail, loadBranding, sendWelcomeEmails } from '../_shared/importWelcomeEmail.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -329,7 +329,7 @@ function validateRow(raw: RawRow, lookups: Lookups): Validation {
       pay_rate: payRate.value,
       status: 'completed',
       source: 'imported',
-      link_expires_at: null,
+      link_expires_at: new Date(Date.now() + IMPORT_LINK_DAYS * 86400000).toISOString(),
     },
     personalInfo: {
       ...splitName(name),
@@ -418,12 +418,14 @@ Deno.serve(async (req) => {
       }
 
       const token = employee.token ?? crypto.randomUUID()
-      if (!employee.token) {
-        const { error: tokenError } = await supabase.from('caregivers').update({ token }).eq('id', employee.id)
-        if (tokenError) {
-          console.error('invitation token could not be saved:', tokenError)
-          return json({ error: 'Could not prepare the invitation link. Please try again.' }, 500)
-        }
+      const linkExpiresAt = new Date(Date.now() + IMPORT_LINK_DAYS * 86400000).toISOString()
+      const { error: tokenError } = await supabase
+        .from('caregivers')
+        .update({ token, link_expires_at: linkExpiresAt })
+        .eq('id', employee.id)
+      if (tokenError) {
+        console.error('invitation link could not be saved:', tokenError)
+        return json({ error: 'Could not prepare the invitation link. Please try again.' }, 500)
       }
 
       const branding = await loadBranding(supabase, companyId)
@@ -448,7 +450,7 @@ Deno.serve(async (req) => {
       })
       if (auditError) console.error('audit log failed', auditError)
 
-      return json({ success: true, welcomeEmailSentAt })
+      return json({ success: true, welcomeEmailSentAt, linkExpiresAt })
     }
 
     const rows: unknown = body?.rows

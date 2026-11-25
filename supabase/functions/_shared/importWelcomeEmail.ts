@@ -1,6 +1,8 @@
 import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { escapeHtml, firstName } from './caregiverVerification.ts'
 
+export const IMPORT_LINK_DAYS = 7
+
 const PORTAL_DOMAIN = 'rsonboard.com'
 const SENDER_EMAIL = 'noreply@rsonboard.com'
 const DEFAULT_COLOR = '#577C09'
@@ -81,6 +83,10 @@ export function buildWelcomeEmail(target: WelcomeTarget, branding: Branding) {
             Create your account →
           </a>
         </div>
+
+        <p style="color: #555; font-size: 14px; margin-bottom: 24px;">
+          This link is valid for ${IMPORT_LINK_DAYS} days. If it has expired, ask ${company} to send you a new one.
+        </p>
 
         <p style="color: #888; font-size: 13px; margin-bottom: 8px;">
           Or copy this link into your browser:
