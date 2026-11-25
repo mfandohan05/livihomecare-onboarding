@@ -181,7 +181,7 @@ function understoodDates(results, employees) {
 }
 
 function SummaryTile({ label, value, tone }) {
-    const TONES = { good: 'text-[var(--primary-color)]', warn: 'text-amber-600', bad: 'text-red-500' }
+    const TONES = { good: 'text-green-600', warn: 'text-amber-600', bad: 'text-red-500' }
     const color = TONES[tone] || 'text-foreground'
     return (
         <div className="border border-border rounded-lg px-3 py-2">
