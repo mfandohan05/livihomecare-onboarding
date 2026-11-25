@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
 import Landing from './pages/marketing/Landing'
 import Login from './pages/Login'
+import PrivacyPolicy from './pages/legal/PrivacyPolicy'
+import TermsOfService from './pages/legal/TermsOfService'
 import NotFound from './pages/NotFound'
 import OnboardingGate from './pages/onboarding/OnboardingGate'
 import CaregiverSignIn from './pages/onboarding/CaregiverSignIn'
@@ -70,7 +72,7 @@ function StudioLayoutWrapper() {
 
 // Public pages only: start at the top when moving between them (e.g. landing page -> /login).
 // App routes (/admin, /studio, /onboard) are left alone, and same-page #anchors don't change pathname.
-const PUBLIC_PATHS = ['/', '/login', '/admin/login']
+const PUBLIC_PATHS = ['/', '/login', '/admin/login', '/privacy', '/terms']
 function ScrollToTopOnPublicNav() {
     const { pathname } = useLocation()
     useEffect(() => {
@@ -88,6 +90,8 @@ function App() {
             <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/terms" element={<TermsOfService />} />
                 {/* Public, static help content: no sign-in needed */}
                 <Route path='/help' element={<CaregiverFaq />} />
                 {/* Every caregiver route lives under CaregiverLayout, which adds the Help button */}

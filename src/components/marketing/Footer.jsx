@@ -14,8 +14,10 @@ export default function Footer() {
                 </div>
                 <nav aria-label="Footer">
                     <ul className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-medium">
-                        <li><a href="#features" className="hover:underline">Features</a></li>
-                        <li><a href="#contact" className="hover:underline">Contact</a></li>
+                        <li><a href="/#features" className="hover:underline">Features</a></li>
+                        <li><a href="/#contact" className="hover:underline">Contact</a></li>
+                        <li><Link to="/privacy" className="hover:underline">Privacy Policy</Link></li>
+                        <li><Link to="/terms" className="hover:underline">Terms of Service</Link></li>
                         <li><Link to="/login" className="hover:underline">Log in</Link></li>
                     </ul>
                 </nav>

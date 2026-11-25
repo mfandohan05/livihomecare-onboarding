@@ -4,9 +4,9 @@ import { Menu, X } from 'lucide-react'
 import logo from '@/assets/logo.png'
 
 const LINKS = [
-    { href: '#features', label: 'Features' },
-    { href: '#how-it-works', label: 'How it works' },
-    { href: '#contact', label: 'Contact' },
+    { href: '/#features', label: 'Features' },
+    { href: '/#how-it-works', label: 'How it works' },
+    { href: '/#contact', label: 'Contact' },
 ]
 
 export default function Nav() {
@@ -31,7 +31,7 @@ export default function Nav() {
 
                 <div className="flex items-center gap-2">
                     <Link to="/login" className="lr-btn lr-btn-tonal lr-btn-sm">Log in</Link>
-                    <a href="#contact" className="lr-btn lr-btn-primary lr-btn-sm hidden sm:inline-flex">Contact us</a>
+                    <a href="/#contact" className="lr-btn lr-btn-primary lr-btn-sm hidden sm:inline-flex">Contact us</a>
                     <button
                         type="button"
                         className="inline-flex size-10 items-center justify-center rounded-full text-[var(--lr-navy)] hover:bg-[var(--lr-surface)] md:hidden"
@@ -57,7 +57,7 @@ export default function Nav() {
                         ))}
                     </ul>
                     <div className="lr-container">
-                        <a href="#contact" onClick={() => setOpen(false)} className="lr-btn lr-btn-primary w-full">Contact us</a>
+                        <a href="/#contact" onClick={() => setOpen(false)} className="lr-btn lr-btn-primary w-full">Contact us</a>
                     </div>
                 </div>
             )}
