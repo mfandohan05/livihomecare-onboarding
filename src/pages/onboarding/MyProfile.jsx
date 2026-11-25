@@ -86,7 +86,7 @@ export default function MyProfile() {
                     <div className="flex items-center justify-between gap-3 mb-4">
                         <h2 className="font-semibold">My uploaded documents</h2>
                         <Button variant="outline" size="sm" onClick={() => navigate('/my-documents')}>
-                            Update expiring documents
+                            Upload documents
                         </Button>
                     </div>
                     {documents === null ? (

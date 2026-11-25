@@ -363,20 +363,20 @@ export const adminHelp = {
         {
           id: 'cg-my-documents',
           title: 'After they finish: My Documents',
-          summary: 'Where completed employees replace expiring documents.',
-          whenToUse: ['Use this when a document is expiring and you want the employee to replace it.'],
+          summary: 'Where completed and imported employees upload documents and replace expiring ones.',
+          whenToUse: ['Use this when a document is expiring and you want the employee to replace it, or when an employee needs to upload a document themselves (imported employees, for example).'],
           steps: [
-            'The employee signs in with their email and password. They land on **My Profile** and choose **Update expiring documents**, or use **My Documents** in the menu at the top.',
-            'They find the document and tap **Replace**.',
-            'They choose the new file, enter the new expiration date, and tap **Upload**.',
+            'The employee signs in with their email and password. They land on **My Profile** and choose **Upload documents**, or use **My Documents** in the menu at the top.',
+            'They find the document type and tap **Upload** (nothing on file yet) or **Replace** (swap the current file).',
+            'They choose the file. For documents that expire, they enter the expiration date and tap **Upload**. Files can be images or PDFs up to 10 MB.',
           ],
           details: [
             { screenshot: { label: 'My Documents', src: '/help/my-documents.png', alt: 'Example screen with sample data: My Documents' } },
-            'They see their tracked documents sorted by soonest expiry, with colored badges. Reminder emails send them here.',
+            'They see every document type with the file on file or "Not uploaded yet", and colored expiration badges for documents that expire. Reminder emails send them here. Nurses also see Nursing License.',
             { tip: 'What to tell them: "When you get a reminder email, sign in and replace the document. Enter the new expiration date."' },
           ],
-          seeing: ['"Document updated" appears. The new file and date show on the employee page.'],
-          problems: [{ q: 'They see no documents.', a: ['Only documents with tracked types appear. Others are not listed.'] }],
+          seeing: ['"Document uploaded" or "Document updated" appears. The new file and date show on the employee page.'],
+          problems: [{ q: 'They cannot find a document type they need to upload.', a: ['The list covers the common documents: licenses, insurance, TB test, bloodborne pathogens certificate, certifications, Social Security card or other I-9 identity documents, badge photo and resume. For anything else, you can upload it for them from the employee page.'] }],
           related: ['document-expiration', 'emails'],
         },
         {
