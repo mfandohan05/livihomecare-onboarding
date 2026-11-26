@@ -56,7 +56,6 @@ export default function CaregiverFaq() {
         return () => window.removeEventListener('hashchange', goToHash)
     }, [])
 
-    // Jump to a topic without adding a history entry, so Back still leaves the Help page in one click.
     const jumpToTopic = (event, id) => {
         event.preventDefault()
         window.history.replaceState(null, '', `#${id}`)
