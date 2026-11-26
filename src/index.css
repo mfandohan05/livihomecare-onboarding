@@ -47,6 +47,20 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --lr-navy: #022a69;
+  --lr-navy-hover: #0a3a86;
+  --lr-navy-tint: #e6ecf7;
+}
+
+.rsonboard-theme {
+  /* RSOnboard's own pages (404, public Help, error dialog): the product's navy, not a company's color.
+     Everything inside that reads --primary / --primary-color picks it up. */
+  --primary: var(--lr-navy);
+  --primary-foreground: #fff;
+  --ring: var(--lr-navy);
+  --primary-color: var(--lr-navy);
+  --hover-color: var(--lr-navy-hover);
+  --secondary-bg: var(--lr-navy-tint);
 }
 
 .studio-theme {

@@ -3,7 +3,7 @@ import '@/components/marketing/marketing.css'
 
 export default function NotFound() {
     return (
-        <main className="lr-page-enter min-h-screen flex items-center justify-center bg-muted/30 px-4 text-center">
+        <main className="rsonboard-theme lr-page-enter min-h-screen flex items-center justify-center bg-muted/30 px-4 text-center">
             <div>
                 <p className="text-sm font-semibold text-[var(--primary-color)]">404</p>
                 <h1 className="mt-2 text-3xl font-semibold">Page not found</h1>

@@ -17,7 +17,7 @@ export default function ErrorDialogProvider() {
 
     return (
         <Dialog open={!!error} onOpenChange={(o) => !o && setError(null)}>
-            <DialogContent>
+            <DialogContent className="rsonboard-theme">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <TriangleAlert className="w-5 h-5 text-red-500 shrink-0" />

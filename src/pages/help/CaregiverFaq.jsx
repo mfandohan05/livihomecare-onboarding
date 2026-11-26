@@ -61,7 +61,7 @@ export default function CaregiverFaq() {
     const email = company?.email?.trim()
 
     return (
-        <div className="min-h-screen bg-muted/30 pb-16">
+        <div className="rsonboard-theme min-h-screen bg-muted/30 pb-16">
             <header className="border-b border-border bg-white">
                 <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-4">
                     <img src={companyLogo} alt="Ready, Set, Onboard!" className="w-[140px]" />
