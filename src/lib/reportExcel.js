@@ -1,6 +1,3 @@
-// Builds an .xlsx workbook from the same columns/rows the CSV export uses.
-// Rows hold display text (MM/DD/YYYY, "15.00"); each column's type tells us how to store it in Excel.
-
 const ALIGNMENT = 'left'
 const MIN_WIDTH = 10
 const MAX_WIDTH = 45
@@ -13,7 +10,6 @@ const HEADER_STYLE = { fontWeight: 'bold', backgroundColor: '#F3F4F6', align: AL
 const CELL_BUILDERS = {
     date: (text) => {
         const [month, day, year] = text.split('/').map(Number)
-        // Excel cannot show dates before 1900 (it prints ####), so keep those as text.
         if (year < MIN_EXCEL_YEAR) return { value: text }
         return { value: new Date(Date.UTC(year, month - 1, day)), type: Date, format: DATE_FORMAT }
     },

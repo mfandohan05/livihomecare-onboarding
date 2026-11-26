@@ -16,7 +16,9 @@ const FORMATS = {
     csv: { extension: 'csv', toBlob: async (columns, rows) => new Blob([toCsv(columns, rows)], { type: CSV_TYPE }) },
 }
 
-async function recordExport(companyId, reportId, count, format) {
+const allColumnKeys = () => Object.fromEntries(REPORT_TYPES.map((type) => [type.id, type.columns.map(([key]) => key)]))
+
+async function recordExport(companyId, reportId, count, format, columns) {
     try {
         const { data: { session } } = await supabase.auth.getSession()
         if (!session) return
@@ -26,7 +28,7 @@ async function recordExport(companyId, reportId, count, format) {
             admin_email: session.user.email,
             action: 'exported_report',
             company_id: companyId,
-            metadata: { report: reportId, employees: count, format },
+            metadata: { report: reportId, employees: count, format, columns },
         })
         if (error) throw error
     } catch (err) {
@@ -41,6 +43,7 @@ export default function AdminReports() {
     const [roleOptions, setRoleOptions] = useState([])
     const [complianceSort, setComplianceSort] = useState(COMPLIANCE_SORTS[0].value)
     const [progress, setProgress] = useState(null)
+    const [columnKeys, setColumnKeys] = useState(allColumnKeys)
 
     useEffect(() => {
         if (!companyId) return
@@ -53,6 +56,13 @@ export default function AdminReports() {
 
     const report = REPORT_TYPES.find((type) => type.id === reportId)
     const running = progress !== null
+    const chosenKeys = columnKeys[reportId]
+    const chosen = new Set(chosenKeys)
+
+    const setChosen = (keys) => setColumnKeys((current) => ({ ...current, [reportId]: keys }))
+    const toggleColumn = (key) => setChosen(
+        report.columns.map(([k]) => k).filter((k) => (k === key ? !chosen.has(k) : chosen.has(k)))
+    )
 
     const runReport = async (format) => {
         if (selected.size > MAX_REPORT_EMPLOYEES) {
@@ -65,12 +75,12 @@ export default function AdminReports() {
 
         try {
             const data = await loadReportData(companyId, reportId, ids, (done, total) => setProgress({ done, total, format }))
-            const { columns, rows, baseName } = buildReport(reportId, { ...data, roleOptions, sort: complianceSort })
+            const { columns, rows, baseName } = buildReport(reportId, { ...data, roleOptions, sort: complianceSort }, chosenKeys)
             const { extension, toBlob } = FORMATS[format]
 
             downloadBlob(`${baseName}.${extension}`, await toBlob(columns, rows, report.label))
             toast.success(`${report.label} report downloaded (${rows.length.toLocaleString()} row${rows.length === 1 ? '' : 's'})`)
-            recordExport(companyId, reportId, ids.length, format)
+            recordExport(companyId, reportId, ids.length, format, columns.map(([key]) => key))
         } catch (err) {
             toast.error(err.message || 'The report could not be created. Please try again.')
         } finally {
@@ -112,8 +122,46 @@ export default function AdminReports() {
                     ))}
                 </div>
                 <div className="mt-4 text-xs">
-                    <p className="font-medium mb-1.5">Columns in this report</p>
-                    <p className="text-muted-foreground">{report.columns.map(([, label]) => label).join(', ')}</p>
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                        <p className="font-medium">
+                            Columns to include
+                            <span className="text-muted-foreground font-normal"> · {chosenKeys.length} of {report.columns.length}</span>
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setChosen(report.columns.map(([key]) => key))}
+                                className="text-[var(--primary-color)] hover:underline disabled:opacity-50 disabled:no-underline"
+                                disabled={chosenKeys.length === report.columns.length}
+                            >
+                                Select all
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setChosen([])}
+                                className="text-[var(--primary-color)] hover:underline disabled:opacity-50 disabled:no-underline"
+                                disabled={chosenKeys.length === 0}
+                            >
+                                Clear
+                            </button>
+                        </div>
+                    </div>
+                    <div className="grid gap-x-4 gap-y-1.5 sm:grid-cols-2 md:grid-cols-3">
+                        {report.columns.map(([key, label]) => (
+                            <label key={key} className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={chosen.has(key)}
+                                    onChange={() => toggleColumn(key)}
+                                    className="h-4 w-4 shrink-0 accent-[var(--primary-color)]"
+                                />
+                                <span>{label}</span>
+                            </label>
+                        ))}
+                    </div>
+                    {chosenKeys.length === 0 && (
+                        <p className="mt-2 text-red-500">Choose at least one column.</p>
+                    )}
                 </div>
                 {reportId === 'compliance' && (
                     <label className="mt-4 flex items-center gap-2 text-xs">
@@ -152,14 +200,14 @@ export default function AdminReports() {
                     <Button
                         variant="outline"
                         onClick={() => runReport('csv')}
-                        disabled={selected.size === 0 || running}
+                        disabled={selected.size === 0 || chosenKeys.length === 0 || running}
                     >
                         {progress?.format === 'csv' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
                         Download CSV
                     </Button>
                     <Button
                         onClick={() => runReport('xlsx')}
-                        disabled={selected.size === 0 || running}
+                        disabled={selected.size === 0 || chosenKeys.length === 0 || running}
                         className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white disabled:opacity-50"
                     >
                         {progress?.format === 'xlsx' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileSpreadsheet className="w-4 h-4 mr-2" />}

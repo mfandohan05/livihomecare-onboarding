@@ -276,9 +276,18 @@ export function reportBaseName(reportId, now = new Date()) {
     return `${reportId}-report-${todayInTimeZone(undefined, now)}`
 }
 
-export function buildReport(reportId, data) {
+export function selectColumns(columns, keys) {
+    if (!keys) return columns
+    const wanted = new Set(keys)
+    return columns.filter(([key]) => wanted.has(key))
+}
+
+export function buildReport(reportId, data, columnKeys) {
     const type = REPORT_TYPES.find((t) => t.id === reportId)
     if (!type) throw new Error(`Unknown report: ${reportId}`)
+
+    const columns = selectColumns(type.columns, columnKeys)
+    if (columns.length === 0) throw new Error('Choose at least one column.')
 
     const rows = reportId === 'roster'
         ? rosterRows(data.caregivers, data)
@@ -286,5 +295,5 @@ export function buildReport(reportId, data) {
             ? complianceRows(data.caregivers, data.documents || [], data)
             : detailRows(data.caregivers, data)
 
-    return { columns: type.columns, rows, baseName: reportBaseName(reportId, data.now) }
+    return { columns, rows, baseName: reportBaseName(reportId, data.now) }
 }
