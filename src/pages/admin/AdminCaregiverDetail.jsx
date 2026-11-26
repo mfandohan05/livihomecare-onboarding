@@ -103,6 +103,7 @@ const docLabel = (type) => {
         oig_exclusion: "OIG Exclusion Screening Result",
         drug_test_results: "Drug Test Result",
         employee_policy_manual: "Employee Policy Manual (Signed)",
+        fraud_waste_abuse: "Fraud, Waste, & Abuse",
     }
     return labels[type] || type
 }
@@ -138,7 +139,7 @@ const DOCUMENT_CATEGORIES = [
             'criminal_background_check', 'criminal_background_check_signed',
             'new_hire_notification', 'new_hire_notification_signed',
             'pre_employment_orientation', 'orientation_checklist_signed',
-            'wotc_disclosure', 'direct_deposit_authorization', 'contractor_agreement',
+            'wotc_disclosure', 'direct_deposit_authorization', 'contractor_agreement', 'fraud_waste_abuse',
         ],
     },
 ]
@@ -401,7 +402,7 @@ export default function AdminCaregiverDetail() {
             'independent_contractor_agreement', "direct_deposit_authorization", 'wotc_disclosure', 
             "reference_check", "job_description", "non_compete", 'contractor_agreement',
             'criminal_background_check', 'drug_test_policy', "new_hire_notification",
-            'employee_policy_manual',
+            'employee_policy_manual', 'fraud_waste_abuse',
         ]
 
         const bucket = generatedPdfTypes.includes(doc.document_type)
@@ -465,6 +466,7 @@ export default function AdminCaregiverDetail() {
         'drug_test_results': 'Drug Test Result',
         'oig_exclusion': 'OIG Exclusion Screening Result',
         'employee_policy_manual': 'Employee Policy Manual (Signed)',
+        "fraud_waste_abuse": "Fraud, Waste, & Abuse",
     }
 
     const handleUpload = async (documentType, file, expirationDate) => {
@@ -910,8 +912,8 @@ export default function AdminCaregiverDetail() {
     const isCancelled = caregiver.status === 'cancelled'
     const isImported = caregiver.source === 'imported'
     const uploadableDocs = isNurse
-        ? ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'nursingLicense', 'bloodborne_certificate', 'certifications', 'criminal-background-results', 'nc-healthcare-personnel-check', 'resume', 'competency_skills_assessment', 'drug_test_results', 'oig_exclusion', 'reference_check']
-        : ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'bloodborne_certificate', 'certifications', 'criminal-background-results', 'nc-healthcare-personnel-check', 'resume', 'competency_skills_assessment', 'drug_test_results', 'oig_exclusion', 'reference_check']
+        ? ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'nursingLicense', 'bloodborne_certificate', 'certifications', 'criminal-background-results', 'nc-healthcare-personnel-check', 'resume', 'competency_skills_assessment', 'drug_test_results', 'oig_exclusion', 'reference_check', 'fraud_waste_abuse']
+        : ['driversLicense', 'carInsurance', 'tbTest', 'socialSecurityCard', 'badgePhoto', 'bloodborne_certificate', 'certifications', 'criminal-background-results', 'nc-healthcare-personnel-check', 'resume', 'competency_skills_assessment', 'drug_test_results', 'oig_exclusion', 'reference_check', 'fraud_waste_abuse']
     const adminSignableTypes = signableDocs.filter(d => !d.requiresSection2).flatMap(d => d.ids)
     const visibleDocuments = documents.filter(doc => {
         if (doc.document_type === 'w4_completed') {
