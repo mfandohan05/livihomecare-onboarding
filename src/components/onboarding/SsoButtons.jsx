@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { signInWithSso } from '@/lib/caregiver'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 
 function GoogleIcon() {
     return (
@@ -14,7 +13,7 @@ function GoogleIcon() {
     )
 }
 
-export default function SsoButtons({ redirectTo, disabled, onError, onStart, buttonClassName }) {
+export default function SsoButtons({ redirectTo, disabled, onError, onStart }) {
     const [pending, setPending] = useState(null)
 
     const handleClick = async (provider) => {
@@ -34,7 +33,7 @@ export default function SsoButtons({ redirectTo, disabled, onError, onStart, but
                 variant="outline"
                 disabled={disabled || !!pending}
                 onClick={() => handleClick('google')}
-                className={cn("w-full h-10 gap-2", buttonClassName)}
+                className="h-12 w-full gap-2 rounded-full border-[#677fa5] bg-white text-base font-semibold text-[var(--lr-navy)] hover:border-[var(--lr-navy)] hover:bg-[var(--lr-navy-tint)] hover:text-[var(--lr-navy)]"
             >
                 <GoogleIcon />
                 {pending === 'google' ? 'Redirecting...' : 'Continue with Google'}
@@ -46,9 +45,9 @@ export default function SsoButtons({ redirectTo, disabled, onError, onStart, but
 export function OrDivider() {
     return (
         <div className="flex items-center gap-3 py-1">
-            <div className="h-px flex-1 bg-border" />
-            <span className="text-xs text-muted-foreground">or</span>
-            <div className="h-px flex-1 bg-border" />
+            <div className="h-px flex-1 bg-[var(--lr-line)]" />
+            <span className="text-xs text-[var(--lr-text-2)]">or</span>
+            <div className="h-px flex-1 bg-[var(--lr-line)]" />
         </div>
     )
 }

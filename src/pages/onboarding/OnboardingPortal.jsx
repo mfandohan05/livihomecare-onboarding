@@ -26,6 +26,7 @@ import SurePayrollGuidePage from './onboarding-pages/SurePayrollGuidePage'
 import NeedHelpLink from '@/components/help/NeedHelpLink'
 import { useNavigate } from 'react-router-dom'
 import ProfilePromptDialog from '@/components/onboarding/ProfilePromptDialog'
+import LoginShell from '@/components/auth/LoginShell'
 
 import {
     Heart,
@@ -362,17 +363,11 @@ export default function OnboardingPortal({ initialCaregiver, viewer }) {
 
     if (!caregiver) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center max-w-md px-8">
-                    <h1 className="text-2xl font-bold mb-2">Link not found</h1>
-                    <p className="text-muted-foreground">
-                        This onboarding link is invalid or has expired. Please contact Livi Home Care for a new link.
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-4">
-                        📞 980-416-6127 &nbsp;|&nbsp; ✉️ office@livihomecare.com
-                    </p>
-                </div>
-            </div>
+            <LoginShell
+                backTo={null}
+                title="Link not found"
+                subtitle="This onboarding link is invalid or has expired. Please contact your employer for a new link."
+            />
         )
     }
 

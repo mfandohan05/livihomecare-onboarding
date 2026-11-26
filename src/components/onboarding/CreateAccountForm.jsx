@@ -1,11 +1,8 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { createCaregiverAccount, clearVerificationProof, markSsoIntent, clearSsoIntent } from '@/lib/caregiver'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/password-input'
-import { Label } from '@/components/ui/label'
-import AuthCard from './AuthCard'
+import LoginShell from '@/components/auth/LoginShell'
 import { MAX_PASSWORD_LENGTH, meetsPasswordRules } from '@/lib/passwordPolicy'
 import PasswordRequirements from './PasswordRequirements'
 import SsoButtons, { OrDivider } from './SsoButtons'
@@ -64,7 +61,8 @@ export default function CreateAccountForm({ token, proof, firstName, maskedEmail
     }
 
     return (
-        <AuthCard
+        <LoginShell
+            backTo={null}
             title={firstName ? `Welcome, ${firstName}` : 'Welcome'}
             subtitle={imported
                 ? "Create your account to manage your profile, documents and trainings. You'll use it to sign back in any time."
@@ -79,17 +77,18 @@ export default function CreateAccountForm({ token, proof, firstName, maskedEmail
                     setError(message)
                 }}
             />
-            <div className="my-4">
+            <div className="my-5">
                 <OrDivider />
             </div>
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-1.5">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="text" value={maskedEmail} disabled readOnly />
+            <form onSubmit={handleSubmit} className="space-y-5">
+                <div>
+                    <label htmlFor="email" className="text-sm font-semibold text-[var(--lr-navy)]">Email</label>
+                    <input id="email" type="text" value={maskedEmail} disabled readOnly className="lr-input" />
                 </div>
-                <div className="space-y-1.5">
-                    <Label htmlFor="password">Password</Label>
+                <div>
+                    <label htmlFor="password" className="text-sm font-semibold text-[var(--lr-navy)]">Password</label>
                     <PasswordInput
+                        as="input"
                         id="password"
                         autoComplete="new-password"
                         maxLength={MAX_PASSWORD_LENGTH}
@@ -98,17 +97,18 @@ export default function CreateAccountForm({ token, proof, firstName, maskedEmail
                             setPassword(e.target.value)
                             clearErrors()
                         }}
-                        placeholder={`Enter your password`}
-                        className="focus-visible:border-[var(--rsonboard-navy)] focus-visible:ring-[var(--rsonboard-navy)]/40"
+                        placeholder="Enter your password"
+                        className="lr-input"
                         required
                     />
-                    <div className="pt-1">
+                    <div className="pt-3">
                         <PasswordRequirements password={password} />
                     </div>
                 </div>
-                <div className="space-y-1.5">
-                    <Label htmlFor="confirm">Confirm password</Label>
+                <div>
+                    <label htmlFor="confirm" className="text-sm font-semibold text-[var(--lr-navy)]">Confirm password</label>
                     <PasswordInput
+                        as="input"
                         id="confirm"
                         autoComplete="new-password"
                         maxLength={MAX_PASSWORD_LENGTH}
@@ -117,27 +117,23 @@ export default function CreateAccountForm({ token, proof, firstName, maskedEmail
                             setConfirm(e.target.value)
                             clearErrors()
                         }}
-                        placeholder={`Re-enter your password`}
-                        className="focus-visible:border-[var(--rsonboard-navy)] focus-visible:ring-[var(--rsonboard-navy)]/40"
+                        placeholder="Re-enter your password"
+                        className="lr-input"
                         aria-invalid={!!confirmError}
                         aria-describedby={confirmError ? 'confirm-error' : undefined}
                         required
                     />
                     {confirmError && (
-                        <p id="confirm-error" className="text-sm text-red-500">{confirmError}</p>
+                        <p id="confirm-error" className="lr-error">{confirmError}</p>
                     )}
                 </div>
 
-                {error && <p className="text-sm text-red-500">{error}</p>}
+                {error && <p role="alert" className="lr-error">{error}</p>}
 
-                <Button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-[var(--rsonboard-navy)] hover:bg-[var(--rsonboard-navy-hover)] text-white focus-visible:ring-[var(--rsonboard-navy)]/40"
-                >
+                <button type="submit" disabled={loading} className="lr-btn lr-btn-primary w-full">
                     {loading ? 'Creating account...' : 'Create account & continue'}
-                </Button>
+                </button>
             </form>
-        </AuthCard>
+        </LoginShell>
     )
 }

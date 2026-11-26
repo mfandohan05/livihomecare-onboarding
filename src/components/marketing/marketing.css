@@ -135,6 +135,7 @@ html:has(.landing-root) { scroll-behavior: smooth; }
 .lr-input:hover { border-color: var(--lr-navy); }
 .lr-input:focus-visible { outline: none; border-color: var(--lr-navy); box-shadow: 0 0 0 4px rgba(2, 42, 105, 0.18); }
 .lr-input[aria-invalid="true"] { border-color: #b42318; }
+.lr-input:disabled { background: var(--lr-surface); color: var(--lr-text-2); border-color: var(--lr-line); cursor: not-allowed; }
 .lr-error { color: #b42318; font-size: var(--lr-caption); margin-top: 6px; }
 
 /* Page enter: plays when a public page mounts after navigating. Short, never fully transparent, and the end state is

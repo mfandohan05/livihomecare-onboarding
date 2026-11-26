@@ -1,9 +1,6 @@
 import { useEffect, useState } from 'react'
 import { sendVerificationCode, verifyVerificationCode } from '@/lib/caregiver'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import AuthCard from './AuthCard'
+import LoginShell from '@/components/auth/LoginShell'
 
 export default function VerifyIdentity({ token, firstName, companyName, maskedEmail, imported, onVerified }) {
     const [codeSent, setCodeSent] = useState(false)
@@ -56,36 +53,35 @@ export default function VerifyIdentity({ token, firstName, companyName, maskedEm
     }
 
     return (
-        <AuthCard
+        <LoginShell
+            backTo={null}
             title={firstName ? `Welcome, ${firstName}` : 'Welcome'}
             subtitle={`Verify your identity to ${imported ? 'set up your account' : 'start your onboarding'}${companyName ? ` with ${companyName}` : ''}.`}
         >
             {!codeSent ? (
-                <div className="space-y-4">
-                    <div className="space-y-1.5">
-                        <Label>Email</Label>
-                        <p className="text-sm font-medium break-all">{maskedEmail}</p>
-                        <p className="text-sm text-muted-foreground">
-                            We'll email a 6-digit code to this address.
-                        </p>
+                <div className="space-y-5">
+                    <div>
+                        <p className="text-sm font-semibold text-[var(--lr-navy)]">Email</p>
+                        <p className="mt-1 break-all font-medium text-[var(--lr-text)]">{maskedEmail}</p>
+                        <p className="lr-muted mt-1 text-sm">We'll email a 6-digit code to this address.</p>
                     </div>
 
-                    {error && <p className="text-sm text-red-500">{error}</p>}
+                    {error && <p role="alert" className="lr-error">{error}</p>}
 
-                    <Button
+                    <button
                         type="button"
                         onClick={handleSend}
                         disabled={sending || cooldown > 0}
-                        className="w-full bg-[var(--rsonboard-navy)] hover:bg-[var(--rsonboard-navy-hover)] text-white focus-visible:ring-[var(--rsonboard-navy)]/40"
+                        className="lr-btn lr-btn-primary w-full"
                     >
                         {sending ? 'Sending...' : cooldown > 0 ? `Send me a code (${cooldown}s)` : 'Send me a code'}
-                    </Button>
+                    </button>
                 </div>
             ) : (
-                <form onSubmit={handleVerify} className="space-y-4">
-                    <div className="space-y-1.5">
-                        <Label htmlFor="code">Verification code</Label>
-                        <Input
+                <form onSubmit={handleVerify} className="space-y-5">
+                    <div>
+                        <label htmlFor="code" className="text-sm font-semibold text-[var(--lr-navy)]">Verification code</label>
+                        <input
                             id="code"
                             inputMode="numeric"
                             autoComplete="one-time-code"
@@ -96,35 +92,33 @@ export default function VerifyIdentity({ token, firstName, companyName, maskedEm
                                 setError(null)
                             }}
                             placeholder="123456"
-                            className="text-center tracking-[0.4em] focus-visible:border-[var(--rsonboard-navy)] focus-visible:ring-[var(--rsonboard-navy)]/40"
+                            className="lr-input text-center tracking-[0.4em]"
                             autoFocus
                             required
                         />
-                        <p className="text-sm text-muted-foreground">
-                            We sent a code to {maskedEmail}. It expires in 5 minutes.
-                        </p>
+                        <p className="lr-muted mt-2 text-sm">We sent a code to {maskedEmail}. It expires in 5 minutes.</p>
                     </div>
 
-                    {error && <p className="text-sm text-red-500">{error}</p>}
+                    {error && <p role="alert" className="lr-error">{error}</p>}
 
-                    <Button
+                    <button
                         type="submit"
                         disabled={verifying || code.length !== 6}
-                        className="w-full bg-[var(--rsonboard-navy)] hover:bg-[var(--rsonboard-navy-hover)] text-white focus-visible:ring-[var(--rsonboard-navy)]/40"
+                        className="lr-btn lr-btn-primary w-full"
                     >
                         {verifying ? 'Verifying...' : 'Verify'}
-                    </Button>
+                    </button>
 
                     <button
                         type="button"
                         onClick={handleSend}
                         disabled={sending || cooldown > 0}
-                        className="block mx-auto text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 disabled:hover:text-muted-foreground"
+                        className="mx-auto block text-sm font-medium text-[var(--lr-text-2)] hover:text-[var(--lr-navy)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:text-[var(--lr-text-2)]"
                     >
                         {sending ? 'Sending...' : cooldown > 0 ? `Resend code in ${cooldown}s` : 'Resend code'}
                     </button>
                 </form>
             )}
-        </AuthCard>
+        </LoginShell>
     )
 }

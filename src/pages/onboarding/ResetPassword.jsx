@@ -1,10 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import { Button } from '@/components/ui/button'
 import { PasswordInput } from '@/components/ui/password-input'
-import { Label } from '@/components/ui/label'
-import AuthCard from '@/components/onboarding/AuthCard'
+import LoginShell, { LoginLoading } from '@/components/auth/LoginShell'
 import { MAX_PASSWORD_LENGTH, meetsPasswordRules } from '@/lib/passwordPolicy'
 import PasswordRequirements from '@/components/onboarding/PasswordRequirements'
 
@@ -73,32 +71,26 @@ export default function ResetPassword() {
     }
 
     if (status === 'checking') {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <p className="text-muted-foreground">Loading...</p>
-            </div>
-        )
+        return <LoginLoading />
     }
 
     if (status === 'invalid') {
         return (
-            <AuthCard title="Link expired" subtitle="This password reset link is invalid or has expired.">
-                <Button
-                    onClick={() => navigate('/sign-in', { replace: true })}
-                    className="w-full bg-[var(--rsonboard-navy)] hover:bg-[var(--rsonboard-navy-hover)] text-white"
-                >
-                    Back to sign in
-                </Button>
-            </AuthCard>
+            <LoginShell backTo="/sign-in" title="Link expired" subtitle="This password reset link is invalid or has expired.">
+                <Link to="/sign-in" replace className="lr-btn lr-btn-primary w-full">
+                    Request a new link
+                </Link>
+            </LoginShell>
         )
     }
 
     return (
-        <AuthCard title="Choose a new password" subtitle="Enter a new password for your account">
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-1.5">
-                    <Label htmlFor="password">New password</Label>
+        <LoginShell backTo="/sign-in" title="Choose a new password" subtitle="Enter a new password for your account.">
+            <form onSubmit={handleSubmit} className="space-y-5">
+                <div>
+                    <label htmlFor="password" className="text-sm font-semibold text-[var(--lr-navy)]">New password</label>
                     <PasswordInput
+                        as="input"
                         id="password"
                         autoComplete="new-password"
                         maxLength={MAX_PASSWORD_LENGTH}
@@ -107,17 +99,18 @@ export default function ResetPassword() {
                             setPassword(e.target.value)
                             clearErrors()
                         }}
-                        placeholder={`Enter your new password`}
-                        className="focus-visible:border-[var(--rsonboard-navy)] focus-visible:ring-[var(--rsonboard-navy)]/40"
+                        placeholder="Enter your new password"
+                        className="lr-input"
                         required
                     />
-                    <div className="pt-1">
+                    <div className="pt-3">
                         <PasswordRequirements password={password} />
                     </div>
                 </div>
-                <div className="space-y-1.5">
-                    <Label htmlFor="confirm">Confirm new password</Label>
+                <div>
+                    <label htmlFor="confirm" className="text-sm font-semibold text-[var(--lr-navy)]">Confirm new password</label>
                     <PasswordInput
+                        as="input"
                         id="confirm"
                         autoComplete="new-password"
                         maxLength={MAX_PASSWORD_LENGTH}
@@ -126,27 +119,23 @@ export default function ResetPassword() {
                             setConfirm(e.target.value)
                             clearErrors()
                         }}
-                        placeholder={`Re-enter your new password`}
-                        className="focus-visible:border-[var(--rsonboard-navy)] focus-visible:ring-[var(--rsonboard-navy)]/40"
+                        placeholder="Re-enter your new password"
+                        className="lr-input"
                         aria-invalid={!!confirmError}
                         aria-describedby={confirmError ? 'confirm-error' : undefined}
                         required
                     />
                     {confirmError && (
-                        <p id="confirm-error" className="text-sm text-red-500">{confirmError}</p>
+                        <p id="confirm-error" className="lr-error">{confirmError}</p>
                     )}
                 </div>
 
-                {error && <p className="text-sm text-red-500">{error}</p>}
+                {error && <p role="alert" className="lr-error">{error}</p>}
 
-                <Button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-[var(--rsonboard-navy)] hover:bg-[var(--rsonboard-navy-hover)] text-white focus-visible:ring-[var(--rsonboard-navy)]/40"
-                >
+                <button type="submit" disabled={loading} className="lr-btn lr-btn-primary w-full">
                     {loading ? 'Saving...' : 'Update password'}
-                </Button>
+                </button>
             </form>
-        </AuthCard>
+        </LoginShell>
     )
 }

@@ -91,7 +91,6 @@ export default function CaregiverSignIn() {
                 redirectTo={`${window.location.origin}/sign-in?sso=1`}
                 disabled={loading}
                 onError={setError}
-                buttonClassName="h-12 rounded-full border-[#677fa5] bg-white text-base font-semibold text-[var(--lr-navy)] hover:border-[var(--lr-navy)] hover:bg-[var(--lr-navy-tint)] hover:text-[var(--lr-navy)]"
             />
             <div className="my-5">
                 <OrDivider />

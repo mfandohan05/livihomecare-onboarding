@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Navigate, useParams, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import {
     getCaregiverByToken,
@@ -13,7 +13,7 @@ import {
 } from '@/lib/caregiver'
 import CreateAccountForm from '@/components/onboarding/CreateAccountForm'
 import VerifyIdentity from '@/components/onboarding/VerifyIdentity'
-import { Button } from '@/components/ui/button'
+import LoginShell, { LoginLoading } from '@/components/auth/LoginShell'
 import OnboardingPortal from './OnboardingPortal'
 
 const SSO_PROVIDERS = ['google']
@@ -123,11 +123,7 @@ export default function OnboardingGate() {
 
     switch (result.status) {
         case 'loading':
-            return (
-                <div className="min-h-screen flex items-center justify-center">
-                    <p className="text-muted-foreground">Loading...</p>
-                </div>
-            )
+            return <LoginLoading />
         case 'signin':
             return <Navigate to="/sign-in" replace />
         case 'verify':
@@ -169,35 +165,32 @@ export default function OnboardingGate() {
             return <OnboardingPortal key={result.caregiver.id} initialCaregiver={result.caregiver} viewer={result.viewer} />
         case 'norecord':
             return (
-                <div className="min-h-screen flex items-center justify-center">
-                    <div className="text-center max-w-md px-8">
-                        <h1 className="text-2xl font-bold mb-2">No onboarding found</h1>
-                        <p className="text-muted-foreground">
-                            This account isn't linked to an employee onboarding. If you think this is a mistake, please contact your employer.
-                        </p>
-                        <Button
-                            variant="outline"
-                            className="mt-4"
-                            onClick={async () => { await supabase.auth.signOut(); refresh() }}
-                        >
-                            Sign out
-                        </Button>
-                    </div>
-                </div>
+                <LoginShell
+                    backTo={null}
+                    title="No onboarding found"
+                    subtitle="This account isn't linked to an employee onboarding. If you think this is a mistake, please contact your employer."
+                >
+                    <button
+                        type="button"
+                        className="lr-btn lr-btn-tonal w-full"
+                        onClick={async () => { await supabase.auth.signOut(); refresh() }}
+                    >
+                        Sign out
+                    </button>
+                </LoginShell>
             )
         default:
             return (
-                <div className="min-h-screen flex items-center justify-center">
-                    <div className="text-center max-w-md px-8">
-                        <h1 className="text-2xl font-bold mb-2">Link not found</h1>
-                        <p className="text-muted-foreground">
-                            This onboarding link is invalid or has expired. Please contact Livi Home Care for a new link.
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-4">
-                            📞 980-416-6127 &nbsp;|&nbsp; ✉️ office@livihomecare.com
-                        </p>
-                    </div>
-                </div>
+                <LoginShell
+                    backTo={null}
+                    title="Link not found"
+                    subtitle="This onboarding link is invalid or has expired. Please contact your employer for a new link."
+                >
+                    <p className="lr-muted text-sm">
+                        Already created your account?{' '}
+                        <Link to="/sign-in" className="font-semibold text-[var(--lr-navy)] underline underline-offset-4">Sign in</Link>
+                    </p>
+                </LoginShell>
             )
     }
 }
