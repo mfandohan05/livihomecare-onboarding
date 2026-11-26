@@ -76,7 +76,7 @@ export default function VerifyIdentity({ token, firstName, companyName, maskedEm
                         type="button"
                         onClick={handleSend}
                         disabled={sending || cooldown > 0}
-                        className="w-full bg-[#0A2E73] hover:bg-[#14449C] text-white focus-visible:ring-[#08265D]/40"
+                        className="w-full bg-[var(--rsonboard-navy)] hover:bg-[var(--rsonboard-navy-hover)] text-white focus-visible:ring-[var(--rsonboard-navy)]/40"
                     >
                         {sending ? 'Sending...' : cooldown > 0 ? `Send me a code (${cooldown}s)` : 'Send me a code'}
                     </Button>
@@ -96,7 +96,7 @@ export default function VerifyIdentity({ token, firstName, companyName, maskedEm
                                 setError(null)
                             }}
                             placeholder="123456"
-                            className="text-center tracking-[0.4em] focus-visible:border-[#08265D] focus-visible:ring-[#08265D]/40"
+                            className="text-center tracking-[0.4em] focus-visible:border-[var(--rsonboard-navy)] focus-visible:ring-[var(--rsonboard-navy)]/40"
                             autoFocus
                             required
                         />
@@ -110,7 +110,7 @@ export default function VerifyIdentity({ token, firstName, companyName, maskedEm
                     <Button
                         type="submit"
                         disabled={verifying || code.length !== 6}
-                        className="w-full bg-[#0A2E73] hover:bg-[#14449C] text-white focus-visible:ring-[#08265D]/40"
+                        className="w-full bg-[var(--rsonboard-navy)] hover:bg-[var(--rsonboard-navy-hover)] text-white focus-visible:ring-[var(--rsonboard-navy)]/40"
                     >
                         {verifying ? 'Verifying...' : 'Verify'}
                     </Button>

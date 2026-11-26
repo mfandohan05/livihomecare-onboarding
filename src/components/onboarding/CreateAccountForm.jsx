@@ -99,7 +99,7 @@ export default function CreateAccountForm({ token, proof, firstName, maskedEmail
                             clearErrors()
                         }}
                         placeholder={`Enter your password`}
-                        className="focus-visible:border-[#08265D] focus-visible:ring-[#08265D]/40"
+                        className="focus-visible:border-[var(--rsonboard-navy)] focus-visible:ring-[var(--rsonboard-navy)]/40"
                         required
                     />
                     <div className="pt-1">
@@ -118,7 +118,7 @@ export default function CreateAccountForm({ token, proof, firstName, maskedEmail
                             clearErrors()
                         }}
                         placeholder={`Re-enter your password`}
-                        className="focus-visible:border-[#08265D] focus-visible:ring-[#08265D]/40"
+                        className="focus-visible:border-[var(--rsonboard-navy)] focus-visible:ring-[var(--rsonboard-navy)]/40"
                         aria-invalid={!!confirmError}
                         aria-describedby={confirmError ? 'confirm-error' : undefined}
                         required
@@ -133,7 +133,7 @@ export default function CreateAccountForm({ token, proof, firstName, maskedEmail
                 <Button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-[#0A2E73] hover:bg-[#14449C] text-white focus-visible:ring-[#08265D]/40"
+                    className="w-full bg-[var(--rsonboard-navy)] hover:bg-[var(--rsonboard-navy-hover)] text-white focus-visible:ring-[var(--rsonboard-navy)]/40"
                 >
                     {loading ? 'Creating account...' : 'Create account & continue'}
                 </Button>

@@ -56,12 +56,18 @@ export default function CaregiverFaq() {
         return () => window.removeEventListener('hashchange', goToHash)
     }, [])
 
+    const jumpToTopic = (event, id) => {
+        event.preventDefault()
+        window.history.replaceState(null, '', `#${id}`)
+        window.dispatchEvent(new HashChangeEvent('hashchange'))
+    }
+
     const contactName = company?.name?.trim()
     const phone = company?.phone?.trim()
     const email = company?.email?.trim()
 
     return (
-        <div className="min-h-screen bg-muted/30 pb-16">
+        <div className="rsonboard-theme min-h-screen bg-muted/30 pb-16">
             <header className="border-b border-border bg-white">
                 <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-4">
                     <img src={companyLogo} alt="Ready, Set, Onboard!" className="w-[140px]" />
@@ -107,6 +113,7 @@ export default function CaregiverFaq() {
                                 <li key={c.id}>
                                     <a
                                         href={`#${c.id}`}
+                                        onClick={(event) => jumpToTopic(event, c.id)}
                                         className="inline-block rounded-full border border-[var(--primary-color)]/20 bg-white px-3.5 py-1.5 text-sm font-medium text-[var(--primary-color)] hover:bg-[var(--secondary-bg)]"
                                     >
                                         {c.title}

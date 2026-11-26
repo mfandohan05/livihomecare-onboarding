@@ -107,7 +107,7 @@ export default function CaregiverSignIn() {
                         autoComplete="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="focus-visible:border-[#08265D] focus-visible:ring-[#08265D]/40"
+                        className="focus-visible:border-[var(--rsonboard-navy)] focus-visible:ring-[var(--rsonboard-navy)]/40"
                         required
                     />
                 </div>
@@ -119,7 +119,7 @@ export default function CaregiverSignIn() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
-                        className="focus-visible:border-[#08265D] focus-visible:ring-[#08265D]/40"
+                        className="focus-visible:border-[var(--rsonboard-navy)] focus-visible:ring-[var(--rsonboard-navy)]/40"
                         required
                     />
                 </div>
@@ -130,7 +130,7 @@ export default function CaregiverSignIn() {
                 <Button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-[#0A2E73] hover:bg-[#14449C] text-white focus-visible:ring-[#08265D]/40"
+                    className="w-full bg-[var(--rsonboard-navy)] hover:bg-[var(--rsonboard-navy-hover)] text-white focus-visible:ring-[var(--rsonboard-navy)]/40"
                 >
                     {loading ? 'Signing in...' : 'Sign in'}
                 </Button>
