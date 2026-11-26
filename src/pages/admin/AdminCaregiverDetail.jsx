@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/password-input'
 import { Label } from '@/components/ui/label'
 import { formatPhone } from '@/lib/formUtils'
+import { formatPayRate } from '@/lib/formUtils'
 import { logImportantAction } from '@/lib/logAction'
 import { useCompany } from '@/context/CompanyContext'
 import ExpirationDateDialog from '@/components/global/ExpirationDateDialog'
@@ -1542,12 +1543,12 @@ export default function AdminCaregiverDetail() {
                             </div>
                             <div>
                                 <p className="text-muted-foreground">Pay Rate</p>
-                                <p className="font-medium">${caregiver.pay_rate}/hr</p>
+                                <p className="font-medium">${formatPayRate(caregiver.pay_rate)}/hr</p>
                             </div>
                             {caregiver.companion_pay_rate && (
                                 <div>
                                     <p className="text-muted-foreground">Companion Pay Rate</p>
-                                    <p className="font-medium">${caregiver.companion_pay_rate}/hr</p>
+                                    <p className="font-medium">${formatPayRate(caregiver.companion_pay_rate)}/hr</p>
                                 </div>
                             )}
                         </div>

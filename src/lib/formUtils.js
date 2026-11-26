@@ -32,3 +32,6 @@ export const splitName = (name) => {
         lastName: parts.slice(1).join(' '),
     }
 }
+
+// Shared with the edge functions so emails, PDFs and screens format rates identically.
+export { formatPayRate } from '../../supabase/functions/_shared/payRate.js'

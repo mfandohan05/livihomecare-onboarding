@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { PDFDocument, StandardFonts } from 'https://esm.sh/pdf-lib@1.17.1'
 import { requireCaregiverAccess } from '../_shared/caregiverAccess.ts'
+import { formatPayRate } from '../_shared/payRate.js'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -48,9 +49,9 @@ async function fillOfferLetterTemplate(
   trySet('effective_date_intro', caregiver.start_date || '')
   trySet('effective_date', caregiver.start_date || '')
   trySet('letter_date', today)
-  trySet('hourly_rate', caregiver.pay_rate?.toString() || '')
-  trySet('live_in_hourly_rate', caregiver.companion_pay_rate?.toString() || '')
-  trySet('companion_rate', caregiver.companion_pay_rate?.toString() || '')
+  trySet('hourly_rate', formatPayRate(caregiver.pay_rate))
+  trySet('live_in_hourly_rate', formatPayRate(caregiver.companion_pay_rate))
+  trySet('companion_rate', formatPayRate(caregiver.companion_pay_rate))
   trySet('mileage_rate', caregiver.mileage_rate?.toString() || '')
 
   const positionIntro = caregiver.position_title
