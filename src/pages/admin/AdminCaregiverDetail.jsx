@@ -800,6 +800,15 @@ export default function AdminCaregiverDetail() {
             return
         }
 
+        const { data: authDeleteData, error: authDeleteError } = await supabase.functions.invoke('admin-delete-caregiver-auth', {
+            body: { caregiverId: id }
+        })
+
+        if (authDeleteError || !authDeleteData?.success) {
+            setDeleteError(authDeleteData?.error || 'Could not delete this employee\'s sign-in account. Please try again.')
+            setDeleteLoading(false)
+            return
+        }
 
         const docFiles = documents
             .filter(d => !['i9_completed', 'w4_completed', 'w9_completed', 'nc4ez_completed'].includes(d.document_type))
