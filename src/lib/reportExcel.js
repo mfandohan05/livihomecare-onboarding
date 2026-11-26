@@ -4,11 +4,13 @@ const MAX_WIDTH = 45
 const WIDTH_PADDING = 3
 const DATE_FORMAT = 'mm/dd/yyyy'
 const MIN_EXCEL_YEAR = 1900
+const US_DATE = /^\d{2}\/\d{2}\/\d{4}$/
 
 const HEADER_STYLE = { fontWeight: 'bold', backgroundColor: '#F3F4F6', align: ALIGNMENT }
 
 const CELL_BUILDERS = {
     date: (text) => {
+        if (!US_DATE.test(text)) return { value: text }
         const [month, day, year] = text.split('/').map(Number)
         if (year < MIN_EXCEL_YEAR) return { value: text }
         return { value: new Date(Date.UTC(year, month - 1, day)), type: Date, format: DATE_FORMAT }

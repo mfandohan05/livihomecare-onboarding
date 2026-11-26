@@ -20,6 +20,7 @@ const ROSTER_COLUMNS = [
     ['name', 'Full name'],
     ['email', 'Email'],
     ['phone', 'Phone'],
+    ['dateOfBirth', 'Date of birth', 'date'],
     ['role', 'Role'],
     ['position', 'Position title'],
     ['employmentType', 'Employment type'],
@@ -48,6 +49,8 @@ const DETAIL_COLUMNS = [
     ['emergency2Email', 'Secondary emergency email'],
 ]
 
+export const SENSITIVE_COLUMNS = ['dateOfBirth']
+
 const COMPLIANCE_COLUMNS = [
     ['employeeId', 'Employee ID'],
     ['name', 'Full name'],
@@ -64,7 +67,7 @@ export const REPORT_TYPES = [
     {
         id: 'roster',
         label: 'Basic roster',
-        description: 'One row per employee: contact details, role, employment type, start date, status, onboarding completion date and pay rate.',
+        description: 'One row per employee: contact details, role, employment type, start date, status, onboarding completion date and pay rate. Date of birth can be added.',
         columns: ROSTER_COLUMNS,
     },
     {
@@ -76,7 +79,7 @@ export const REPORT_TYPES = [
     {
         id: 'details',
         label: 'Full employee details',
-        description: 'The roster plus gender, companion pay rate, payroll readiness, home address and emergency contacts. Social security numbers, dates of birth and banking details are never included.',
+        description: 'The roster plus gender, companion pay rate, payroll readiness, home address and emergency contacts. Date of birth can be added. Social security numbers and banking details are never included.',
         columns: DETAIL_COLUMNS,
     },
 ]
@@ -88,6 +91,13 @@ export function usDate(value) {
     if (!date) return ''
     const [year, month, day] = date.split('-')
     return `${month}/${day}/${year}`
+}
+
+export function birthDateText(value) {
+    const match = text(value).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+    if (!match) return text(value)
+    const [, month, day, year] = match
+    return `${month.padStart(2, '0')}/${day.padStart(2, '0')}/${year}`
 }
 
 export function payText(value) {
@@ -121,12 +131,13 @@ export function roleName(role, roleOptions = []) {
 
 const byName = (a, b) => text(a.name).localeCompare(text(b.name), undefined, { sensitivity: 'base' })
 
-function rosterRow(caregiver, { timeLogsById = {}, roleOptions = [] }) {
+function rosterRow(caregiver, { timeLogsById = {}, roleOptions = [], birthdatesById = {} }) {
     return {
         employeeId: text(caregiver.employee_id),
         name: text(caregiver.name),
         email: text(caregiver.email),
         phone: text(caregiver.phone),
+        dateOfBirth: birthDateText(birthdatesById[caregiver.id]),
         role: roleName(caregiver.role, roleOptions),
         position: text(caregiver.position_title),
         employmentType: text(caregiver.employment_type),

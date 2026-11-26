@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import { TRACKED_DOCUMENT_TYPES } from '@/lib/documentExpiration'
 import { mapChunks } from '@/lib/chunks'
+import { functionError } from '@/lib/functionError'
 
 export const PAGE_SIZE = 25
 export const MAX_REPORT_EMPLOYEES = 5000
@@ -148,4 +149,24 @@ export async function loadReportData(companyId, reportId, ids, onProgress) {
         for (const row of chunk.personalInfo) data.personalInfoById[row.caregiver_id] = row.personalInfo || {}
     }
     return data
+}
+
+export async function confirmPassword(password) {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) throw new Error('Your session has expired. Please sign in again.')
+
+    const { error } = await supabase.auth.signInWithPassword({ email: session.user.email, password })
+    if (error) throw new Error('Incorrect password')
+}
+
+export async function loadBirthdates(ids) {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) throw new Error('Your session has expired. Please sign in again.')
+
+    const { data, error } = await supabase.functions.invoke('get-report-birthdates', {
+        body: { caregiverIds: [...new Set(ids)] },
+        headers: { Authorization: `Bearer ${session.access_token}` },
+    })
+    if (error) throw new Error(await functionError(error, 'Could not load dates of birth.'))
+    return data?.birthdates || {}
 }

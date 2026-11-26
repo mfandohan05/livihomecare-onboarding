@@ -4,10 +4,19 @@ import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { useCompany } from '@/context/CompanyContext'
 import { Button } from '@/components/ui/button'
+import { PasswordInput } from '@/components/ui/password-input'
+import { Label } from '@/components/ui/label'
+import {
+    AlertDialog,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import HowDoesThisWork from '@/components/help/HowDoesThisWork'
 import ReportEmployeePicker from '@/components/admin/ReportEmployeePicker'
-import { MAX_REPORT_EMPLOYEES, loadReportData } from '@/lib/reportData'
-import { COMPLIANCE_SORTS, REPORT_TYPES, buildReport, toCsv } from '@/lib/reportFormat'
+import { MAX_REPORT_EMPLOYEES, confirmPassword, loadBirthdates, loadReportData } from '@/lib/reportData'
+import { COMPLIANCE_SORTS, REPORT_TYPES, SENSITIVE_COLUMNS, buildReport, toCsv } from '@/lib/reportFormat'
 import { toXlsxBlob } from '@/lib/reportExcel'
 import { CSV_TYPE, downloadBlob } from '@/lib/downloadFile'
 
@@ -16,7 +25,10 @@ const FORMATS = {
     csv: { extension: 'csv', toBlob: async (columns, rows) => new Blob([toCsv(columns, rows)], { type: CSV_TYPE }) },
 }
 
-const allColumnKeys = () => Object.fromEntries(REPORT_TYPES.map((type) => [type.id, type.columns.map(([key]) => key)]))
+const defaultColumnKeys = () => Object.fromEntries(REPORT_TYPES.map((type) => [
+    type.id,
+    type.columns.map(([key]) => key).filter((key) => !SENSITIVE_COLUMNS.includes(key)),
+]))
 
 async function recordExport(companyId, reportId, count, format, columns) {
     try {
@@ -43,7 +55,11 @@ export default function AdminReports() {
     const [roleOptions, setRoleOptions] = useState([])
     const [complianceSort, setComplianceSort] = useState(COMPLIANCE_SORTS[0].value)
     const [progress, setProgress] = useState(null)
-    const [columnKeys, setColumnKeys] = useState(allColumnKeys)
+    const [columnKeys, setColumnKeys] = useState(defaultColumnKeys)
+    const [passwordFor, setPasswordFor] = useState(null)
+    const [password, setPassword] = useState('')
+    const [passwordError, setPasswordError] = useState(null)
+    const [confirming, setConfirming] = useState(false)
 
     useEffect(() => {
         if (!companyId) return
@@ -58,24 +74,56 @@ export default function AdminReports() {
     const running = progress !== null
     const chosenKeys = columnKeys[reportId]
     const chosen = new Set(chosenKeys)
+    const wantsBirthdates = chosen.has('dateOfBirth')
 
     const setChosen = (keys) => setColumnKeys((current) => ({ ...current, [reportId]: keys }))
     const toggleColumn = (key) => setChosen(
         report.columns.map(([k]) => k).filter((k) => (k === key ? !chosen.has(k) : chosen.has(k)))
     )
 
-    const runReport = async (format) => {
+    const closePasswordDialog = () => {
+        setPasswordFor(null)
+        setPassword('')
+        setPasswordError(null)
+    }
+
+    const startReport = (format) => {
         if (selected.size > MAX_REPORT_EMPLOYEES) {
             toast.error(`A report can include at most ${MAX_REPORT_EMPLOYEES.toLocaleString()} employees.`)
             return
         }
+        if (wantsBirthdates) {
+            setPasswordFor(format)
+            return
+        }
+        runReport(format)
+    }
+
+    const submitPassword = async () => {
+        const format = passwordFor
+        setPasswordError(null)
+        setConfirming(true)
+        try {
+            await confirmPassword(password)
+        } catch (err) {
+            setPasswordError(err.message)
+            return
+        } finally {
+            setConfirming(false)
+        }
+        closePasswordDialog()
+        runReport(format)
+    }
+
+    const runReport = async (format) => {
 
         const ids = [...selected]
         setProgress({ done: 0, total: ids.length, format })
 
         try {
+            const birthdatesById = wantsBirthdates ? await loadBirthdates(ids) : {}
             const data = await loadReportData(companyId, reportId, ids, (done, total) => setProgress({ done, total, format }))
-            const { columns, rows, baseName } = buildReport(reportId, { ...data, roleOptions, sort: complianceSort }, chosenKeys)
+            const { columns, rows, baseName } = buildReport(reportId, { ...data, birthdatesById, roleOptions, sort: complianceSort }, chosenKeys)
             const { extension, toBlob } = FORMATS[format]
 
             downloadBlob(`${baseName}.${extension}`, await toBlob(columns, rows, report.label))
@@ -90,6 +138,42 @@ export default function AdminReports() {
 
     return (
         <div className="max-w-4xl">
+            <AlertDialog open={passwordFor !== null} onOpenChange={(open) => !open && !confirming && closePasswordDialog()}>
+                <AlertDialogContent className="max-w-sm">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Confirm your identity</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This report includes dates of birth. Enter your password to download it.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="space-y-4 pt-2">
+                        <div className="space-y-1.5">
+                            <Label htmlFor="report_password">Password</Label>
+                            <PasswordInput
+                                id="report_password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && password && !confirming && submitPassword()}
+                                placeholder="••••••••"
+                                autoFocus
+                            />
+                        </div>
+                        {passwordError && <p className="text-sm text-red-500">{passwordError}</p>}
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            <Button
+                                onClick={submitPassword}
+                                disabled={!password || confirming}
+                                className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white disabled:opacity-50 w-full sm:w-auto"
+                            >
+                                {confirming ? 'Verifying...' : 'Download'}
+                            </Button>
+                            <Button variant="outline" onClick={closePasswordDialog} disabled={confirming} className="w-full sm:w-auto">
+                                Cancel
+                            </Button>
+                        </div>
+                    </div>
+                </AlertDialogContent>
+            </AlertDialog>
             <div className="flex items-center justify-between gap-4 mb-8">
                 <div>
                     <h1 className="text-2xl font-bold">Reports</h1>
@@ -159,6 +243,9 @@ export default function AdminReports() {
                             </label>
                         ))}
                     </div>
+                    {wantsBirthdates && (
+                        <p className="mt-2 text-muted-foreground">Date of birth is sensitive. You will be asked for your password, and the export is recorded in the audit log.</p>
+                    )}
                     {chosenKeys.length === 0 && (
                         <p className="mt-2 text-red-500">Choose at least one column.</p>
                     )}
@@ -199,14 +286,14 @@ export default function AdminReports() {
                 <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                     <Button
                         variant="outline"
-                        onClick={() => runReport('csv')}
+                        onClick={() => startReport('csv')}
                         disabled={selected.size === 0 || chosenKeys.length === 0 || running}
                     >
                         {progress?.format === 'csv' ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
                         Download CSV
                     </Button>
                     <Button
-                        onClick={() => runReport('xlsx')}
+                        onClick={() => startReport('xlsx')}
                         disabled={selected.size === 0 || chosenKeys.length === 0 || running}
                         className="bg-[var(--primary-color)] hover:bg-[var(--hover-color)] text-white disabled:opacity-50"
                     >

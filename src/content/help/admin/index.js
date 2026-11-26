@@ -662,7 +662,8 @@ export const adminHelp = {
             ] } },
             { tip: 'In the Compliance status report you can switch **Sort rows by** to **Employee name** to keep each person\'s documents together.' },
             { note: 'The Excel file has a bold header that stays in view as you scroll, real dates and numbers you can sort and filter. The CSV file has the same data without formatting.' },
-            { note: 'Social security numbers, dates of birth, banking details and tax forms are never included in a report, and the documents themselves are not exported.' },
+            { note: 'Social security numbers, banking details and tax forms are never included in a report, and the documents themselves are not exported.' },
+            { note: '**Date of birth** can be added to the Basic roster and Full employee details reports. It is unticked to start. When it is ticked, you are asked for your password before the file downloads, and the export is recorded in the audit log. Employees who have not filled in their tax forms have an empty date of birth.' },
             { tip: 'Imported employees have no onboarding completion date, because they were not onboarded in RSOnboard.' },
             'Each report is recorded in the audit log under **Exported Report**, with the report type, the number of employees and the columns included.',
           ],
@@ -670,6 +671,7 @@ export const adminHelp = {
             'A file named like **roster-report-2026-11-25.xlsx** (or **.csv**) downloads, and "report downloaded" appears with the number of rows.',
           ],
           problems: [
+            { q: 'It says Incorrect password when I download.', a: ['The report includes **Date of birth**, which needs your sign-in password. Type it again, or untick Date of birth.'] },
             { q: 'The Download button is greyed out.', a: ['Select at least one employee and tick at least one column. The count next to the button shows how many employees are selected.'] },
             { q: 'It says a report can include at most 5,000 employees.', a: ['Narrow the filters (for example by status or role) and run the report in more than one go.'] },
             { q: 'The CSV file shows strange characters or one column.', a: ['Use **Download Excel (.xlsx)** instead, or open the CSV with **File > Open** and import it as UTF-8 comma-separated text.'] },
