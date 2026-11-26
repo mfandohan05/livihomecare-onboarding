@@ -72,7 +72,7 @@ function AdminDialog({ open, onClose, onSaved, companyId, editingAdmin }) {
         setSaving(true)
         try {
             const result = editingAdmin
-                ? await callStudioFunction('studio-update-company-admin', {
+                ? await callStudioFunction('studio/update-company-admin', {
                     id: editingAdmin.id,
                     companyId,
                     name: form.name,
@@ -81,7 +81,7 @@ function AdminDialog({ open, onClose, onSaved, companyId, editingAdmin }) {
                     position: form.position,
                     ...(form.password ? { password: form.password } : {}),
                 })
-                : await callStudioFunction('studio-create-company-admin', {
+                : await callStudioFunction('studio/create-company-admin', {
                     companyId,
                     name: form.name,
                     email: form.email,
@@ -168,7 +168,7 @@ export default function StudioCompanyAdmins() {
     const fetchAdmins = async () => {
         setLoading(true)
         try {
-            const data = await callStudioFunction('studio-list-company-admins', { companyId })
+            const data = await callStudioFunction('studio/list-company-admins', { companyId })
             setAdmins(data)
         } catch (err) {
             toast.error(err.message)
@@ -202,7 +202,7 @@ export default function StudioCompanyAdmins() {
 
     const requestDelete = async (admin) => {
         try {
-            const result = await callStudioFunction('studio-delete-company-admin', { id: admin.id, companyId })
+            const result = await callStudioFunction('studio/delete-company-admin', { id: admin.id, companyId })
             setPendingDelete({ id: admin.id, ...result })
         } catch (err) {
             toast.error(err.message)
@@ -212,7 +212,7 @@ export default function StudioCompanyAdmins() {
     const confirmDelete = async () => {
         setConfirmingDelete(true)
         try {
-            await callStudioFunction('studio-delete-company-admin', { id: pendingDelete.id, companyId, confirmed: true })
+            await callStudioFunction('studio/delete-company-admin', { id: pendingDelete.id, companyId, confirmed: true })
             setAdmins((prev) => prev.filter((a) => a.id !== pendingDelete.id))
             toast.success('Admin deleted')
             setPendingDelete(null)

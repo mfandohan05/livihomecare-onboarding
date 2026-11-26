@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import { getMyCaregiver, usesGoogleSignIn } from '@/lib/caregiver'
+import { clearActiveCompany, getMyCaregiverContext, usesGoogleSignIn } from '@/lib/caregiver'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/password-input'
@@ -27,8 +27,14 @@ export default function CaregiverSignIn() {
             if (!session || cancelled) return
 
             setLoading(true)
-            const caregiver = await getMyCaregiver()
+            clearActiveCompany()
+            const { caregiver, companies } = await getMyCaregiverContext()
             if (cancelled) return
+
+            if (companies.length > 1) {
+                navigate('/choose-company', { replace: true })
+                return
+            }
 
             if (!caregiver) {
                 await supabase.auth.signOut()
@@ -60,9 +66,12 @@ export default function CaregiverSignIn() {
             return
         }
 
-        // The record is derived server-side from this session — nothing about
-        // which caregiver to load is ever supplied by the client.
-        const caregiver = await getMyCaregiver()
+        clearActiveCompany()
+        const { caregiver, companies } = await getMyCaregiverContext()
+        if (companies.length > 1) {
+            navigate('/choose-company', { replace: true })
+            return
+        }
         if (!caregiver) {
             await supabase.auth.signOut()
             setError('No employee onboarding is linked to this account.')

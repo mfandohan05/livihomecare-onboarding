@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { getActiveCompany } from '@/lib/caregiver'
 
 export const DUE_SOON_DAYS = 7
 
@@ -39,7 +40,7 @@ export async function loadTrainingRoles(companyId) {
         return TRAINING_ROLES
     }
 }
-export const trainingCaregiver = (action, body = {}) => invoke('training-caregiver', { action, ...body })
+export const trainingCaregiver = (action, body = {}) => invoke('training-caregiver', { action, companyId: getActiveCompany(), ...body })
 
 export function trainingImageUrl(path) {
     if (!path) return null

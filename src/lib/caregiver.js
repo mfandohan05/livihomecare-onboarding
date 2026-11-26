@@ -8,11 +8,34 @@ export async function getCaregiverByToken(token) {
   return data
 }
 
-export async function getMyCaregiver() {
-  const { data, error } = await supabase.functions.invoke('get-my-caregiver')
+const ACTIVE_COMPANY_KEY = 'livi_active_company'
 
-  if (error) return null
-  return data?.caregiver ?? null
+export function getActiveCompany() {
+  return localStorage.getItem(ACTIVE_COMPANY_KEY)
+}
+
+export function setActiveCompany(companyId) {
+  if (companyId) localStorage.setItem(ACTIVE_COMPANY_KEY, companyId)
+}
+
+export function clearActiveCompany() {
+  localStorage.removeItem(ACTIVE_COMPANY_KEY)
+}
+
+export async function getMyCaregiverContext() {
+  const { data, error } = await supabase.functions.invoke('get-my-caregiver', {
+    body: { companyId: getActiveCompany() }
+  })
+
+  if (error) return { caregiver: null, companies: [] }
+  const caregiver = data?.caregiver ?? null
+  if (caregiver) setActiveCompany(caregiver.company_id)
+  return { caregiver, companies: data?.companies ?? [] }
+}
+
+export async function getMyCaregiver() {
+  const { caregiver } = await getMyCaregiverContext()
+  return caregiver
 }
 
 export async function createCaregiverAccount(token, password, proof) {
@@ -99,7 +122,7 @@ export async function signInWithSso(provider, redirectTo) {
 
 export async function updateCaregiverStatus(status) {
   const { error } = await supabase.functions.invoke('update-caregiver-status', {
-    body: { status }
+    body: { status, companyId: getActiveCompany() }
   })
 
   if (error) console.error('Error updating status:', error)

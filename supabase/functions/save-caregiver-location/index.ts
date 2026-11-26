@@ -18,12 +18,12 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { lat, lng } = await req.json()
+    const { lat, lng, companyId } = await req.json()
     if (typeof lat !== 'number' || typeof lng !== 'number') {
       return json({ error: 'Invalid coordinates' }, 400)
     }
 
-    const { supabase, caregiver } = await requireOwnCaregiver(req)
+    const { supabase, caregiver } = await requireOwnCaregiver(req, companyId)
 
     const { error } = await supabase
       .from('caregivers')

@@ -1,4 +1,4 @@
-import { getCallerUser, serviceClient } from '../_shared/caregiverAccess.ts'
+import { getCallerUser, listOwnCaregivers, pickOwnCaregiver, serviceClient } from '../_shared/caregiverAccess.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,10 +11,6 @@ const json = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   })
 
-// Returns the caregiver record belonging to the signed-in user. Takes no
-// parameters on purpose: the record is derived only from the verified JWT, so a
-// caller can never ask for someone else's. `caregiver: null` means the user is
-// signed in but has no onboarding record (e.g. an admin).
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -25,15 +21,32 @@ Deno.serve(async (req) => {
     const user = await getCallerUser(req, supabase)
     if (!user) return json({ error: 'Unauthorized' }, 401)
 
-    const { data: caregiver, error } = await supabase
-      .from('caregivers')
-      .select('*, company_id')
-      .eq('user_id', user.id)
-      .maybeSingle()
+    let companyId: unknown = null
+    try {
+      const body = await req.json()
+      companyId = body?.companyId ?? null
+    } catch {
+      companyId = null
+    }
 
-    if (error) throw error
+    const rows = await listOwnCaregivers(supabase, user.id)
+    const caregiver = pickOwnCaregiver(rows, companyId)
 
-    return json({ caregiver: caregiver ?? null })
+    let companies: { companyId: string; companyName: string | null; status: unknown }[] = []
+    if (rows.length > 1) {
+      const { data: names } = await supabase
+        .from('company_data')
+        .select('company_id, company_name')
+        .in('company_id', rows.map((r) => r.company_id))
+      const nameById = new Map((names ?? []).map((n) => [n.company_id, n.company_name]))
+      companies = rows.map((r) => ({
+        companyId: r.company_id,
+        companyName: nameById.get(r.company_id) ?? null,
+        status: r.status,
+      }))
+    }
+
+    return json({ caregiver: caregiver ?? null, companies })
   } catch {
     return json({ error: 'Unauthorized' }, 401)
   }

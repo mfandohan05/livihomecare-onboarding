@@ -66,7 +66,7 @@ function NewFormDialog({ open, onClose, onCreated, companyId, roles, existingFor
         setSaving(true)
         setError(null)
         try {
-            const created = await callStudioFunction('studio-create-company-form', { companyId, ...form })
+            const created = await callStudioFunction('studio/create-company-form', { companyId, ...form })
             toast.success('Form created')
             onCreated(created)
         } catch (err) {
@@ -188,8 +188,8 @@ export default function StudioCompanyForms() {
         setLoading(true)
         try {
             const [formsResult, rolesResult] = await Promise.all([
-                callStudioFunction('studio-list-company-forms', { companyId }),
-                callStudioFunction('studio-list-role-labels', { companyId }),
+                callStudioFunction('studio/list-company-forms', { companyId }),
+                callStudioFunction('studio/list-role-labels', { companyId }),
             ])
             setForms(formsResult)
             setRoles(rolesResult)
@@ -216,7 +216,7 @@ export default function StudioCompanyForms() {
     const confirmDelete = async () => {
         setDeleting(true)
         try {
-            await callStudioFunction('studio-delete-company-form', { id: pendingDelete.id, companyId })
+            await callStudioFunction('studio/delete-company-form', { id: pendingDelete.id, companyId })
             setForms((prev) => prev.filter((f) => f.id !== pendingDelete.id))
             toast.success('Form deleted')
             setPendingDelete(null)
@@ -230,7 +230,7 @@ export default function StudioCompanyForms() {
     const move = async (form, direction) => {
         setReordering(form.id)
         try {
-            const updated = await callStudioFunction('studio-reorder-company-form', {
+            const updated = await callStudioFunction('studio/reorder-company-form', {
                 companyId,
                 formId: form.id,
                 direction,

@@ -76,12 +76,30 @@ export async function requireCaregiverAccess(
   throw denied
 }
 
-// For caregiver self-service functions that take no caregiverId at all: the
-// record is derived purely from the verified JWT.
-export async function requireOwnCaregiver(req: Request): Promise<{
+export type OwnCaregiver = Record<string, unknown> & { id: string; company_id: string }
+
+export function pickOwnCaregiver(rows: OwnCaregiver[], companyId: unknown): OwnCaregiver | null {
+  if (typeof companyId === 'string' && UUID_RE.test(companyId)) {
+    const match = rows.find((r) => r.company_id === companyId)
+    if (match) return match
+  }
+  return rows.length === 1 ? rows[0] : null
+}
+
+export async function listOwnCaregivers(supabase: SupabaseClient, userId: string): Promise<OwnCaregiver[]> {
+  const { data, error } = await supabase
+    .from('caregivers')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: true })
+  if (error) throw error
+  return (data ?? []) as OwnCaregiver[]
+}
+
+export async function requireOwnCaregiver(req: Request, companyId?: unknown): Promise<{
   supabase: SupabaseClient
   userId: string
-  caregiver: Record<string, unknown> & { id: string; company_id: string }
+  caregiver: OwnCaregiver
 }> {
   const denied = new Error('Unauthorized')
 
@@ -89,11 +107,7 @@ export async function requireOwnCaregiver(req: Request): Promise<{
   const user = await getCallerUser(req, supabase)
   if (!user) throw denied
 
-  const { data: caregiver } = await supabase
-    .from('caregivers')
-    .select('*')
-    .eq('user_id', user.id)
-    .maybeSingle()
+  const caregiver = pickOwnCaregiver(await listOwnCaregivers(supabase, user.id), companyId)
   if (!caregiver) throw denied
 
   return { supabase, userId: user.id, caregiver }

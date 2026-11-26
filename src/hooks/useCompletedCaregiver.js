@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { getMyCaregiver } from '@/lib/caregiver'
+import { getMyCaregiverContext } from '@/lib/caregiver'
 import { applyBranding } from '@/lib/branding'
 
 export function useCompletedCaregiver() {
@@ -16,9 +16,9 @@ export function useCompletedCaregiver() {
                 return
             }
 
-            const caregiver = await getMyCaregiver()
+            const { caregiver, companies } = await getMyCaregiverContext()
             if (!caregiver) {
-                if (!cancelled) setState({ status: 'norecord' })
+                if (!cancelled) setState({ status: companies.length > 1 ? 'choose' : 'norecord' })
                 return
             }
             if (caregiver.status !== 'completed') {
@@ -40,7 +40,7 @@ export function useCompletedCaregiver() {
                     secondary: branding.secondary_bg_color,
                 })
             }
-            setState({ status: 'ready', caregiver, companyName: branding?.company_name || '' })
+            setState({ status: 'ready', caregiver, companyName: branding?.company_name || '', hasMultipleCompanies: companies.length > 1 })
         }
 
         load()

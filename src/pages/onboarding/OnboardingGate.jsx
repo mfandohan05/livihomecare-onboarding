@@ -3,7 +3,8 @@ import { Navigate, useParams, useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import {
     getCaregiverByToken,
-    getMyCaregiver,
+    getMyCaregiverContext,
+    setActiveCompany,
     getVerificationProof,
     setVerificationProof,
     clearVerificationProof,
@@ -88,6 +89,7 @@ export default function OnboardingGate() {
                 if (!res) next = { status: 'invalid' }
                 else if (res.state === 'ok') {
                     clearVerificationProof(token)
+                    if (res.viewer === 'caregiver') setActiveCompany(res.caregiver.company_id)
                     next = { status: 'ready', caregiver: res.caregiver, viewer: res.viewer }
                 }
                 else if (res.state === 'needs_signup') next = await resolveSignup(token, res)
@@ -102,10 +104,12 @@ export default function OnboardingGate() {
                 if (!session) {
                     next = { status: 'signin' }
                 } else {
-                    const caregiver = await getMyCaregiver()
+                    const { caregiver, companies } = await getMyCaregiverContext()
                     next = caregiver
                         ? { status: 'ready', caregiver, viewer: 'caregiver' }
-                        : { status: 'norecord' }
+                        : companies.length > 1
+                            ? { status: 'choose' }
+                            : { status: 'norecord' }
                 }
             }
 
@@ -130,6 +134,8 @@ export default function OnboardingGate() {
             )
         case 'signin':
             return <Navigate to="/sign-in" replace />
+        case 'choose':
+            return <Navigate to="/choose-company" replace />
         case 'verify':
             return (
                 <VerifyIdentity

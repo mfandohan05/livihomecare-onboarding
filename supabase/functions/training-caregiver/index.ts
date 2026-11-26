@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json()
-    const { supabase, caregiver } = await requireOwnCaregiver(req)
+    const { supabase, caregiver } = await requireOwnCaregiver(req, body?.companyId)
 
     if (caregiver.status !== 'completed') {
       throw new TrainingError('Finish onboarding to access your training', 403)

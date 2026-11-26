@@ -92,8 +92,8 @@ function SlideDialog({ open, onClose, onSaved, sectionId, companyId, editingSlid
         try {
             const cleanedContent = content.filter((l) => l.trim() !== '')
             const result = editingSlide
-                ? await callStudioFunction('studio-update-orientation-slide', { id: editingSlide.id, sectionId, companyId, title, content: cleanedContent })
-                : await callStudioFunction('studio-create-orientation-slide', { sectionId, companyId, title, content: cleanedContent })
+                ? await callStudioFunction('studio/update-orientation-slide', { id: editingSlide.id, sectionId, companyId, title, content: cleanedContent })
+                : await callStudioFunction('studio/create-orientation-slide', { sectionId, companyId, title, content: cleanedContent })
             toast.success(editingSlide ? 'Slide updated' : 'Slide added')
             onSaved(result, !!editingSlide)
         } catch (err) {
@@ -168,10 +168,10 @@ function QuizQuestionDialog({ open, onClose, onSaved, sectionId, companyId, edit
         setError(null)
         try {
             const result = editingQuestion
-                ? await callStudioFunction('studio-update-orientation-quiz-question', {
+                ? await callStudioFunction('studio/update-orientation-quiz-question', {
                     id: editingQuestion.id, sectionId, companyId, question_text: questionText, options, correct_answer_index: correctIndex,
                 })
-                : await callStudioFunction('studio-create-orientation-quiz-question', {
+                : await callStudioFunction('studio/create-orientation-quiz-question', {
                     sectionId, companyId, question_text: questionText, options, correct_answer_index: correctIndex,
                 })
             toast.success(editingQuestion ? 'Question updated' : 'Question added')
@@ -259,7 +259,7 @@ export default function StudioOrientationSectionEditor() {
     const fetchAll = async () => {
         setLoading(true)
         try {
-            const data = await callStudioFunction('studio-get-orientation-section-detail', { id: sectionId, companyId })
+            const data = await callStudioFunction('studio/get-orientation-section-detail', { id: sectionId, companyId })
             setSection(data.section)
             setTitle(data.section.title)
             setPassingScore(Math.round((data.section.passing_score ?? 0.8) * 100))
@@ -279,7 +279,7 @@ export default function StudioOrientationSectionEditor() {
     const saveBasics = async () => {
         setSavingBasics(true)
         try {
-            const updated = await callStudioFunction('studio-update-orientation-section', {
+            const updated = await callStudioFunction('studio/update-orientation-section', {
                 id: sectionId, companyId, title, passing_score: Number(passingScore) / 100,
             })
             setSection((prev) => ({ ...prev, ...updated }))
@@ -300,7 +300,7 @@ export default function StudioOrientationSectionEditor() {
     const confirmDeleteSlide = async () => {
         setDeleting(true)
         try {
-            await callStudioFunction('studio-delete-orientation-slide', { id: pendingDeleteSlide.id, sectionId, companyId })
+            await callStudioFunction('studio/delete-orientation-slide', { id: pendingDeleteSlide.id, sectionId, companyId })
             setSlides((prev) => prev.filter((s) => s.id !== pendingDeleteSlide.id))
             toast.success('Slide deleted')
             setPendingDeleteSlide(null)
@@ -314,7 +314,7 @@ export default function StudioOrientationSectionEditor() {
     const moveSlide = async (slide, direction) => {
         setReorderingSlide(slide.id)
         try {
-            const updated = await callStudioFunction('studio-reorder-orientation-slide', { sectionId, companyId, slideId: slide.id, direction })
+            const updated = await callStudioFunction('studio/reorder-orientation-slide', { sectionId, companyId, slideId: slide.id, direction })
             setSlides(updated)
         } catch (err) {
             toast.error(err.message)
@@ -332,7 +332,7 @@ export default function StudioOrientationSectionEditor() {
     const confirmDeleteQuestion = async () => {
         setDeleting(true)
         try {
-            await callStudioFunction('studio-delete-orientation-quiz-question', { id: pendingDeleteQuestion.id, sectionId, companyId })
+            await callStudioFunction('studio/delete-orientation-quiz-question', { id: pendingDeleteQuestion.id, sectionId, companyId })
             setQuestions((prev) => prev.filter((q) => q.id !== pendingDeleteQuestion.id))
             toast.success('Question deleted')
             setPendingDeleteQuestion(null)
@@ -346,7 +346,7 @@ export default function StudioOrientationSectionEditor() {
     const moveQuestion = async (question, direction) => {
         setReorderingQuestion(question.id)
         try {
-            const updated = await callStudioFunction('studio-reorder-orientation-quiz-question', { sectionId, companyId, questionId: question.id, direction })
+            const updated = await callStudioFunction('studio/reorder-orientation-quiz-question', { sectionId, companyId, questionId: question.id, direction })
             setQuestions(updated)
         } catch (err) {
             toast.error(err.message)

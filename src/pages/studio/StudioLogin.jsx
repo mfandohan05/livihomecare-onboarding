@@ -28,7 +28,7 @@ export default function StudioLogin() {
             return
         }
 
-        const { data: whoami, error: whoamiError } = await supabase.functions.invoke('studio-whoami', {
+        const { data: whoami, error: whoamiError } = await supabase.functions.invoke('studio/whoami', {
             headers: { Authorization: `Bearer ${data.session.access_token}` },
         })
 

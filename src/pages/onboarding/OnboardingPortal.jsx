@@ -251,7 +251,7 @@ export default function OnboardingPortal({ initialCaregiver, viewer }) {
             if (data.features?.length > 0) {
                 const [lng, lat] = data.features[0].center
                 await supabase.functions.invoke('save-caregiver-location', {
-                    body: { lat, lng }
+                    body: { lat, lng, companyId: caregiver.company_id }
                 })
             }
         } catch (e) {

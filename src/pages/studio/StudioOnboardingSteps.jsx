@@ -104,13 +104,13 @@ function StepDialog({ open, onClose, onSaved, companyId, editingStep, existingSt
         setError(null)
         try {
             const result = editingStep
-                ? await callStudioFunction('studio-update-onboarding-step', {
+                ? await callStudioFunction('studio/update-onboarding-step', {
                     id: editingStep.id,
                     companyId,
                     taxFormVariant,
                     visible_to_roles: visibleToRoles,
                 })
-                : await callStudioFunction('studio-create-onboarding-step', {
+                : await callStudioFunction('studio/create-onboarding-step', {
                     companyId,
                     stepType,
                     taxFormVariant,
@@ -223,8 +223,8 @@ export default function StudioOnboardingSteps() {
         setLoading(true)
         try {
             const [stepsResult, rolesResult] = await Promise.all([
-                callStudioFunction('studio-list-onboarding-steps', { companyId }),
-                callStudioFunction('studio-list-role-labels', { companyId }),
+                callStudioFunction('studio/list-onboarding-steps', { companyId }),
+                callStudioFunction('studio/list-role-labels', { companyId }),
             ])
             setSteps(stepsResult.steps)
             setInProgressCount(stepsResult.in_progress_caregiver_count)
@@ -265,7 +265,7 @@ export default function StudioOnboardingSteps() {
     const confirmDelete = async () => {
         setDeleting(true)
         try {
-            await callStudioFunction('studio-delete-onboarding-step', { id: pendingDelete.id, companyId })
+            await callStudioFunction('studio/delete-onboarding-step', { id: pendingDelete.id, companyId })
             setSteps((prev) => prev.filter((s) => s.id !== pendingDelete.id))
             toast.success('Step deleted')
             setPendingDelete(null)
@@ -279,7 +279,7 @@ export default function StudioOnboardingSteps() {
     const move = async (step, direction) => {
         setReordering(step.id)
         try {
-            const updated = await callStudioFunction('studio-reorder-onboarding-step', {
+            const updated = await callStudioFunction('studio/reorder-onboarding-step', {
                 companyId,
                 stepId: step.id,
                 direction,

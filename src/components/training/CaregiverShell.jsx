@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import companyLogo from '@/assets/logo.png'
 import { useCompletedCaregiver } from '@/hooks/useCompletedCaregiver'
+import { clearActiveCompany } from '@/lib/caregiver'
 
 const links = [
     { to: '/my-profile', label: 'My Profile' },
@@ -21,6 +22,7 @@ export function CaregiverGate({ state }) {
     }
     if (state.status === 'signin') return <Navigate to="/sign-in" replace />
     if (state.status === 'onboarding') return <Navigate to="/onboard" replace />
+    if (state.status === 'choose') return <Navigate to="/choose-company" replace />
     if (state.status === 'norecord') {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -41,6 +43,7 @@ export default function CaregiverShell() {
     const state = useCompletedCaregiver()
 
     const handleSignOut = async () => {
+        clearActiveCompany()
         await supabase.auth.signOut()
         navigate('/sign-in', { replace: true })
     }
@@ -67,7 +70,12 @@ export default function CaregiverShell() {
                             </NavLink>
                         ))}
                     </nav>
-                    <Button variant="outline" size="sm" onClick={handleSignOut}>Sign out</Button>
+                    <div className="flex items-center gap-2">
+                        {state.hasMultipleCompanies && (
+                            <Button variant="ghost" size="sm" onClick={() => navigate('/choose-company')}>Switch company</Button>
+                        )}
+                        <Button variant="outline" size="sm" onClick={handleSignOut}>Sign out</Button>
+                    </div>
                 </div>
                 <Outlet context={state} />
             </div>

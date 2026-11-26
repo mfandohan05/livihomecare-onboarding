@@ -24,10 +24,10 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { status } = await req.json()
+    const { status, companyId } = await req.json()
     if (!ALLOWED_STATUSES.includes(status)) return json({ error: 'Invalid status' }, 400)
 
-    const { supabase, caregiver } = await requireOwnCaregiver(req)
+    const { supabase, caregiver } = await requireOwnCaregiver(req, companyId)
 
     const { error } = await supabase
       .from('caregivers')

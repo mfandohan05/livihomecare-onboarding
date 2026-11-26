@@ -385,8 +385,8 @@ export default function StudioCompanyFormEditor() {
         setLoading(true)
         try {
             const [formResult, rolesResult] = await Promise.all([
-                callStudioFunction('studio-get-company-form', { id: formId, companyId }),
-                callStudioFunction('studio-list-role-labels', { companyId }),
+                callStudioFunction('studio/get-company-form', { id: formId, companyId }),
+                callStudioFunction('studio/list-role-labels', { companyId }),
             ])
             setForm(formResult)
             setTitle(formResult.title)
@@ -399,8 +399,8 @@ export default function StudioCompanyFormEditor() {
 
             if (FIELD_MAPPING_TYPES.includes(formResult.form_type)) {
                 const [fieldsResult, caregiversResult] = await Promise.all([
-                    callStudioFunction('studio-list-form-template-fields', { companyId, formKey: formResult.form_key }),
-                    callStudioFunction('studio-list-test-caregivers', { companyId }),
+                    callStudioFunction('studio/list-form-template-fields', { companyId, formKey: formResult.form_key }),
+                    callStudioFunction('studio/list-test-caregivers', { companyId }),
                 ])
                 setTemplateExists(fieldsResult.exists)
                 setTemplateFields(fieldsResult.fields || [])
@@ -425,7 +425,7 @@ export default function StudioCompanyFormEditor() {
     const saveBasics = async () => {
         setSavingBasics(true)
         try {
-            const updated = await callStudioFunction('studio-update-company-form', {
+            const updated = await callStudioFunction('studio/update-company-form', {
                 id: formId, companyId, title, visible_to_roles: visibleToRoles,
                 requires_signature: requiresSignature, admin_signable: adminSignable,
             })
@@ -441,7 +441,7 @@ export default function StudioCompanyFormEditor() {
     const saveContent = async () => {
         setSavingContent(true)
         try {
-            await callStudioFunction('studio-update-company-form', { id: formId, companyId, content })
+            await callStudioFunction('studio/update-company-form', { id: formId, companyId, content })
             toast.success('Content saved')
         } catch (err) {
             toast.error(err.message)
@@ -453,7 +453,7 @@ export default function StudioCompanyFormEditor() {
     const saveConfig = async () => {
         setSavingConfig(true)
         try {
-            await callStudioFunction('studio-update-company-form', { id: formId, companyId, config })
+            await callStudioFunction('studio/update-company-form', { id: formId, companyId, config })
             toast.success('Configuration saved')
         } catch (err) {
             toast.error(err.message)
@@ -468,7 +468,7 @@ export default function StudioCompanyFormEditor() {
         setUploadingTemplate(true)
         try {
             const base64 = await fileToBase64(file)
-            const result = await callStudioFunction('studio-upload-form-template', {
+            const result = await callStudioFunction('studio/upload-form-template', {
                 companyId, formKey: form.form_key, fileBase64: base64, contentType: file.type,
             })
             setTemplateFields(result.fields)
@@ -489,7 +489,7 @@ export default function StudioCompanyFormEditor() {
     const refreshFields = async () => {
         setLoadingFields(true)
         try {
-            const result = await callStudioFunction('studio-list-form-template-fields', { companyId, formKey: form.form_key })
+            const result = await callStudioFunction('studio/list-form-template-fields', { companyId, formKey: form.form_key })
             setTemplateExists(result.exists)
             setTemplateFields(result.fields)
         } catch (err) {
@@ -522,7 +522,7 @@ export default function StudioCompanyFormEditor() {
         setPreviewFieldValues(null)
         try {
             const references = usedReferenceIndexes.map((idx) => previewReferences[idx] || {})
-            const result = await callStudioFunction('studio-preview-fill-form', {
+            const result = await callStudioFunction('studio/preview-fill-form', {
                 companyId,
                 formKey: form.form_key,
                 fieldMapping,

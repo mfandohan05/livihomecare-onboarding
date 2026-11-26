@@ -44,7 +44,7 @@ export default function StudioOrientationPreview() {
         const fetchData = async () => {
             setLoading(true)
             try {
-                const data = await callStudioFunction('studio-get-orientation-section-detail', { id: sectionId, companyId })
+                const data = await callStudioFunction('studio/get-orientation-section-detail', { id: sectionId, companyId })
                 setSection(data.section)
                 setSlides(data.slides.map((s) => ({ title: s.title, content: s.content || [] })))
                 setQuiz(data.questions.map((q) => ({ question: q.question_text, choices: q.options, correct: q.correct_answer_index })))

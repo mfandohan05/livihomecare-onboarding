@@ -215,8 +215,8 @@ export default function StudioOfferLetterTemplateEditor() {
         setLoading(true)
         try {
             const [templateResult, rolesResult] = await Promise.all([
-                callStudioFunction('studio-get-offer-letter-template', { id: templateId, companyId }),
-                callStudioFunction('studio-list-role-labels', { companyId }),
+                callStudioFunction('studio/get-offer-letter-template', { id: templateId, companyId }),
+                callStudioFunction('studio/list-role-labels', { companyId }),
             ])
             setTemplate(templateResult)
             setTitle(templateResult.title)
@@ -228,8 +228,8 @@ export default function StudioOfferLetterTemplateEditor() {
 
             if (!templateResult.uses_custom_pdf) {
                 const [fieldsResult, caregiversResult] = await Promise.all([
-                    callStudioFunction('studio-list-offer-letter-template-fields', { companyId, roleKey: templateResult.role_key }),
-                    callStudioFunction('studio-list-test-caregivers', { companyId }),
+                    callStudioFunction('studio/list-offer-letter-template-fields', { companyId, roleKey: templateResult.role_key }),
+                    callStudioFunction('studio/list-test-caregivers', { companyId }),
                 ])
                 setTemplateExists(fieldsResult.exists)
                 setTemplateFields(fieldsResult.fields || [])
@@ -251,7 +251,7 @@ export default function StudioOfferLetterTemplateEditor() {
     const saveBasics = async () => {
         setSavingBasics(true)
         try {
-            const updated = await callStudioFunction('studio-update-offer-letter-template', {
+            const updated = await callStudioFunction('studio/update-offer-letter-template', {
                 id: templateId, companyId, title, requires_address: requiresAddress, uses_custom_pdf: usesCustomPdf,
             })
             setTemplate((prev) => ({ ...prev, ...updated }))
@@ -267,7 +267,7 @@ export default function StudioOfferLetterTemplateEditor() {
     const saveContent = async () => {
         setSavingContent(true)
         try {
-            await callStudioFunction('studio-update-offer-letter-template', { id: templateId, companyId, content })
+            await callStudioFunction('studio/update-offer-letter-template', { id: templateId, companyId, content })
             toast.success('Content saved')
         } catch (err) {
             toast.error(err.message)
@@ -279,7 +279,7 @@ export default function StudioOfferLetterTemplateEditor() {
     const saveAcknowledgment = async () => {
         setSavingAck(true)
         try {
-            await callStudioFunction('studio-update-offer-letter-template', { id: templateId, companyId, acknowledgment_text: acknowledgmentText })
+            await callStudioFunction('studio/update-offer-letter-template', { id: templateId, companyId, acknowledgment_text: acknowledgmentText })
             toast.success('Acknowledgment text saved')
         } catch (err) {
             toast.error(err.message)
@@ -294,7 +294,7 @@ export default function StudioOfferLetterTemplateEditor() {
         setUploadingTemplate(true)
         try {
             const base64 = await fileToBase64(file)
-            const result = await callStudioFunction('studio-upload-offer-letter-template', {
+            const result = await callStudioFunction('studio/upload-offer-letter-template', {
                 companyId, roleKey: template.role_key, fileBase64: base64, contentType: file.type,
             })
             setTemplateFields(result.fields)
@@ -316,7 +316,7 @@ export default function StudioOfferLetterTemplateEditor() {
     const refreshFields = async () => {
         setLoadingFields(true)
         try {
-            const result = await callStudioFunction('studio-list-offer-letter-template-fields', { companyId, roleKey: template.role_key })
+            const result = await callStudioFunction('studio/list-offer-letter-template-fields', { companyId, roleKey: template.role_key })
             setTemplateExists(result.exists)
             setTemplateFields(result.fields)
             setKnownFieldsPresent(result.knownFieldsPresent || [])
@@ -335,7 +335,7 @@ export default function StudioOfferLetterTemplateEditor() {
         setPreviewing(true)
         setPreviewUrl(null)
         try {
-            const result = await callStudioFunction('studio-preview-fill-offer-letter', {
+            const result = await callStudioFunction('studio/preview-fill-offer-letter', {
                 companyId, roleKey: template.role_key, caregiverId: previewCaregiverId,
                 signature: previewSignature, address: previewAddress, city: previewCity, state: previewState, zip: previewZip,
             })

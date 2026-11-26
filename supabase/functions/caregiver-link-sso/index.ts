@@ -60,11 +60,13 @@ Deno.serve(async (req) => {
       .from('caregivers')
       .select('id')
       .eq('user_id', user.id)
-      .maybeSingle()
-    if (existing) {
+      .eq('company_id', caregiver.company_id)
+      .neq('id', caregiver.id)
+      .limit(1)
+    if (existing?.length) {
       return json({
         success: false,
-        error: 'This account is already linked to another employee. Please use a different account.',
+        error: 'This account is already linked to another employee at this company. Please use a different account.',
       })
     }
 

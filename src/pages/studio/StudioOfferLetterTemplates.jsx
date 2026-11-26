@@ -129,8 +129,8 @@ export default function StudioOfferLetterTemplates() {
         setLoading(true)
         try {
             const [templatesResult, rolesResult] = await Promise.all([
-                callStudioFunction('studio-list-offer-letter-templates', { companyId }),
-                callStudioFunction('studio-list-role-labels', { companyId }),
+                callStudioFunction('studio/list-offer-letter-templates', { companyId }),
+                callStudioFunction('studio/list-role-labels', { companyId }),
             ])
             setTemplates(templatesResult)
             setRoles(rolesResult)
@@ -149,7 +149,7 @@ export default function StudioOfferLetterTemplates() {
     const roleLabel = (roleKey) => roles.find((r) => r.role_key === roleKey)?.display_label || roleKey
 
     const handleCreate = async (form) => {
-        const created = await callStudioFunction('studio-create-offer-letter-template', { companyId, ...form })
+        const created = await callStudioFunction('studio/create-offer-letter-template', { companyId, ...form })
         toast.success('Template created')
         setDialogOpen(false)
         setTemplates((prev) => [...prev, created].sort((a, b) => a.role_key.localeCompare(b.role_key)))
@@ -160,7 +160,7 @@ export default function StudioOfferLetterTemplates() {
     const confirmDelete = async () => {
         setDeleting(true)
         try {
-            await callStudioFunction('studio-delete-offer-letter-template', { id: pendingDelete.id, companyId })
+            await callStudioFunction('studio/delete-offer-letter-template', { id: pendingDelete.id, companyId })
             setTemplates((prev) => prev.filter((t) => t.id !== pendingDelete.id))
             toast.success('Template deleted')
             setPendingDelete(null)

@@ -111,7 +111,7 @@ export default function StudioOrientationSections() {
     const fetchSections = async () => {
         setLoading(true)
         try {
-            const data = await callStudioFunction('studio-list-orientation-sections', { companyId })
+            const data = await callStudioFunction('studio/list-orientation-sections', { companyId })
             setSections(data)
         } catch (err) {
             toast.error(err.message)
@@ -126,7 +126,7 @@ export default function StudioOrientationSections() {
     }, [companyId])
 
     const handleCreate = async (form) => {
-        const created = await callStudioFunction('studio-create-orientation-section', {
+        const created = await callStudioFunction('studio/create-orientation-section', {
             companyId,
             section_key: form.section_key,
             title: form.title,
@@ -141,7 +141,7 @@ export default function StudioOrientationSections() {
     const confirmDelete = async () => {
         setDeleting(true)
         try {
-            await callStudioFunction('studio-delete-orientation-section', { id: pendingDelete.id, companyId })
+            await callStudioFunction('studio/delete-orientation-section', { id: pendingDelete.id, companyId })
             setSections((prev) => prev.filter((s) => s.id !== pendingDelete.id))
             toast.success('Section deleted')
             setPendingDelete(null)
@@ -155,7 +155,7 @@ export default function StudioOrientationSections() {
     const move = async (section, direction) => {
         setReordering(section.id)
         try {
-            const updated = await callStudioFunction('studio-reorder-orientation-section', {
+            const updated = await callStudioFunction('studio/reorder-orientation-section', {
                 companyId, sectionId: section.id, direction,
             })
             setSections((prev) => updated.map((u) => {

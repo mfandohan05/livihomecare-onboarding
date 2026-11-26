@@ -110,7 +110,15 @@ Deno.serve(async (req) => {
       return json({ success: false, error: 'Could not reset this employee\'s sign-in. Please try again.' })
     }
 
-    const { error: deleteError } = await supabase.auth.admin.deleteUser(caregiver.user_id)
+    const { data: otherLinks } = await supabase
+      .from('caregivers')
+      .select('id')
+      .eq('user_id', caregiver.user_id)
+      .limit(1)
+
+    const { error: deleteError } = otherLinks?.length
+      ? { error: null }
+      : await supabase.auth.admin.deleteUser(caregiver.user_id)
     if (deleteError) {
       console.error('deleteUser failed:', deleteError)
       await supabase.from('caregivers').update({ user_id: caregiver.user_id }).eq('id', caregiver.id)

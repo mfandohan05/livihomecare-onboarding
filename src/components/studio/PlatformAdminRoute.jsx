@@ -15,7 +15,7 @@ export default function PlatformAdminRoute({ children }) {
                 return
             }
 
-            const { data, error } = await supabase.functions.invoke('studio-whoami', {
+            const { data, error } = await supabase.functions.invoke('studio/whoami', {
                 headers: { Authorization: `Bearer ${session.access_token}` },
             })
 

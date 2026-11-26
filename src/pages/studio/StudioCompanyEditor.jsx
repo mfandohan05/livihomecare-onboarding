@@ -53,7 +53,7 @@ export default function StudioCompanyEditor() {
     const fetchCompany = async () => {
         setLoading(true)
         try {
-            const data = await callStudioFunction('studio-get-company', { companyId: id })
+            const data = await callStudioFunction('studio/get-company', { companyId: id })
             setCompany({
                 ...data,
                 admin_notification_emails: data.admin_notification_emails || [],
@@ -114,7 +114,7 @@ export default function StudioCompanyEditor() {
         setUploadingLogo(true)
         try {
             const base64 = await fileToBase64(file)
-            const result = await callStudioFunction('studio-upload-logo', {
+            const result = await callStudioFunction('studio/upload-logo', {
                 companyId: id,
                 fileBase64: base64,
                 contentType: file.type,
@@ -155,7 +155,7 @@ export default function StudioCompanyEditor() {
                 payload.ein = einDraft.trim()
             }
 
-            const updated = await callStudioFunction('studio-update-company', payload)
+            const updated = await callStudioFunction('studio/update-company', payload)
             setCompany({
                 ...updated,
                 admin_notification_emails: updated.admin_notification_emails || [],

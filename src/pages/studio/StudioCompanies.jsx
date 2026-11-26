@@ -47,7 +47,7 @@ function NewCompanyDialog({ open, onClose, onCreated }) {
         setSaving(true)
         setError(null)
         try {
-            const company = await callStudioFunction('studio-create-company', form)
+            const company = await callStudioFunction('studio/create-company', form)
             toast.success('Company created')
             onCreated(company)
             setForm({ company_name: '', legal_name: '', phone: '', support_email: '' })
@@ -100,7 +100,7 @@ export default function StudioCompanies() {
     const fetchCompanies = async () => {
         setLoading(true)
         try {
-            const data = await callStudioFunction('studio-list-companies', {})
+            const data = await callStudioFunction('studio/list-companies', {})
             setCompanies(data)
         } catch (err) {
             toast.error(err.message)

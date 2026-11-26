@@ -6,6 +6,7 @@ import TermsOfService from './pages/legal/TermsOfService'
 import NotFound from './pages/NotFound'
 import OnboardingGate from './pages/onboarding/OnboardingGate'
 import CaregiverSignIn from './pages/onboarding/CaregiverSignIn'
+import ChooseCompany from './pages/onboarding/ChooseCompany'
 import MyDocuments from './pages/onboarding/MyDocuments'
 import ResetPassword from './pages/onboarding/ResetPassword'
 import CaregiverLayout from './components/help/CaregiverLayout'
@@ -106,6 +107,7 @@ function App() {
                     <Route path='/onboard' element={<OnboardingGate />} />
                     <Route path='/onboard/:token' element={<OnboardingGate />} />
                     <Route path='/sign-in' element={<CaregiverSignIn />} />
+                    <Route path='/choose-company' element={<ChooseCompany />} />
                     <Route element={<CaregiverShell />}>
                         <Route path='/my-documents' element={<MyDocuments />} />
                         <Route path='/my-profile' element={<MyProfile />} />

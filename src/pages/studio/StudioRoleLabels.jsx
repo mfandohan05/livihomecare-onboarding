@@ -83,13 +83,13 @@ function RoleDialog({ open, onClose, onSaved, companyId, editingRole }) {
         setError(null)
         try {
             const result = editingRole
-                ? await callStudioFunction('studio-update-role-label', {
+                ? await callStudioFunction('studio/update-role-label', {
                     id: editingRole.id,
                     companyId,
                     display_label: form.display_label,
                     required_tax_forms: form.required_tax_forms,
                 })
-                : await callStudioFunction('studio-create-role-label', {
+                : await callStudioFunction('studio/create-role-label', {
                     companyId,
                     role_key: form.role_key,
                     display_label: form.display_label,
@@ -175,7 +175,7 @@ export default function StudioRoleLabels() {
     const fetchRoles = async () => {
         setLoading(true)
         try {
-            const data = await callStudioFunction('studio-list-role-labels', { companyId })
+            const data = await callStudioFunction('studio/list-role-labels', { companyId })
             setRoles(data)
         } catch (err) {
             toast.error(err.message)
@@ -212,7 +212,7 @@ export default function StudioRoleLabels() {
         try {
             // Always fetches fresh confirmation info and always opens the dialog below —
             // this call never deletes anything by itself, even when caregiver_count is 0.
-            const result = await callStudioFunction('studio-delete-role-label', { id: role.id, companyId })
+            const result = await callStudioFunction('studio/delete-role-label', { id: role.id, companyId })
             setPendingDelete({ id: role.id, ...result })
         } catch (err) {
             toast.error(err.message)
@@ -222,7 +222,7 @@ export default function StudioRoleLabels() {
     const confirmDelete = async () => {
         setConfirmingDelete(true)
         try {
-            await callStudioFunction('studio-delete-role-label', { id: pendingDelete.id, companyId, confirmed: true })
+            await callStudioFunction('studio/delete-role-label', { id: pendingDelete.id, companyId, confirmed: true })
             setRoles((prev) => prev.filter((r) => r.id !== pendingDelete.id))
             toast.success('Role deleted')
             setPendingDelete(null)
