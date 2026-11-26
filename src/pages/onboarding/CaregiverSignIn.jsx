@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { getMyCaregiver, usesGoogleSignIn } from '@/lib/caregiver'
 import { Button } from '@/components/ui/button'
@@ -16,7 +16,6 @@ export default function CaregiverSignIn() {
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
-    const [notice, setNotice] = useState(null)
 
     useEffect(() => {
         if (!searchParams.has('sso')) return
@@ -48,13 +47,12 @@ export default function CaregiverSignIn() {
         e.preventDefault()
         setLoading(true)
         setError(null)
-        setNotice(null)
 
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
         if (signInError) {
             const googleUser = await usesGoogleSignIn(email)
             setError(googleUser
-                ? 'It looks like you signed up with Google. Please sign in again using Google.'
+                ? 'It looks like you signed up with Google. Sign in with Google above, or choose "Forgot password?" to set a password.'
                 : 'Invalid email or password')
             setLoading(false)
             return
@@ -71,21 +69,6 @@ export default function CaregiverSignIn() {
         }
 
         navigate(caregiver.status === 'completed' ? '/my-profile' : '/onboard', { replace: true })
-    }
-
-    const handleForgotPassword = async () => {
-        setError(null)
-        setNotice(null)
-        if (!email) {
-            setError('Enter your email above, then choose "Forgot password?".')
-            return
-        }
-
-        await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: `${window.location.origin}/reset-password`,
-        })
-        // Same message whether or not the address has an account.
-        setNotice('If an account exists for that email, we sent a link to reset your password.')
     }
 
     return (
@@ -125,7 +108,6 @@ export default function CaregiverSignIn() {
                 </div>
 
                 {error && <p className="text-sm text-red-500">{error}</p>}
-                {notice && <p className="text-sm text-muted-foreground">{notice}</p>}
 
                 <Button
                     type="submit"
@@ -135,13 +117,13 @@ export default function CaregiverSignIn() {
                     {loading ? 'Signing in...' : 'Sign in'}
                 </Button>
 
-                <button
-                    type="button"
-                    onClick={handleForgotPassword}
-                    className="block mx-auto text-sm text-muted-foreground hover:text-foreground transition-colors"
+                <Link
+                    to="/forgot-password"
+                    state={{ email }}
+                    className="block w-fit mx-auto text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                     Forgot password?
-                </button>
+                </Link>
             </form>
         </AuthCard>
     )

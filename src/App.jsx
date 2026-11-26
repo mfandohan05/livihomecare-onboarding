@@ -8,6 +8,7 @@ import OnboardingGate from './pages/onboarding/OnboardingGate'
 import CaregiverSignIn from './pages/onboarding/CaregiverSignIn'
 import MyDocuments from './pages/onboarding/MyDocuments'
 import ResetPassword from './pages/onboarding/ResetPassword'
+import ForgotPassword from './pages/onboarding/ForgotPassword'
 import CaregiverLayout from './components/help/CaregiverLayout'
 import CaregiverFaq from './pages/help/CaregiverFaq'
 import AdminLogin from './pages/admin/AdminLogin';
@@ -112,6 +113,7 @@ function App() {
                         <Route path='/my-training' element={<MyTraining />} />
                         <Route path='/my-training/:trainingId' element={<TrainingPlayer />} />
                     </Route>
+                    <Route path='/forgot-password' element={<ForgotPassword />} />
                     <Route path='/reset-password' element={<ResetPassword />} />
                 </Route>
                 <Route path='/admin/login' element={<AdminLogin />} />

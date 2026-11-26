@@ -1,5 +1,6 @@
 import { requireCaregiverAccess } from '../_shared/caregiverAccess.ts'
 import { escapeHtml, firstName } from '../_shared/caregiverVerification.ts'
+import { generateRecoveryLink, sendPasswordResetEmail } from '../_shared/passwordResetEmail.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -73,11 +74,14 @@ Deno.serve(async (req) => {
     }
 
     if (!usesGoogle) {
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(authUser.email!, {
-        redirectTo: `https://${PORTAL_DOMAIN}/reset-password`,
+      const recovery = await generateRecoveryLink(supabase, authUser.email!)
+      const sent = recovery && await sendPasswordResetEmail({
+        to: authUser.email!,
+        link: recovery.link,
+        name: caregiver.name,
+        googleOnly: false,
       })
-      if (resetError) {
-        console.error('resetPasswordForEmail failed:', resetError)
+      if (!sent) {
         return json({ success: false, error: 'Could not send the password reset email. Please try again.' })
       }
 
