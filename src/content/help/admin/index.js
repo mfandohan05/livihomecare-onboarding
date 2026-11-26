@@ -644,6 +644,42 @@ export const adminHelp = {
           related: ['add-employee', 'employee-page', 'document-expiration'],
         },
         {
+          id: 'reports',
+          title: 'Running reports',
+          summary: 'Download an Excel or CSV file with the details or document expirations of the employees you choose.',
+          whenToUse: ['Use this when you need a roster, a list of expiring documents, or the details of several employees in one spreadsheet.'],
+          steps: [
+            'Open **Reports** in the top menu.',
+            'Under **1. Choose a report**, pick **Basic roster**, **Compliance status** or **Full employee details**. Under **Columns to include**, tick the columns you want in the file. All of them are ticked to start; use **Select all** or **Clear** to change many at once. Each report remembers its own choice while you stay on the page.',
+            'Under **2. Choose employees**, search by name or email, and filter by status or role. Tick the employees you want, tick **Select this page**, or select **Select all N matching** to take everyone who matches your filters. Your selection stays when you change pages or filters. Select **Show selected** to review everyone you have picked, and **Back to all employees** to return.',
+            'Select **Download Excel (.xlsx)** for a formatted spreadsheet, or **Download CSV** for a plain file. The file downloads to your computer.',
+          ],
+          details: [
+            { table: { head: ['Report', 'What you get'], rows: [
+              ['Basic roster', 'One row per employee: name, email, phone, role, position title, employment type, start date, status, the date onboarding was completed, and pay rate.'],
+              ['Compliance status', 'One row per document, most urgent first (expired, then not on file, then expiring soon): employee ID, expiration date, days until it expires (a negative number means it already expired), and a status of Expired, Expiring soon (30 days or less), Valid or No expiration date. Required documents that are not on file are listed as Not on file.'],
+              ['Full employee details', 'The roster plus gender, companion pay rate, ready for payroll, home address and emergency contacts.'],
+            ] } },
+            { tip: 'In the Compliance status report you can switch **Sort rows by** to **Employee name** to keep each person\'s documents together.' },
+            { note: 'The Excel file has a bold header that stays in view as you scroll, real dates and numbers you can sort and filter. The CSV file has the same data without formatting.' },
+            { note: 'Social security numbers, banking details and tax forms are never included in a report, and the documents themselves are not exported.' },
+            { note: '**Date of birth** can be added to the Basic roster and Full employee details reports. It is unticked to start. When it is ticked, you are asked for your password before the file downloads, and the export is recorded in the audit log. Employees who have not filled in their tax forms have an empty date of birth.' },
+            { tip: 'Imported employees have no onboarding completion date, because they were not onboarded in RSOnboard.' },
+            'Each report is recorded in the audit log under **Exported Report**, with the report type, the number of employees and the columns included.',
+          ],
+          seeing: [
+            'A file named like **roster-report-2026-11-25.xlsx** (or **.csv**) downloads, and "report downloaded" appears with the number of rows.',
+          ],
+          problems: [
+            { q: 'It says Incorrect password when I download.', a: ['The report includes **Date of birth**, which needs your sign-in password. Type it again, or untick Date of birth.'] },
+            { q: 'The Download button is greyed out.', a: ['Select at least one employee and tick at least one column. The count next to the button shows how many employees are selected.'] },
+            { q: 'It says a report can include at most 5,000 employees.', a: ['Narrow the filters (for example by status or role) and run the report in more than one go.'] },
+            { q: 'The CSV file shows strange characters or one column.', a: ['Use **Download Excel (.xlsx)** instead, or open the CSV with **File > Open** and import it as UTF-8 comma-separated text.'] },
+            { q: 'A person is missing from the list.', a: ['Cancelled employees are hidden by default. Set the status filter to **Cancelled** or **All except cancelled**.'] },
+          ],
+          related: ['employee-page', 'document-expiration', 'import-employees'],
+        },
+        {
           id: 'finding-employees',
           title: 'Finding employees',
           summary: 'Search, filter by status, role, documents and skills.',

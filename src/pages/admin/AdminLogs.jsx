@@ -28,11 +28,12 @@ const ACTION_LABELS = {
     reset_caregiver_password: "Reset Employee Password",
     imported_employees: "Imported Employees",
     resent_invitation: "Resent Invitation",
+    exported_report: "Exported Report",
 }
 
 const actionColor = (action) => {
     if (action.includes('deleted') || (action.includes('remove')) || (action.includes('reset')) || action.includes('cancelled')) return 'bg-red-50 text-red-700 border-red-200'
-    if (action.includes('viewed') || action.includes('opened') || (action.includes('created')) || (action.includes('up'))) return 'bg-amber-50 text-amber-700 border-amber-200'
+    if (action.includes('viewed') || action.includes('exported') || action.includes('opened') || (action.includes('created')) || (action.includes('up'))) return 'bg-amber-50 text-amber-700 border-amber-200'
     if (action.includes('signed') || action.includes('completed') || action.includes('Completed') || action.includes('Started') || action.includes('regenerate')) return 'bg-[#E8F0D0] text-[#577C09] border-[#577C09]/20'
     return 'bg-muted text-muted-foreground border-border'
 }

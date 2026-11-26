@@ -13,7 +13,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { LayoutDashboard, Users, LogOut, ChevronDown, Map, Logs, Menu, BookOpen, GraduationCap, Loader2, Settings } from 'lucide-react'
+import { LayoutDashboard, Users, LogOut, ChevronDown, Map, Logs, Menu, BookOpen, GraduationCap, Loader2, Settings, FileSpreadsheet } from 'lucide-react'
 import { APP_VERSION } from '@/version'
 import { getCachedBranding } from '@/lib/branding'
 import { useCompany } from '@/context/CompanyContext'
@@ -76,6 +76,7 @@ export default function AdminLayout({ children }) {
     const navItems = !hasAccess ? [] : [
         { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
         { label: 'Employees', path: '/admin/employees', icon: Users },
+        { label: 'Reports', path: '/admin/reports', icon: FileSpreadsheet },
         { label: 'Caregiver Map', path: '/admin/map', icon: Map },
         { label: 'Training', path: '/admin/training', icon: GraduationCap },
         ...(adminRole === 'superadmin' ? [{ label: 'Logs', path: '/admin/logs', icon: Logs }] : []),

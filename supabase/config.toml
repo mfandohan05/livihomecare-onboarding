@@ -633,6 +633,12 @@ verify_jwt = true
 import_map = "./functions/admin-import-employees/deno.json"
 entrypoint = "./functions/admin-import-employees/index.ts"
 
+[functions.get-report-birthdates]
+enabled = true
+verify_jwt = true
+import_map = "./functions/get-report-birthdates/deno.json"
+entrypoint = "./functions/get-report-birthdates/index.ts"
+
 [functions.get-form-template-url]
 enabled = true
 verify_jwt = true
