@@ -1,10 +1,8 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import { ArrowLeft } from 'lucide-react'
 import { PasswordInput } from '@/components/ui/password-input'
-import companyLogo from '@/assets/logo.png'
-import '@/components/marketing/marketing.css'
+import LoginShell from '@/components/auth/LoginShell'
 
 export default function AdminLogin() {
     const navigate = useNavigate()
@@ -47,57 +45,41 @@ export default function AdminLogin() {
 }
 
     return (
-        <div className="landing-root lr-page-enter lr-surface min-h-screen flex items-center justify-center px-4 py-10">
-            <div className="w-full max-w-md">
-                <Link to="/login" className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--lr-text-2)] hover:text-[var(--lr-navy)]">
-                    <ArrowLeft className="size-4" aria-hidden="true" />
-                    Back to sign in
-                </Link>
-
-                <div className="mb-6 flex justify-center">
-                    <img src={companyLogo} alt="Ready, Set, Onboard!" width="498" height="226" className="h-16 w-auto" />
+        <LoginShell title="Administrator login" subtitle="Sign in to manage your employees.">
+            <form onSubmit={handleLogin} className="space-y-5">
+                <div>
+                    <label htmlFor="email" className="text-sm font-semibold text-[var(--lr-navy)]">Email</label>
+                    <input
+                        id="email"
+                        type="email"
+                        autoComplete="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="example@readysetonboard.com"
+                        className="lr-input"
+                        required
+                    />
+                </div>
+                <div>
+                    <label htmlFor="password" className="text-sm font-semibold text-[var(--lr-navy)]">Password</label>
+                    <PasswordInput
+                        as="input"
+                        id="password"
+                        autoComplete="current-password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="lr-input"
+                        required
+                    />
                 </div>
 
-                <main className="lr-card p-7 sm:p-9">
-                    <h1 className="lr-h3 text-2xl">Administrator login</h1>
-                    <p className="lr-muted mt-1 mb-6 text-[0.9375rem]">Sign in to manage your employees.</p>
+                {error && <p role="alert" className="lr-error">{error}</p>}
 
-                    <form onSubmit={handleLogin} className="space-y-5">
-                        <div>
-                            <label htmlFor="email" className="text-sm font-semibold text-[var(--lr-navy)]">Email</label>
-                            <input
-                                id="email"
-                                type="email"
-                                autoComplete="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="example@readysetonboard.com"
-                                className="lr-input"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="password" className="text-sm font-semibold text-[var(--lr-navy)]">Password</label>
-                            <PasswordInput
-                                as="input"
-                                id="password"
-                                autoComplete="current-password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder="••••••••"
-                                className="lr-input"
-                                required
-                            />
-                        </div>
-
-                        {error && <p role="alert" className="lr-error">{error}</p>}
-
-                        <button type="submit" disabled={loading} className="lr-btn lr-btn-primary w-full">
-                            {loading ? 'Signing in...' : 'Sign in'}
-                        </button>
-                    </form>
-                </main>
-            </div>
-        </div>
+                <button type="submit" disabled={loading} className="lr-btn lr-btn-primary w-full">
+                    {loading ? 'Signing in...' : 'Sign in'}
+                </button>
+            </form>
+        </LoginShell>
     )
 }

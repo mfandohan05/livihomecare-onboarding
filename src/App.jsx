@@ -78,7 +78,7 @@ function StudioLayoutWrapper() {
 
 // Public pages only: start at the top when moving between them (e.g. landing page -> /login).
 // App routes (/admin, /studio, /onboard) are left alone, and same-page #anchors don't change pathname.
-const PUBLIC_PATHS = ['/', '/login', '/admin/login', '/privacy', '/terms', '/refund-cancellation']
+const PUBLIC_PATHS = ['/', '/login', '/admin/login', '/sign-in', '/studio/login', '/privacy', '/terms', '/refund-cancellation']
 function ScrollToTopOnPublicNav() {
     const { pathname } = useLocation()
     useEffect(() => {

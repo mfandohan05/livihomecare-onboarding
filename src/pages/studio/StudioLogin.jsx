@@ -1,12 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/password-input'
-import { Label } from '@/components/ui/label'
-import { ArrowLeft } from 'lucide-react'
-import companyLogo from '@/assets/logo.png'
+import LoginShell from '@/components/auth/LoginShell'
 
 export default function StudioLogin() {
     const navigate = useNavigate()
@@ -43,57 +39,41 @@ export default function StudioLogin() {
     }
 
     return (
-        <div className="studio-theme min-h-screen flex items-center justify-center bg-muted/30 px-4">
-            <div className="w-full max-w-sm">
-                <button
-                    onClick={() => navigate('/login')}
-                    className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
-                >
-                    <ArrowLeft className="w-4 h-4" />
-                    Back to sign in
+        <LoginShell title="Studio login" subtitle="Sign in to platform administration.">
+            <form onSubmit={handleLogin} className="space-y-5">
+                <div>
+                    <label htmlFor="email" className="text-sm font-semibold text-[var(--lr-navy)]">Email</label>
+                    <input
+                        id="email"
+                        type="email"
+                        autoComplete="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="you@company.com"
+                        className="lr-input"
+                        required
+                    />
+                </div>
+                <div>
+                    <label htmlFor="password" className="text-sm font-semibold text-[var(--lr-navy)]">Password</label>
+                    <PasswordInput
+                        as="input"
+                        id="password"
+                        autoComplete="current-password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="lr-input"
+                        required
+                    />
+                </div>
+
+                {error && <p role="alert" className="lr-error">{error}</p>}
+
+                <button type="submit" disabled={loading} className="lr-btn lr-btn-primary w-full">
+                    {loading ? 'Signing in...' : 'Sign in'}
                 </button>
-
-                <div className="flex justify-center mb-8">
-                    <img src={companyLogo} alt="Ready, Set, Onboard!" className="w-[200px]" />
-                </div>
-
-                <div className="bg-white rounded-xl border border-border p-6 sm:p-8 shadow-sm">
-                    <h1 className="text-xl font-semibold mb-1">Studio</h1>
-                    <p className="text-sm text-muted-foreground mb-6">Platform administration sign in</p>
-
-                    <form onSubmit={handleLogin} className="space-y-4">
-                        <div className="space-y-1.5">
-                            <Label htmlFor="email">Email</Label>
-                            <Input
-                                id="email"
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="you@company.com"
-                                required
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <Label htmlFor="password">Password</Label>
-                            <PasswordInput
-                                id="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder="••••••••"
-                                required
-                            />
-                        </div>
-
-                        {error && (
-                            <p className="text-sm text-red-500">{error}</p>
-                        )}
-
-                        <Button type="submit" disabled={loading} className="w-full">
-                            {loading ? 'Signing in...' : 'Sign in'}
-                        </Button>
-                    </form>
-                </div>
-            </div>
-        </div>
+            </form>
+        </LoginShell>
     )
 }

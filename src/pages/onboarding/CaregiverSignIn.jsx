@@ -2,11 +2,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { getMyCaregiver, usesGoogleSignIn } from '@/lib/caregiver'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/password-input'
-import { Label } from '@/components/ui/label'
-import AuthCard from '@/components/onboarding/AuthCard'
+import LoginShell from '@/components/auth/LoginShell'
 import SsoButtons, { OrDivider } from '@/components/onboarding/SsoButtons'
 
 export default function CaregiverSignIn() {
@@ -89,60 +86,59 @@ export default function CaregiverSignIn() {
     }
 
     return (
-        <AuthCard title="Employee Sign In" subtitle="Sign in to continue your onboarding">
+        <LoginShell title="Employee login" subtitle="Sign in to continue your onboarding.">
             <SsoButtons
                 redirectTo={`${window.location.origin}/sign-in?sso=1`}
                 disabled={loading}
                 onError={setError}
+                buttonClassName="h-12 rounded-full border-[#677fa5] bg-white text-base font-semibold text-[var(--lr-navy)] hover:border-[var(--lr-navy)] hover:bg-[var(--lr-navy-tint)] hover:text-[var(--lr-navy)]"
             />
-            <div className="my-4">
+            <div className="my-5">
                 <OrDivider />
             </div>
-            <form onSubmit={handleSignIn} className="space-y-4">
-                <div className="space-y-1.5">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
+            <form onSubmit={handleSignIn} className="space-y-5">
+                <div>
+                    <label htmlFor="email" className="text-sm font-semibold text-[var(--lr-navy)]">Email</label>
+                    <input
                         id="email"
                         type="email"
                         autoComplete="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="focus-visible:border-[var(--rsonboard-navy)] focus-visible:ring-[var(--rsonboard-navy)]/40"
+                        placeholder="you@example.com"
+                        className="lr-input"
                         required
                     />
                 </div>
-                <div className="space-y-1.5">
-                    <Label htmlFor="password">Password</Label>
+                <div>
+                    <label htmlFor="password" className="text-sm font-semibold text-[var(--lr-navy)]">Password</label>
                     <PasswordInput
+                        as="input"
                         id="password"
                         autoComplete="current-password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
-                        className="focus-visible:border-[var(--rsonboard-navy)] focus-visible:ring-[var(--rsonboard-navy)]/40"
+                        className="lr-input"
                         required
                     />
                 </div>
 
-                {error && <p className="text-sm text-red-500">{error}</p>}
-                {notice && <p className="text-sm text-muted-foreground">{notice}</p>}
+                {error && <p role="alert" className="lr-error">{error}</p>}
+                {notice && <p role="status" className="lr-muted text-sm">{notice}</p>}
 
-                <Button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-[var(--rsonboard-navy)] hover:bg-[var(--rsonboard-navy-hover)] text-white focus-visible:ring-[var(--rsonboard-navy)]/40"
-                >
+                <button type="submit" disabled={loading} className="lr-btn lr-btn-primary w-full">
                     {loading ? 'Signing in...' : 'Sign in'}
-                </Button>
+                </button>
 
                 <button
                     type="button"
                     onClick={handleForgotPassword}
-                    className="block mx-auto text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="mx-auto block text-sm font-medium text-[var(--lr-text-2)] hover:text-[var(--lr-navy)]"
                 >
                     Forgot password?
                 </button>
             </form>
-        </AuthCard>
+        </LoginShell>
     )
 }

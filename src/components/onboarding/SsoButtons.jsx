@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { signInWithSso } from '@/lib/caregiver'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 function GoogleIcon() {
     return (
@@ -13,7 +14,7 @@ function GoogleIcon() {
     )
 }
 
-export default function SsoButtons({ redirectTo, disabled, onError, onStart }) {
+export default function SsoButtons({ redirectTo, disabled, onError, onStart, buttonClassName }) {
     const [pending, setPending] = useState(null)
 
     const handleClick = async (provider) => {
@@ -33,7 +34,7 @@ export default function SsoButtons({ redirectTo, disabled, onError, onStart }) {
                 variant="outline"
                 disabled={disabled || !!pending}
                 onClick={() => handleClick('google')}
-                className="w-full h-10 gap-2"
+                className={cn("w-full h-10 gap-2", buttonClassName)}
             >
                 <GoogleIcon />
                 {pending === 'google' ? 'Redirecting...' : 'Continue with Google'}
