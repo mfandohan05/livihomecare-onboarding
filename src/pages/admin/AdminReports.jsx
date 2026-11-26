@@ -14,7 +14,7 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import HowDoesThisWork from '@/components/help/HowDoesThisWork'
-import ReportEmployeePicker from '@/components/admin/ReportEmployeePicker'
+import EmployeePicker from '@/components/admin/EmployeePicker'
 import { MAX_REPORT_EMPLOYEES, confirmPassword, loadBirthdates, loadReportData } from '@/lib/reportData'
 import { COMPLIANCE_SORTS, REPORT_TYPES, SENSITIVE_COLUMNS, buildReport, toCsv } from '@/lib/reportFormat'
 import { toXlsxBlob } from '@/lib/reportExcel'
@@ -268,7 +268,7 @@ export default function AdminReports() {
 
             <section className="bg-white rounded-xl border border-border p-6 mb-6">
                 <h2 className="font-semibold mb-4">2. Choose employees</h2>
-                <ReportEmployeePicker
+                <EmployeePicker
                     companyId={companyId}
                     roleOptions={roleOptions}
                     selected={selected}

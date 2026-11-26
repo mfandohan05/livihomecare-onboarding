@@ -680,6 +680,40 @@ export const adminHelp = {
           related: ['employee-page', 'document-expiration', 'import-employees'],
         },
         {
+          id: 'broadcast',
+          title: 'Emailing employees (Broadcast)',
+          summary: 'Send one email to everyone who has completed onboarding, to a few people, or to one person.',
+          whenToUse: ['Use this to let employees know a shift is available, or to send them a general update.'],
+          steps: [
+            'Open **Broadcast** in the top menu. To email one person, you can also open their page and select **Send message**.',
+            'Under **1. Choose recipients**, pick **All completed employees**, or **Choose employees** and tick the people you want. Search by name or email and filter by role. **Select all N** takes everyone who matches the search.',
+            'Under **2. Write the message**, type a subject and message, or start from the **Shift available** or **General update** template. Use **First name** and **Company name** to insert a field that is filled in for each person.',
+            'Check the **Preview**, then select **Send email** and confirm.',
+          ],
+          details: [
+            'Only employees with the status **Completed** (including imported employees) can receive a broadcast.',
+            'Each person gets their own email. Nobody can see who else received it. Replies go to your company\'s support email address.',
+            { table: { head: ['Limit', 'Value'], rows: [
+              ['Recipients per message', 'Up to 300'],
+              ['Messages per admin', 'Up to 5 per hour'],
+              ['Subject', 'Up to 150 characters'],
+              ['Message', 'Up to 2,000 characters'],
+            ] } },
+            'Every message is listed under **Sent messages**. Select one to see its text and, for each person, whether it was sent, failed or skipped.',
+            'Each send is recorded in the audit log under **Sent Broadcast**.',
+          ],
+          seeing: [
+            '"Message sent to N employees" appears, and the **Last send** card shows how many were sent, failed or skipped.',
+          ],
+          problems: [
+            { q: 'Someone was skipped.', a: ['Open the message under **Sent messages** to see why. The usual reasons are no email on file, an invalid email address, or two employees sharing one address (only the first gets it). Fix the email on their page and send again to just that person.'] },
+            { q: 'A person is missing from the list.', a: ['Only Completed employees are shown. Employees who are still onboarding, or who were cancelled, cannot be messaged here.'] },
+            { q: 'It says Rate limit reached.', a: ['Each admin can send 5 messages an hour. Wait, or ask another admin to send it.'] },
+            { q: 'The Send button is greyed out.', a: ['Choose at least one employee, and enter both a subject and a message.'] },
+          ],
+          related: ['employee-page', 'emails', 'audit-logs'],
+        },
+        {
           id: 'finding-employees',
           title: 'Finding employees',
           summary: 'Search, filter by status, role, documents and skills.',

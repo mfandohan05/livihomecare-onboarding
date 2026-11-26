@@ -972,3 +972,8 @@ entrypoint = "./functions/training-caregiver/index.ts"
 enabled = true
 verify_jwt = false
 entrypoint = "./functions/stripe-webhook/index.ts"
+
+[functions.send-broadcast]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/send-broadcast/index.ts"

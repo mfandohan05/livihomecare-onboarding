@@ -1,6 +1,5 @@
 import { requireAdminContext } from '../_shared/requireAdmin.ts'
-import { analyzeSms, applyTemplate, firstNameOf, normalizePhoneE164 } from '../_shared/smsText.ts'
-import { getSmsMode, isAllowed, MOCK_FAILURE_NUMBERS, isProduction, sendSms, smsUnavailableReason } from '../_shared/sms.ts'
+import { applyTemplate, firstNameOf } from '../_shared/smsText.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -21,7 +20,7 @@ const MAX_RECIPIENTS = Number(Deno.env.get('BROADCAST_MAX_RECIPIENTS') || 300)
 const MAX_PER_HOUR = Number(Deno.env.get('BROADCAST_MAX_PER_HOUR') || 5)
 const CONCURRENCY = 3
 const MAX_BODY = 2000
-const MAX_SMS_BODY = 1000
+const MAX_SUBJECT = 150
 
 const portalDomain = 'rsonboard.com'
 const senderEmail = 'onboarding@rsonboard.com'
@@ -47,13 +46,10 @@ type Company = {
   primary_color: string | null
   support_email: string | null
   phone: string | null
-  sms_enabled: boolean | null
-  sms_messaging_service_sid: string | null
-  sms_from_number: string | null
 }
 
 function buildEmail(opts: {
-  companyName: string; firstName: string; subject: string; body: string
+  companyName: string; subject: string; body: string
   primaryColor: string; supportEmail: string; supportPhone: string
 }) {
   const { companyName, subject, body, primaryColor, supportEmail, supportPhone } = opts
@@ -105,7 +101,6 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405)
 
-  // company_id / admin identity come ONLY from the verified JWT -> admin_users.
   let admin
   try {
     admin = await requireAdminContext(req)
@@ -120,41 +115,29 @@ Deno.serve(async (req) => {
   try {
     const { data: company } = await supabase
       .from('company_data')
-      .select('company_name, primary_color, support_email, phone, sms_enabled, sms_messaging_service_sid, sms_from_number')
+      .select('company_name, primary_color, support_email, phone')
       .eq('company_id', companyId)
       .maybeSingle<Company>()
 
-    const mode = getSmsMode()
-    const smsBlocked = smsUnavailableReason(mode, company)
-
     if (payload.action === 'config') {
       return json({
-        smsMode: mode,
-        smsAvailable: !smsBlocked,
-        smsUnavailableReason: smsBlocked,
-        restrictedToAllowlist: !isProduction(),
         maxRecipients: MAX_RECIPIENTS,
+        maxPerHour: MAX_PER_HOUR,
+        maxSubject: MAX_SUBJECT,
+        maxBody: MAX_BODY,
         companyName: company?.company_name ?? '',
       })
     }
 
-    // ---- validate input -------------------------------------------------
-    const channels = Array.isArray(payload.channels) ? [...new Set(payload.channels as string[])] : []
-    if (channels.length === 0 || channels.some((c) => c !== 'email' && c !== 'sms')) {
-      return json({ error: 'Choose email, SMS, or both.' }, 400)
-    }
-    const wantEmail = channels.includes('email')
-    const wantSms = channels.includes('sms')
-
     const rawBody = typeof payload.body === 'string' ? payload.body.trim() : ''
     const rawSubject = typeof payload.subject === 'string' ? payload.subject.trim() : ''
+    if (!rawSubject || rawSubject.length > MAX_SUBJECT) return json({ error: `Subject must be 1-${MAX_SUBJECT} characters.` }, 400)
     if (!rawBody || rawBody.length > MAX_BODY) return json({ error: `Message must be 1-${MAX_BODY} characters.` }, 400)
-    if (wantSms && rawBody.length > MAX_SMS_BODY) return json({ error: `SMS messages are limited to ${MAX_SMS_BODY} characters.` }, 400)
-    if (wantEmail && (!rawSubject || rawSubject.length > 150)) return json({ error: 'Email needs a subject (150 characters max).' }, 400)
-    if (wantSms && smsBlocked) return json({ error: smsBlocked }, 400)
 
-    const mode_ = payload.recipientMode
-    if (mode_ !== 'all' && mode_ !== 'selected' && mode_ !== 'single') return json({ error: 'Invalid recipient mode.' }, 400)
+    const recipientMode = payload.recipientMode
+    if (recipientMode !== 'all' && recipientMode !== 'selected' && recipientMode !== 'single') {
+      return json({ error: 'Invalid recipient mode.' }, 400)
+    }
 
     const idempotencyKey = payload.idempotencyKey
     if (typeof idempotencyKey !== 'string' || idempotencyKey.length < 8 || idempotencyKey.length > 100) {
@@ -162,15 +145,14 @@ Deno.serve(async (req) => {
     }
 
     let requestedIds: string[] = []
-    if (mode_ !== 'all') {
+    if (recipientMode !== 'all') {
       const ids = Array.isArray(payload.caregiverIds) ? payload.caregiverIds : []
       requestedIds = [...new Set(ids.filter((x): x is string => typeof x === 'string' && UUID_RE.test(x)))]
       if (requestedIds.length === 0) return json({ error: 'No recipients selected.' }, 400)
-      if (mode_ === 'single' && requestedIds.length !== 1) return json({ error: 'Single mode takes exactly one recipient.' }, 400)
+      if (recipientMode === 'single' && requestedIds.length !== 1) return json({ error: 'Single mode takes exactly one recipient.' }, 400)
       if (requestedIds.length > MAX_RECIPIENTS) return json({ error: `At most ${MAX_RECIPIENTS} recipients per broadcast.` }, 400)
     }
 
-    // ---- idempotency: a repeat submit returns the original result --------
     const findExisting = async () => {
       const { data } = await supabase
         .from('broadcasts')
@@ -183,7 +165,6 @@ Deno.serve(async (req) => {
     const existing = await findExisting()
     if (existing) return json({ broadcastId: existing.id, status: existing.status, counts: existing.counts, duplicate: true })
 
-    // ---- per-admin rate limit -------------------------------------------
     const since = new Date(Date.now() - 60 * 60 * 1000).toISOString()
     const { count: recentCount } = await supabase
       .from('broadcasts')
@@ -195,13 +176,12 @@ Deno.serve(async (req) => {
       return json({ error: `Rate limit reached: ${MAX_PER_HOUR} broadcasts per hour.` }, 429)
     }
 
-    // ---- resolve recipients: this company, completed only ----------------
     let cgQuery = supabase
       .from('caregivers')
-      .select('id, name, email, phone')
+      .select('id, name, email')
       .eq('company_id', companyId)
       .eq('status', 'completed')
-    if (mode_ !== 'all') cgQuery = cgQuery.in('id', requestedIds)
+    if (recipientMode !== 'all') cgQuery = cgQuery.in('id', requestedIds)
     const { data: caregivers, error: cgErr } = await cgQuery
     if (cgErr) throw new Error('Recipient lookup failed')
     const recipients = caregivers ?? []
@@ -209,22 +189,20 @@ Deno.serve(async (req) => {
     if (recipients.length > MAX_RECIPIENTS) {
       return json({ error: `That would message ${recipients.length} people; the limit is ${MAX_RECIPIENTS} per broadcast.` }, 400)
     }
-    const ignoredIds = mode_ === 'all' ? 0 : requestedIds.length - recipients.length
+    const ignoredIds = recipientMode === 'all' ? 0 : requestedIds.length - recipients.length
 
-    // ---- create the broadcast row (unique key blocks concurrent doubles) --
     const { data: broadcast, error: bErr } = await supabase
       .from('broadcasts')
       .insert({
         company_id: companyId,
         created_by: admin.userId,
-        created_by_name: admin.name,
-        channels,
-        subject: wantEmail ? rawSubject : null,
+        created_by_name: admin.name || admin.email || 'Admin',
+        channels: ['email'],
+        subject: rawSubject,
         body: rawBody,
-        recipient_mode: mode_,
+        recipient_mode: recipientMode,
         idempotency_key: idempotencyKey,
         status: 'sending',
-        sms_mode: wantSms ? mode : null,
       })
       .select('id')
       .single()
@@ -237,63 +215,24 @@ Deno.serve(async (req) => {
     }
     const broadcastId = broadcast.id as string
 
-    // ---- consent + per-recipient plan -----------------------------------
-    const optedOut = new Set<string>()
-    if (wantSms) {
-      const { data: consent } = await supabase
-        .from('caregiver_sms_consent')
-        .select('caregiver_id')
-        .eq('company_id', companyId)
-        .eq('status', 'opted_out')
-        .in('caregiver_id', recipients.map((r) => r.id))
-      for (const c of consent ?? []) optedOut.add(c.caregiver_id)
-    }
-
     const companyName = company?.company_name || 'your employer'
     const primaryColor = company?.primary_color && HEX_RE.test(company.primary_color) ? company.primary_color : '#577C09'
     const supportEmail = company?.support_email || 'office@livihomecare.com'
     const supportPhone = company?.phone || ''
 
-    type Plan = {
-      caregiverId: string; channel: 'email' | 'sms'; status: 'queued' | 'skipped'; skipReason?: string
-      to?: string; name: string; segments?: number; text?: string
-    }
-    const plan: Plan[] = []
-    const seenPhones = new Set<string>()
+    type Plan = { caregiverId: string; name: string; to: string; status: 'queued' | 'skipped'; skipReason?: string }
+    const seenEmails = new Set<string>()
+    const plan: Plan[] = recipients.map((cg) => {
+      const email = (cg.email || '').trim().toLowerCase()
+      let reason: string | undefined
+      if (!email) reason = 'no_email'
+      else if (!EMAIL_RE.test(email)) reason = 'invalid_email'
+      else if (seenEmails.has(email)) reason = 'duplicate_email'
+      if (email && !reason) seenEmails.add(email)
+      return { caregiverId: cg.id, name: cg.name, to: email, status: reason ? 'skipped' : 'queued', skipReason: reason }
+    })
 
-    for (const cg of recipients) {
-      const vars = { first_name: firstNameOf(cg.name), company_name: companyName }
-
-      if (wantEmail) {
-        const email = (cg.email || '').trim().toLowerCase()
-        let reason: string | undefined
-        if (!email) reason = 'no_email'
-        else if (!EMAIL_RE.test(email)) reason = 'invalid_email'
-        else if (!isAllowed('email', email)) reason = 'not_allowlisted'
-        plan.push({ caregiverId: cg.id, channel: 'email', name: cg.name, to: email, status: reason ? 'skipped' : 'queued', skipReason: reason })
-      }
-
-      if (wantSms) {
-        const phone = normalizePhoneE164(cg.phone)
-        let reason: string | undefined
-        if (!cg.phone || !cg.phone.trim()) reason = 'no_phone'
-        else if (!phone) reason = 'invalid_phone'
-        else if (optedOut.has(cg.id)) reason = 'opted_out'
-        else if (seenPhones.has(phone)) reason = 'duplicate_phone'
-        else if (!(mode === 'mock' && MOCK_FAILURE_NUMBERS[phone]) && !isAllowed('sms', phone)) reason = 'not_allowlisted'
-        if (phone && !reason) seenPhones.add(phone)
-
-        const text = `${applyTemplate(rawBody, vars)}\n\n${companyName}. Reply STOP to opt out.`
-        plan.push({
-          caregiverId: cg.id, channel: 'sms', name: cg.name, to: phone ?? undefined,
-          status: reason ? 'skipped' : 'queued', skipReason: reason,
-          segments: analyzeSms(text).segments, text,
-        })
-      }
-    }
-
-    // Insert every row up front so the log is complete even if we are cut off.
-    const rowIds = new Map<string, string>() // `${caregiverId}:${channel}` -> row id
+    const rowIds = new Map<string, string>()
     for (let i = 0; i < plan.length; i += 200) {
       const chunk = plan.slice(i, i + 200)
       const { data: rows, error: rErr } = await supabase
@@ -302,91 +241,71 @@ Deno.serve(async (req) => {
           broadcast_id: broadcastId,
           company_id: companyId,
           caregiver_id: p.caregiverId,
-          channel: p.channel,
+          channel: 'email',
           status: p.status,
           skip_reason: p.skipReason ?? null,
-          segments: p.channel === 'sms' ? p.segments : null,
         })))
-        .select('id, caregiver_id, channel')
+        .select('id, caregiver_id')
       if (rErr) throw new Error('Could not record recipients')
-      for (const r of rows ?? []) rowIds.set(`${r.caregiver_id}:${r.channel}`, r.id)
+      for (const r of rows ?? []) rowIds.set(r.caregiver_id, r.id)
     }
 
-    // ---- send ------------------------------------------------------------
-    const results = { email: { sent: 0, failed: 0, skipped: 0 }, sms: { sent: 0, failed: 0, skipped: 0 } }
-    const skippedReasons: Record<string, Record<string, number>> = { email: {}, sms: {} }
+    const results = { sent: 0, failed: 0, skipped: 0 }
+    const skippedReasons: Record<string, number> = {}
     for (const p of plan) {
       if (p.status === 'skipped') {
-        results[p.channel].skipped++
-        skippedReasons[p.channel][p.skipReason!] = (skippedReasons[p.channel][p.skipReason!] ?? 0) + 1
+        results.skipped++
+        skippedReasons[p.skipReason!] = (skippedReasons[p.skipReason!] ?? 0) + 1
       }
     }
 
-    const record = async (p: Plan, r: { ok: boolean; provider: string; providerId?: string; errorCode?: string; error?: string }) => {
-      results[p.channel][r.ok ? 'sent' : 'failed']++
+    const record = async (p: Plan, r: EmailResult) => {
+      results[r.ok ? 'sent' : 'failed']++
       const { error } = await supabase
         .from('broadcast_recipients')
         .update({
           status: r.ok ? 'sent' : 'failed',
-          provider: r.provider,
+          provider: 'resend',
           provider_message_id: r.providerId ?? null,
           error_code: r.errorCode ?? null,
           error: r.error ?? null,
           sent_at: r.ok ? new Date().toISOString() : null,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', rowIds.get(`${p.caregiverId}:${p.channel}`)!)
+        .eq('id', rowIds.get(p.caregiverId)!)
         .eq('company_id', companyId)
-      if (error) console.error('send-broadcast: could not record result', p.channel, r.ok ? 'sent' : 'failed')
+      if (error) console.error('send-broadcast: could not record result', r.ok ? 'sent' : 'failed')
     }
 
-    const queued = plan.filter((p) => p.status === 'queued')
-    const senderCompany = {
-      sms_enabled: company?.sms_enabled ?? false,
-      sms_messaging_service_sid: company?.sms_messaging_service_sid ?? null,
-      sms_from_number: company?.sms_from_number ?? null,
-    }
-
-    await pool(queued, CONCURRENCY, async (p) => {
-      if (p.channel === 'email') {
-        const cg = recipients.find((c) => c.id === p.caregiverId)!
-        const vars = { first_name: firstNameOf(cg.name), company_name: companyName }
-        const { html, text } = buildEmail({
-          companyName, firstName: vars.first_name,
-          subject: applyTemplate(rawSubject, vars), body: applyTemplate(rawBody, vars),
-          primaryColor, supportEmail, supportPhone,
-        })
-        const r = await sendEmail({
-          from: `${companyName} <${senderEmail}>`,
-          to: p.to, // one recipient per request: nobody sees anyone else
-          reply_to: supportEmail,
-          subject: applyTemplate(rawSubject, vars),
-          html,
-          text,
-        })
-        await record(p, { ...r, provider: 'resend' })
-      } else {
-        const r = await sendSms(mode, p.to!, p.text!, senderCompany, p.caregiverId)
-        await record(p, r)
-      }
+    await pool(plan.filter((p) => p.status === 'queued'), CONCURRENCY, async (p) => {
+      const vars = { first_name: firstNameOf(p.name), company_name: companyName }
+      const subject = applyTemplate(rawSubject, vars)
+      const { html, text } = buildEmail({
+        companyName, subject, body: applyTemplate(rawBody, vars),
+        primaryColor, supportEmail, supportPhone,
+      })
+      const r = await sendEmail({
+        from: `${companyName} <${senderEmail}>`,
+        to: p.to,
+        reply_to: supportEmail,
+        subject,
+        html,
+        text,
+      })
+      await record(p, r)
     })
 
-    // ---- finalize --------------------------------------------------------
-    const attempted = results.email.sent + results.email.failed + results.sms.sent + results.sms.failed
-    const failed = results.email.failed + results.sms.failed
-    const status = attempted > 0 && failed === attempted ? 'failed' : failed > 0 ? 'partial' : 'completed'
+    const attempted = results.sent + results.failed
+    const status = attempted > 0 && results.failed === attempted ? 'failed' : results.failed > 0 ? 'partial' : 'completed'
     const counts = {
       recipients: recipients.length,
       ignored_ids: ignoredIds,
-      email: results.email,
-      sms: results.sms,
+      email: results,
       skipped_reasons: skippedReasons,
     }
 
     await supabase.from('broadcasts').update({ status, counts }).eq('id', broadcastId).eq('company_id', companyId)
 
-    // Audit entry: identity comes from the verified JWT + admin_users, so the
-    // attribution (admin_id -> admin_users.name in AdminLogs) is the real sender.
     const { error: auditErr } = await supabase.from('audit_logs').insert({
       admin_id: admin.userId,
       admin_email: admin.email,
@@ -395,18 +314,15 @@ Deno.serve(async (req) => {
       metadata: {
         admin_name: admin.name,
         broadcast_id: broadcastId,
-        channels,
-        recipient_mode: mode_,
-        sms_mode: wantSms ? mode : null,
+        subject: rawSubject,
+        recipient_mode: recipientMode,
         counts,
       },
     })
     if (auditErr) console.error('send-broadcast: audit log failed')
 
     console.log(JSON.stringify({
-      fn: 'send-broadcast', broadcastId, companyId, adminId: admin.userId, smsMode: wantSms ? mode : null,
-      status, email: results.email, sms: results.sms,
-      smsSegments: plan.filter((p) => p.channel === 'sms' && p.status === 'queued').reduce((n, p) => n + (p.segments ?? 0), 0),
+      fn: 'send-broadcast', broadcastId, companyId, adminId: admin.userId, status, email: results,
     }))
 
     return json({ broadcastId, status, counts, duplicate: false })

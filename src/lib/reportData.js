@@ -34,6 +34,7 @@ const STATUS_FILTERS = {
     completed: (query) => query.eq('status', 'completed').neq('source', 'imported'),
     imported: (query) => query.eq('status', 'completed').eq('source', 'imported'),
     cancelled: (query) => query.eq('status', 'cancelled'),
+    onboarded: (query) => query.eq('status', 'completed'),
 }
 
 const unwrap = ({ data, error }) => {

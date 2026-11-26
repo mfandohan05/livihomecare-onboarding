@@ -7,18 +7,27 @@ import { roleName, statusText } from '@/lib/reportFormat'
 import { statusColor } from '@/lib/statusStyle'
 
 const SEARCH_DELAY_MS = 300
-const FIRST_PAGE = { search: '', status: 'active', role: 'all', view: 'all', page: 1 }
-
-const isNarrowed = ({ search, status, role }) =>
-    search.trim() !== '' || status !== FIRST_PAGE.status || role !== FIRST_PAGE.role
+const isNarrowed = ({ search, status, role }, defaultStatus) =>
+    search.trim() !== '' || status !== defaultStatus || role !== 'all'
 
 const SELECT_CLASS = 'w-full sm:w-auto border border-border rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:border-[var(--primary-color)]'
 
 const queryKey = (companyId, query) => JSON.stringify([companyId, query])
 const filtersOf = ({ search, status, role }) => ({ search, status, role })
 
-export default function ReportEmployeePicker({ companyId, roleOptions, selected, onChange }) {
-    const [query, setQuery] = useState(FIRST_PAGE)
+const defaultLimitMessage = (max) => `A report can include at most ${max.toLocaleString()} employees. Narrow the filters and try again.`
+
+export default function EmployeePicker({
+    companyId,
+    roleOptions,
+    selected,
+    onChange,
+    statusOptions = STATUS_OPTIONS,
+    defaultStatus = 'active',
+    maxSelected = MAX_REPORT_EMPLOYEES,
+    limitMessage = defaultLimitMessage,
+}) {
+    const [query, setQuery] = useState(() => ({ search: '', status: defaultStatus, role: 'all', view: 'all', page: 1 }))
     const [searchInput, setSearchInput] = useState('')
     const [result, setResult] = useState({ key: null, employees: [], total: 0, error: null })
     const [selectingAll, setSelectingAll] = useState(false)
@@ -89,8 +98,8 @@ export default function ReportEmployeePicker({ companyId, roleOptions, selected,
     // The selection is locked while this runs, so the merge below cannot overwrite a change made meanwhile.
     const selectAllMatching = async () => {
         setSelectAllError(null)
-        if (total > MAX_REPORT_EMPLOYEES) {
-            setSelectAllError(`A report can include at most ${MAX_REPORT_EMPLOYEES.toLocaleString()} employees. Narrow the filters and try again.`)
+        if (total > maxSelected) {
+            setSelectAllError(limitMessage(maxSelected))
             return
         }
 
@@ -98,8 +107,8 @@ export default function ReportEmployeePicker({ companyId, roleOptions, selected,
         try {
             const ids = await listMatchingIds(companyId, filtersOf(query))
             const next = new Set([...selected, ...ids])
-            if (next.size > MAX_REPORT_EMPLOYEES) {
-                setSelectAllError(`A report can include at most ${MAX_REPORT_EMPLOYEES.toLocaleString()} employees. Narrow the filters and try again.`)
+            if (next.size > maxSelected) {
+                setSelectAllError(limitMessage(maxSelected))
             } else {
                 onChange(next)
             }
@@ -127,11 +136,13 @@ export default function ReportEmployeePicker({ companyId, roleOptions, selected,
                             className="pl-9 focus-visible:border-[var(--primary-color)] focus-visible:ring-[var(--primary-color)]/30"
                         />
                     </div>
-                    <select value={query.status} onChange={(e) => updateFilters({ status: e.target.value })} className={SELECT_CLASS}>
-                        {STATUS_OPTIONS.map((option) => (
-                            <option key={option.value} value={option.value}>{option.label}</option>
-                        ))}
-                    </select>
+                    {statusOptions.length > 1 && (
+                        <select value={query.status} onChange={(e) => updateFilters({ status: e.target.value })} className={SELECT_CLASS}>
+                            {statusOptions.map((option) => (
+                                <option key={option.value} value={option.value}>{option.label}</option>
+                            ))}
+                        </select>
+                    )}
                     <select value={query.role} onChange={(e) => updateFilters({ role: e.target.value })} className={SELECT_CLASS}>
                         <option value="all">All roles</option>
                         {roleOptions.map((role) => (
@@ -151,7 +162,7 @@ export default function ReportEmployeePicker({ companyId, roleOptions, selected,
                             className="inline-flex items-center gap-1.5 text-[var(--primary-color)] hover:underline disabled:opacity-50"
                         >
                             {selectingAll && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                            Select all {total.toLocaleString()} {isNarrowed(query) ? 'matching' : `employee${total === 1 ? '' : 's'}`}
+                            Select all {total.toLocaleString()} {isNarrowed(query, defaultStatus) ? 'matching' : `employee${total === 1 ? '' : 's'}`}
                         </button>
                     )}
                     {inSelectedView ? (

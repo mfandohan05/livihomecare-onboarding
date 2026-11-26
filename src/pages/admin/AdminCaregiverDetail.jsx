@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import { functionError } from '@/lib/functionError'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Upload, Eye, EyeOff, Loader2, CheckCircle, Pencil, CalendarClock } from 'lucide-react'
+import { ArrowLeft, Upload, Eye, EyeOff, Loader2, CheckCircle, Pencil, CalendarClock, Mail } from 'lucide-react'
 import {
     AlertDialog,
     AlertDialogContent,
@@ -1495,8 +1495,14 @@ export default function AdminCaregiverDetail() {
                         <p className="text-muted-foreground truncate">{caregiver.position_title}</p>
                     </div>
                 </div>
-                <div className='flex flex-row items-center gap-3'>
+                <div className='flex flex-row flex-wrap items-center gap-3'>
                     <HowDoesThisWork article="employee-page" />
+                    {caregiver.status === 'completed' && (
+                        <Button variant="outline" size="sm" onClick={() => navigate(`/admin/broadcast?employee=${caregiver.id}`)}>
+                            <Mail className="w-4 h-4 mr-2" />
+                            Send message
+                        </Button>
+                    )}
                     <span className={`text-sm font-medium px-3 py-1.5 rounded-full shrink-0 ${statusColor(caregiver.status, caregiver.source)}`}>
                         {statusLabel(caregiver.status, caregiver.source)}
                     </span>

@@ -29,6 +29,7 @@ const ACTION_LABELS = {
     imported_employees: "Imported Employees",
     resent_invitation: "Resent Invitation",
     exported_report: "Exported Report",
+    sent_broadcast: "Sent Broadcast",
 }
 
 const actionColor = (action) => {
