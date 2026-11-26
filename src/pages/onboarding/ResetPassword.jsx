@@ -85,7 +85,7 @@ export default function ResetPassword() {
             <AuthCard title="Link expired" subtitle="This password reset link is invalid or has expired.">
                 <Button
                     onClick={() => navigate('/sign-in', { replace: true })}
-                    className="w-full bg-[var(--lr-navy)] hover:bg-[var(--lr-navy-hover)] text-white"
+                    className="w-full bg-[var(--rsonboard-navy)] hover:bg-[var(--rsonboard-navy-hover)] text-white"
                 >
                     Back to sign in
                 </Button>
@@ -108,7 +108,7 @@ export default function ResetPassword() {
                             clearErrors()
                         }}
                         placeholder={`Enter your new password`}
-                        className="focus-visible:border-[var(--lr-navy)] focus-visible:ring-[var(--lr-navy)]/40"
+                        className="focus-visible:border-[var(--rsonboard-navy)] focus-visible:ring-[var(--rsonboard-navy)]/40"
                         required
                     />
                     <div className="pt-1">
@@ -127,7 +127,7 @@ export default function ResetPassword() {
                             clearErrors()
                         }}
                         placeholder={`Re-enter your new password`}
-                        className="focus-visible:border-[var(--lr-navy)] focus-visible:ring-[var(--lr-navy)]/40"
+                        className="focus-visible:border-[var(--rsonboard-navy)] focus-visible:ring-[var(--rsonboard-navy)]/40"
                         aria-invalid={!!confirmError}
                         aria-describedby={confirmError ? 'confirm-error' : undefined}
                         required
@@ -142,7 +142,7 @@ export default function ResetPassword() {
                 <Button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-[var(--lr-navy)] hover:bg-[var(--lr-navy-hover)] text-white focus-visible:ring-[var(--lr-navy)]/40"
+                    className="w-full bg-[var(--rsonboard-navy)] hover:bg-[var(--rsonboard-navy-hover)] text-white focus-visible:ring-[var(--rsonboard-navy)]/40"
                 >
                     {loading ? 'Saving...' : 'Update password'}
                 </Button>
